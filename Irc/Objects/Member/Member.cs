@@ -40,9 +40,14 @@ public class Member : MemberModes, IChannelMember
             }
         }
 
-        if (!IsOwner() && requiredLevel >= EnumChannelAccessLevel.ChatOwner) return EnumIrcError.ERR_NOCHANOWNER;
-        else if ((!IsOwner() && !IsHost()) && requiredLevel >= EnumChannelAccessLevel.ChatVoice) return EnumIrcError.ERR_NOCHANOP;
-        else return EnumIrcError.OK;
+        var isOwner = IsOwner();
+        var targetIsOwner = target.IsOwner();
+        var isHost = IsHost();
+        
+        if (!isOwner && (targetIsOwner || requiredLevel > EnumChannelAccessLevel.ChatHost)) return EnumIrcError.ERR_NOCHANOWNER;
+        if ((!isOwner && !isHost) && requiredLevel >= EnumChannelAccessLevel.ChatVoice) return EnumIrcError.ERR_NOCHANOP;
+        
+        return EnumIrcError.OK;
     }
 
     public IUser GetUser()
