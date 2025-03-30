@@ -6,7 +6,7 @@ WORKDIR /app
 RUN \
     git clone https://github.com/IRC7/IRC7.git && \
     dotnet publish IRC7/Irc7d \
-      --runtime alpine-x64 \
+      --runtime linux-x64 \
       --self-contained true \
       /p:PublishTrimmed=true \
       /p:PublishSingleFile=true \
