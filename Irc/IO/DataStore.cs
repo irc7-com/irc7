@@ -38,7 +38,6 @@ public class DataStore : IDataStore
     public void Set(string key, string value)
     {
         _sets[key] = value;
-        Dump();
     }
 
     public void SetAs<T>(string key, T value)
@@ -68,18 +67,5 @@ public class DataStore : IDataStore
     public string GetName()
     {
         return _section;
-    }
-
-    private void Dump()
-    {
-        if (_persist)
-        {
-            if (!Directory.Exists("states")) Directory.CreateDirectory("states");
-            var origFileName = $"{_section}_{_id}.json";
-            var invalids = new char[] { '\0', '/', '¥', '\\' };
-            var newName = string.Join('_', origFileName.Split(invalids, StringSplitOptions.RemoveEmptyEntries))
-                .TrimEnd('.');
-            File.WriteAllText($"states/{newName}", JsonSerializer.Serialize(_sets));
-        }
     }
 }
