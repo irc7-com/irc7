@@ -3,6 +3,7 @@ using System.CommandLine.Invocation;
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Irc.Extensions.Apollo.Directory;
 using Irc.Extensions.Apollo.Factories;
 using Irc.Extensions.Apollo.Objects.Server;
@@ -150,12 +151,19 @@ internal class Program
 
         return server;
     }
-
+    
     private static async Task<NTLMCredentials> LoadCredentials()
     {
+        var options = new JsonSerializerOptions
+        {
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+        };
+        
         if (File.Exists("DefaultCredentials.json"))
         {
-            var credentials = JsonSerializer.Deserialize<Dictionary<string, Credential>>(await File.ReadAllTextAsync("DefaultCredentials.json"));
+            var credentials =
+                JsonSerializer.Deserialize<Dictionary<string, Credential>>(
+                    await File.ReadAllTextAsync("DefaultCredentials.json"), options);
             return new NTLMCredentials(credentials);
         }
 
@@ -164,7 +172,12 @@ internal class Program
 
     private static void InitializeDefaultChannels(IServer server, IrcType serverType)
     {
-        var defaultChannels = JsonSerializer.Deserialize<List<DefaultChannel>>(File.ReadAllText("DefaultChannels.json"));
+        var options = new JsonSerializerOptions
+        {
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+        };
+
+        var defaultChannels = JsonSerializer.Deserialize<List<DefaultChannel>>(File.ReadAllText("DefaultChannels.json"), options);
 
         foreach (var defaultChannel in defaultChannels)
         {

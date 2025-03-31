@@ -6,7 +6,6 @@ WORKDIR /app
 RUN \
     git clone https://github.com/IRC7/IRC7.git && \
     dotnet publish IRC7/Irc7d \
-      --runtime linux-x64 \
       --self-contained true \
       /p:PublishTrimmed=true \
       /p:PublishSingleFile=true \
@@ -14,13 +13,11 @@ RUN \
       -o ./output && \
     mv ./output/Irc7d ./output/irc7
 
-FROM alpine:latest
+FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
 COPY --from=build /app/output /app/output
 ARG irc7d_port
 ARG irc7d_fqdn
 ENV irc7d_port=${irc7d_port}
 ENV irc7d_fqdn=${irc7d_fqdn}
-RUN \
-    apk add libstdc++ krb5-libs
+CMD /app/output/irc7 --ip 0.0.0.0 --port $irc7d_port --fqdn $irc7d_fqdn
 EXPOSE ${irc7d_port}
-ENTRYPOINT [ "/app/output/irc7", "--ip", "0.0.0.0", "--port", "$listen_port", "--fqdn", "$irc7d_fqdn" ]

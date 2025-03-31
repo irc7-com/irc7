@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Irc.IO;
 
@@ -18,11 +19,16 @@ public class DataStore : IDataStore
 
     public DataStore(string path)
     {
+        var options = new JsonSerializerOptions
+        {
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+        };
+
         if (!string.IsNullOrWhiteSpace(path))
         {
             // Workaround for forced case comparison
             // (specifying PropertyNameCaseInsensitive = true in JsonSerializerOptions also didnt work)
-            var tempSet = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path));
+            var tempSet = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path), options);
             foreach (var kvp in tempSet)
             {
                 _sets.Add(kvp.Key, kvp.Value);
