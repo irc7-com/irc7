@@ -5,15 +5,16 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 RUN \
     git clone https://github.com/IRC7/IRC7.git && \
-    dotnet publish IRC7/Irc7d \
+    dotnet publish Irc7d \
       --self-contained true \
-      /p:PublishTrimmed=true \
+      /p:PublishTrimmed=false \
       /p:PublishSingleFile=true \
       -c Release \
-      -o ./output && \
-    mv ./output/Irc7d ./output/irc7
+      -o ./output
+RUN mv ./output/Irc7d ./output/irc7
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
+WORKDIR /app/output/
 COPY --from=build /app/output /app/output
 ARG irc7d_port
 ARG irc7d_fqdn

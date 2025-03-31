@@ -154,16 +154,11 @@ internal class Program
     
     private static async Task<NTLMCredentials> LoadCredentials()
     {
-        var options = new JsonSerializerOptions
-        {
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver()
-        };
-        
         if (File.Exists("DefaultCredentials.json"))
         {
             var credentials =
                 JsonSerializer.Deserialize<Dictionary<string, Credential>>(
-                    await File.ReadAllTextAsync("DefaultCredentials.json"), options);
+                    await File.ReadAllTextAsync("DefaultCredentials.json"));
             return new NTLMCredentials(credentials);
         }
 
@@ -172,12 +167,7 @@ internal class Program
 
     private static void InitializeDefaultChannels(IServer server, IrcType serverType)
     {
-        var options = new JsonSerializerOptions
-        {
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver()
-        };
-
-        var defaultChannels = JsonSerializer.Deserialize<List<DefaultChannel>>(File.ReadAllText("DefaultChannels.json"), options);
+        var defaultChannels = JsonSerializer.Deserialize<List<DefaultChannel>>(File.ReadAllText("DefaultChannels.json"));
 
         foreach (var defaultChannel in defaultChannels)
         {
