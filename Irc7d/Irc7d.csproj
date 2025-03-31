@@ -13,9 +13,6 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.CommandLineUtils" Version="1.1.1" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Irc.Extensions.Apollo.Directory\Irc.Extensions.Apollo.Directory.csproj" />
@@ -26,6 +23,7 @@
 
   <ItemGroup>
     <None Remove="states\" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <None Update="DefaultCredentials.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
