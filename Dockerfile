@@ -22,5 +22,5 @@ ENV irc7d_port=${irc7d_port}
 ENV irc7d_fqdn=${irc7d_fqdn}
 RUN \
     apk add libstdc++ krb5-libs
-CMD ./output/irc7 --ip 0.0.0.0 --port $listen_port --fqdn $irc7d_fqdn
 EXPOSE ${irc7d_port}
+ENTRYPOINT [ "/app/output/irc7", "--ip", "0.0.0.0", "--port", "$listen_port", "--fqdn", "$irc7d_fqdn" ]
