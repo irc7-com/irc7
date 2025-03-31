@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 RUN \
     git clone https://github.com/IRC7/IRC7.git && \
-    dotnet publish Irc7d \
+    dotnet publish IRC7/Irc7d \
       --self-contained true \
       /p:PublishTrimmed=false \
       /p:PublishSingleFile=true \
