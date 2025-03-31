@@ -24,13 +24,23 @@ public class DirectoryServer : ApolloServer
     public DirectoryServer(ISocketServer socketServer, ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
         ICommandCollection commands, IUserFactory userFactory = null,
-        ICredentialProvider? ntlmCredentialProvider = null)
+        ICredentialProvider? ntlmCredentialProvider = null, string? chatServerIp = null)
         : base(socketServer, securityManager,
             floodProtectionManager, dataStore, channels, commands, userFactory ?? new ApolloUserFactory(),
             ntlmCredentialProvider)
     {
         DisableGuestMode = true;
         DisableUserRegistration = true;
+
+        if (!string.IsNullOrEmpty(chatServerIp))
+        {
+            var parts = chatServerIp.Split(':');
+            if (parts.Length > 0)
+                ChatServerIP = parts[0];
+            if (parts.Length > 1)
+                ChatServerPORT = parts[1];
+        }
+
         FlushCommands();
         AddCommand(new Ircvers());
         AddCommand(new Auth());

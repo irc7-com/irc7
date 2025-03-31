@@ -1,9 +1,10 @@
-﻿using System.Net;
+﻿using System.CommandLine;
+using System.CommandLine.Invocation;
+using System.Net;
 using System.Reflection;
 using System.Text.Json;
 using Irc.Extensions.Apollo.Directory;
 using Irc.Extensions.Apollo.Factories;
-using Irc.Extensions.Apollo.Objects.Channel;
 using Irc.Extensions.Apollo.Objects.Server;
 using Irc.Extensions.Factories;
 using Irc.Extensions.Objects.Channel;
@@ -15,7 +16,6 @@ using Irc.IO;
 using Irc.Logger;
 using Irc.Objects.Server;
 using Irc.Security;
-using Microsoft.Extensions.CommandLineUtils;
 using NLog;
 
 namespace Irc7d;
@@ -27,155 +27,38 @@ internal class Program
     private static IServer server;
     private static CancellationTokenSource cancellationTokenSource;
 
-    private static void Main(string[] args)
+    private static async Task<int> Main(string[] args)
     {
         Logging.Attach();
-        var app = new CommandLineApplication();
-        app.Name = AppDomain.CurrentDomain.FriendlyName;
-        app.Description = "irc7 daemon";
-        app.HelpOption("-h|--help");
+        var (rootCommand, optionsDictionary) = CreateRootCommand();
 
-        var configOption = app.Option("-c|--config <configfile>",
-            "The path to the configuration json file (default ./config.json)", CommandOptionType.SingleValue);
-        var bindIpOption = app.Option("-i|--ip <bindip>", "The ip for the server to bind on (default 0.0.0.0)",
-            CommandOptionType.SingleValue);
-        var bindOption = app.Option("-p|--port <bindport>", "The port for the server to bind on (default 6667)",
-            CommandOptionType.SingleValue);
-        var backlogOption = app.Option("-k|--backlog <backlogsize>",
-            "The backlog for connecting sockets (default 1024)", CommandOptionType.SingleValue);
-        var bufferSizeOption = app.Option("-z|--buffer <buffersize>", "The incoming buffer size in bytes (default 512)",
-            CommandOptionType.SingleValue);
-        var maxConnectionsPerIpOption = app.Option("-m|--maxconn <maxconnections>",
-            "The maximum connections per IP that can connect (default 128)", CommandOptionType.SingleValue);
-        var fqdnOption = app.Option("-f|--fqdn <fqdn>", "The FQDN of the machine (default localhost)",
-            CommandOptionType.SingleValue);
-        var serverType = app.Option("-t|--type <type>",
-            "Type of server e.g. IRC, IRCX, MSN, DIR", CommandOptionType.SingleValue);
-        var chatServerIP = app.Option("-s|--server",
-            "The Chat Server IP and Port e.g. 127.0.0.1:6667 (temporary, DIR mode only)",
-            CommandOptionType.SingleValue);
-        var versionOption = app.Option("-v|--version", "The version of the Chat Server", CommandOptionType.NoValue);
-
-        app.OnExecute(async () =>
+        rootCommand.SetHandler(async (InvocationContext context) =>
         {
-            if (app.OptionHelp.HasValue())
-            {
-                app.ShowHint();
-                return 0;
-            }
+            var options = GetOptions(context, optionsDictionary);
 
-            if (versionOption.HasValue())
-            {
-                Log.Info(Assembly.GetExecutingAssembly().GetName().Version.ToString());
-                return 0;
-            }
+            var ip = !string.IsNullOrEmpty(options.BindIp) ? IPAddress.Parse(options.BindIp) : IPAddress.Any;
 
-            var ip = IPAddress.Any;
-            if (bindIpOption.HasValue()) ip = IPAddress.Parse(bindIpOption.Value());
+            Enum.TryParse<IrcType>(options.ServerType, true, out var serverType);
 
-            var port = 6667;
-            if (bindOption.HasValue()) port = Convert.ToInt32(bindOption.Value());
+            var socketServer = new SocketServer(ip, options.BindPort, options.Backlog, options.MaxConnections, options.BufferSize);
+            socketServer.OnListen += (_, __) => DisplayStartupInfo(options, ip);
 
-            var backlog = 1024;
-            if (backlogOption.HasValue()) backlog = Convert.ToInt32(backlogOption.Value());
+            var credentialProvider = await LoadCredentials();
 
-            var bufferSize = 512;
-            if (bufferSizeOption.HasValue()) bufferSize = Convert.ToInt32(bufferSizeOption.Value());
-
-            var maxConnections = 128;
-            if (maxConnectionsPerIpOption.HasValue())
-                maxConnections = Convert.ToInt32(maxConnectionsPerIpOption.Value());
-
-            var fqdn = "localhost";
-            if (fqdnOption.HasValue()) fqdn = fqdnOption.Value();
-
-            var forwardServer = "";
-            if (chatServerIP.HasValue()) forwardServer = chatServerIP.Value();
-
-            Enum.TryParse<IrcType>(serverType.Value(), true, out var type);
-
-            var socketServer = new SocketServer(ip, port, backlog, maxConnections, bufferSize);
-            socketServer.OnListen += (sender, server1) =>
-            {
-                Log.Info(
-                    $"Listening on {ip}:{port} backlog={backlog} buffer={bufferSize} maxconn={maxConnections} fqdn={fqdn} type={type} {(chatServerIP.HasValue() ? "forwardserver=" : "")}{forwardServer}");
-            };
-
-            var credentials = new Dictionary<string, Credential>();
-            if (File.Exists("DefaultCredentials.json"))
-                credentials =
-                    JsonSerializer.Deserialize<Dictionary<string, Credential>>(
-                        await File.ReadAllTextAsync("DefaultCredentials.json"));
-
-            var credentialProvider = new NTLMCredentials(credentials);
-
-            switch (type)
-            {
-                case IrcType.IRC:
-                {
-                    server = new Server(socketServer, new SecurityManager(), new FloodProtectionManager(),
-                        new DataStore("DefaultServer.json"),
-                        new List<IChannel>(), null, new UserFactory());
-                    break;
-                }
-                case IrcType.IRCX:
-                {
-                    server = new ExtendedServer(socketServer, new SecurityManager(), new FloodProtectionManager(),
-                        new DataStore("DefaultServer.json"),
-                        new List<IChannel>(), null, new ExtendedUserFactory(), credentialProvider);
-                    break;
-                }
-                case IrcType.DIR:
-                {
-                    server = new DirectoryServer(socketServer, new SecurityManager(), new FloodProtectionManager(),
-                        new DataStore("DefaultServer.json"),
-                        new List<IChannel>(), null, new ApolloUserFactory(), credentialProvider);
-
-                    var parts = forwardServer.Split(':');
-                    if (parts.Length > 0) ((DirectoryServer)server).ChatServerIP = parts[0];
-                    if (parts.Length > 1) ((DirectoryServer)server).ChatServerPORT = parts[1];
-
-                    break;
-                }
-                default:
-                {
-                    server = new ApolloServer(socketServer, new SecurityManager(), new FloodProtectionManager(),
-                        new DataStore("DefaultServer.json"),
-                        new List<IChannel>(), null, new ApolloUserFactory(), credentialProvider);
-                    break;
-                }
-            }
+            server = ConfigureServer(serverType, socketServer, credentialProvider, options.ChatServerIp);
 
             server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            server.RemoteIP = fqdn;
+            server.RemoteIP = options.Fqdn;
 
-            var defaultChannels =
-                JsonSerializer.Deserialize<List<DefaultChannel>>(File.ReadAllText("DefaultChannels.json"));
-            foreach (var defaultChannel in defaultChannels)
-            {
-                var name = type == IrcType.IRC ? $"#{defaultChannel.Name}" : $"%#{defaultChannel.Name}";
-                var channel = server.CreateChannel(name);
-                channel.ChannelStore.Set("topic", defaultChannel.Topic);
-                foreach (var keyValuePair in defaultChannel.Modes)
-                    channel.Modes.SetModeChar(keyValuePair.Key, keyValuePair.Value);
-
-                if (channel is ExtendedChannel || channel is ApolloChannel)
-                    foreach (var keyValuePair in defaultChannel.Props)
-                        ((ExtendedChannel)channel).PropCollection.GetProp(keyValuePair.Key)
-                            .SetValue(keyValuePair.Value);
-
-                server.AddChannel(channel);
-            }
+            InitializeDefaultChannels(server, serverType);
 
             cancellationTokenSource = new CancellationTokenSource();
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             Console.CancelKeyPress += CurrentDomain_ProcessExit;
             await Task.Delay(-1, cancellationTokenSource.Token).ContinueWith(t => { });
-
-            return 0;
         });
 
-        app.Execute(args);
+        return await rootCommand.InvokeAsync(args);
     }
 
     private static void CurrentDomain_ProcessExit(object? sender, EventArgs e)
@@ -185,11 +68,171 @@ internal class Program
         cancellationTokenSource.Cancel();
     }
 
+    private static (RootCommand, Dictionary<string, Option>) CreateRootCommand()
+    {
+        var rootCommand = new RootCommand("irc7 daemon")
+        {
+            Name = AppDomain.CurrentDomain.FriendlyName
+        };
+
+        var configOption = new Option<string>(["-c", "--config"], "The path to the configuration json file (default ./config.json)") { ArgumentHelpName = "configfile" };
+        configOption.SetDefaultValue("./config.json");
+        var bindIpOption = new Option<string>(["-i", "--ip"], "The ip for the server to bind on (default 0.0.0.0)") { ArgumentHelpName = "bindip" };
+        bindIpOption.SetDefaultValue("0.0.0.0");
+        var bindPortOption = new Option<int>(["-p", "--port"], "The port for the server to bind on (default 6667)") { ArgumentHelpName = "bindport" };
+        bindPortOption.SetDefaultValue("6667");
+        var backlogOption = new Option<int>(["-k", "--backlog"], "The backlog for connecting sockets (default 512)") { ArgumentHelpName = "backlogsize" };
+        backlogOption.SetDefaultValue(512);
+        var bufferSizeOption = new Option<int>(["-z", "--buffer"], "The incoming buffer size in bytes (default 512)") { ArgumentHelpName = "buffersize" };
+        bufferSizeOption.SetDefaultValue(512);
+        var maxConnectionsPerIpOption = new Option<int>(["-m", "--maxConn"], "The maximum connections per IP that can connect (default 128)") { ArgumentHelpName = "maxconnections" };
+        maxConnectionsPerIpOption.SetDefaultValue(128);
+        var fqdnOption = new Option<string>(["-f", "--fqdn"], "The FQDN of the machine (default localhost)") { ArgumentHelpName = "fqdn" };
+        fqdnOption.SetDefaultValue("localhost");
+        var serverTypeOption = new Option<string>(["-t", "--type"], "Type of server e.g. IRC, IRCX, ACS, ADS") { ArgumentHelpName = "type" };
+        var chatServerIpOption = new Option<string>(["-s", "--server"], "The Chat Server Ip and Port e.g. 127.0.0.1:6667") { ArgumentHelpName = "server" };
+
+        var options = new Dictionary<string, Option>
+        {
+            { "config", configOption },
+            { "bindIp", bindIpOption },
+            { "bindPort", bindPortOption },
+            { "backlog", backlogOption },
+            { "bufferSize", bufferSizeOption },
+            { "maxConnections", maxConnectionsPerIpOption },
+            { "fqdn", fqdnOption },
+            { "serverType", serverTypeOption },
+            { "chatServerIp", chatServerIpOption }
+        };
+
+        foreach (var option in options.Values)
+        {
+            rootCommand.AddOption(option);
+        }
+
+        return (rootCommand, options);
+    }
+
+    private static ServerOptions GetOptions(InvocationContext context, Dictionary<string, Option> optionsDict)
+    {
+        return new ServerOptions
+        {
+            ConfigPath = context.ParseResult.GetValueForOption((Option<string>) optionsDict["config"]),
+            BindIp = context.ParseResult.GetValueForOption((Option<string>) optionsDict["bindIp"]),
+            BindPort = context.ParseResult.GetValueForOption((Option<int>) optionsDict["bindPort"]),
+            Backlog = context.ParseResult.GetValueForOption((Option<int>) optionsDict["backlog"]),
+            BufferSize = context.ParseResult.GetValueForOption((Option<int>) optionsDict["bufferSize"]),
+            MaxConnections = context.ParseResult.GetValueForOption((Option<int>) optionsDict["maxConnections"]),
+            Fqdn = context.ParseResult.GetValueForOption((Option<string>) optionsDict["fqdn"]),
+            ServerType = context.ParseResult.GetValueForOption((Option<string>) optionsDict["serverType"]),
+            ChatServerIp = context.ParseResult.GetValueForOption((Option<string>) optionsDict["chatServerIp"])
+        };
+    }
+
+    private static Server ConfigureServer(IrcType serverType, SocketServer socketServer, NTLMCredentials credentialProvider, string? chatServerIp)
+    {
+        var floodProtectionManager = new FloodProtectionManager();
+        var securityManager = new SecurityManager();
+        var dataStoreServerConfig = new DataStore("DefaultServer.json");
+        var channels = new List<IChannel>();
+        return serverType switch
+        {
+            IrcType.IRC => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new UserFactory()),
+            IrcType.IRCX => new ExtendedServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new ExtendedUserFactory(), credentialProvider),
+            IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, securityManager, floodProtectionManager, dataStoreServerConfig, channels, chatServerIp),
+            _ => new ApolloServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new ApolloUserFactory(), credentialProvider)
+        };
+    }
+
+    private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer, NTLMCredentials credentialProvider, SecurityManager securityManager, FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig, List<IChannel> channels, string? chatServerIp)
+    {
+        var server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new ApolloUserFactory(), credentialProvider, chatServerIp);
+
+        return server;
+    }
+
+    private static async Task<NTLMCredentials> LoadCredentials()
+    {
+        if (File.Exists("DefaultCredentials.json"))
+        {
+            var credentials = JsonSerializer.Deserialize<Dictionary<string, Credential>>(await File.ReadAllTextAsync("DefaultCredentials.json"));
+            return new NTLMCredentials(credentials);
+        }
+
+        return new NTLMCredentials(new Dictionary<string, Credential>());
+    }
+
+    private static void InitializeDefaultChannels(IServer server, IrcType serverType)
+    {
+        var defaultChannels = JsonSerializer.Deserialize<List<DefaultChannel>>(File.ReadAllText("DefaultChannels.json"));
+
+        foreach (var defaultChannel in defaultChannels)
+        {
+            var name = serverType == IrcType.IRC ? $"#{defaultChannel.Name}" : $"%#{defaultChannel.Name}";
+            var channel = server.CreateChannel(name);
+
+            channel.ChannelStore.Set("topic", defaultChannel.Topic);
+            foreach (var keyValuePair in defaultChannel.Modes)
+            {
+                channel.Modes.SetModeChar(keyValuePair.Key, keyValuePair.Value);
+            }
+
+            if (channel is ExtendedChannel extendedChannel)
+            {
+                foreach (var keyValuePair in defaultChannel.Props)
+                {
+                    extendedChannel.PropCollection.GetProp(keyValuePair.Key).SetValue(keyValuePair.Value);
+                }
+            }
+
+            server.AddChannel(channel);
+        }
+    }
+
+    private static void DisplayStartupInfo(ServerOptions options, IPAddress ip)
+    {
+        Console.WriteLine("╔════════════════════════════════════════╗");
+        Console.WriteLine("║            IRC7 Server Info            ║");
+        Console.WriteLine("╠════════════════════════════════════════╣");
+
+        List<string> infoLines = new List<string>
+        {
+            $"║ Server Version: {Assembly.GetExecutingAssembly().GetName().Version}",
+            $"║ Listening on IP: {ip}",
+            $"║ Port: {options.BindPort}",
+            $"║ Max Connections: {options.MaxConnections}",
+            $"║ Server Type: {options.ServerType?.ToUpper()}",
+            $"║ FQDN: {options.Fqdn}",
+            $"║ Buffer Size: {options.BufferSize} bytes",
+            $"║ Backlog Size:{options.Backlog}",
+        };
+        if (!string.IsNullOrEmpty(options.ChatServerIp))
+        {
+            infoLines.Add($"║ Chat Server Ip: {options.ChatServerIp}");
+        }
+
+        int maxLength = 0;
+        foreach (var line in infoLines)
+        {
+            maxLength = Math.Max(maxLength, line.Length);
+            maxLength = maxLength < 40 ? 40 : maxLength;
+        }
+
+        foreach (var line in infoLines)
+        {
+            int spacesToAdd = maxLength - line.Length;
+            string formattedLine = line + new string(' ', spacesToAdd) + " ║";
+            Console.WriteLine(formattedLine);
+        }
+
+        Console.WriteLine("╚════════════════════════════════════════╝");
+    }
+
     private enum IrcType
     {
         IRC,
         IRCX,
-        MSN,
-        DIR
+        ACS,
+        ADS
     }
 }
