@@ -2,7 +2,7 @@
   "profiles": {
     "Irc7d": {
       "commandName": "Project",
-      "commandLineArgs": "-t MSN -f 192.168.1.13"
+      "commandLineArgs": "-t ACS -f localhost"
     }
   }
 }

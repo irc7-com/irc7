@@ -204,7 +204,7 @@ internal class Program
             $"║ Server Type: {options.ServerType?.ToUpper()}",
             $"║ FQDN: {options.Fqdn}",
             $"║ Buffer Size: {options.BufferSize} bytes",
-            $"║ Backlog Size:{options.Backlog}",
+            $"║ Backlog Size: {options.Backlog}",
         };
         if (!string.IsNullOrEmpty(options.ChatServerIp))
         {
