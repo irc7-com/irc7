@@ -80,7 +80,7 @@ internal class Program
         var bindIpOption = new Option<string>(["-i", "--ip"], "The ip for the server to bind on (default 0.0.0.0)") { ArgumentHelpName = "bindip" };
         bindIpOption.SetDefaultValue("0.0.0.0");
         var bindPortOption = new Option<int>(["-p", "--port"], "The port for the server to bind on (default 6667)") { ArgumentHelpName = "bindport" };
-        bindPortOption.SetDefaultValue("6667");
+        bindPortOption.SetDefaultValue(6667);
         var backlogOption = new Option<int>(["-k", "--backlog"], "The backlog for connecting sockets (default 512)") { ArgumentHelpName = "backlogsize" };
         backlogOption.SetDefaultValue(512);
         var bufferSizeOption = new Option<int>(["-z", "--buffer"], "The incoming buffer size in bytes (default 512)") { ArgumentHelpName = "buffersize" };
