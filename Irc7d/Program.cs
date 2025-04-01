@@ -91,6 +91,7 @@ internal class Program
         var fqdnOption = new Option<string>(["-f", "--fqdn"], "The FQDN of the machine (default localhost)") { ArgumentHelpName = "fqdn" };
         fqdnOption.SetDefaultValue("localhost");
         var serverTypeOption = new Option<string>(["-t", "--type"], "Type of server e.g. IRC, IRCX, ACS, ADS") { ArgumentHelpName = "type" };
+        serverTypeOption.SetDefaultValue("ACS");
         var chatServerIpOption = new Option<string>(["-s", "--server"], "The Chat Server Ip and Port e.g. 127.0.0.1:6667") { ArgumentHelpName = "server" };
 
         var options = new Dictionary<string, Option>
