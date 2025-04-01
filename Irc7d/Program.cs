@@ -3,6 +3,7 @@ using System.CommandLine.Invocation;
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Irc.Extensions.Apollo.Directory;
 using Irc.Extensions.Apollo.Factories;
 using Irc.Extensions.Apollo.Objects.Server;
@@ -150,12 +151,14 @@ internal class Program
 
         return server;
     }
-
+    
     private static async Task<NTLMCredentials> LoadCredentials()
     {
         if (File.Exists("DefaultCredentials.json"))
         {
-            var credentials = JsonSerializer.Deserialize<Dictionary<string, Credential>>(await File.ReadAllTextAsync("DefaultCredentials.json"));
+            var credentials =
+                JsonSerializer.Deserialize<Dictionary<string, Credential>>(
+                    await File.ReadAllTextAsync("DefaultCredentials.json"));
             return new NTLMCredentials(credentials);
         }
 
