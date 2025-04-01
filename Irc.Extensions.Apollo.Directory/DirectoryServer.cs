@@ -50,7 +50,7 @@ public class DirectoryServer : ApolloServer
         AddCommand(new UserCommand(), EnumProtocolType.IRC, "User");
         AddCommand(new Finds());
         AddCommand(new Prop());
-        AddCommand(new Create());
+        AddCommand(new Create(true));
         AddCommand(new Ping());
         AddCommand(new Pong());
         AddCommand(new Version());
