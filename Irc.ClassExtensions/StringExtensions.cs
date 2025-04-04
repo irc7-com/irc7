@@ -105,7 +105,7 @@ public static class StringExtensions
         return literal.ToString();
     }
 
-    public static string ToEscape(this string? data)
+    public static string ToEscape(this string data)
     {
         var escape = new StringBuilder(data.Length * 2);
 
@@ -113,52 +113,52 @@ public static class StringExtensions
             switch (data[i])
             {
                 case (char)0x0:
-                {
-                    escape.Append('\\');
-                    escape.Append('0');
-                    break;
-                }
+                    {
+                        escape.Append('\\');
+                        escape.Append('0');
+                        break;
+                    }
                 case (char)0x9:
-                {
-                    escape.Append('\\');
-                    escape.Append('t');
-                    break;
-                }
+                    {
+                        escape.Append('\\');
+                        escape.Append('t');
+                        break;
+                    }
                 case (char)0xD:
-                {
-                    escape.Append('\\');
-                    escape.Append('r');
-                    break;
-                }
+                    {
+                        escape.Append('\\');
+                        escape.Append('r');
+                        break;
+                    }
                 case (char)0xA:
-                {
-                    escape.Append('\\');
-                    escape.Append('n');
-                    break;
-                }
+                    {
+                        escape.Append('\\');
+                        escape.Append('n');
+                        break;
+                    }
                 case (char)0x20:
-                {
-                    escape.Append('\\');
-                    escape.Append('b');
-                    break;
-                }
+                    {
+                        escape.Append('\\');
+                        escape.Append('b');
+                        break;
+                    }
                 case (char)0x2C:
-                {
-                    escape.Append('\\');
-                    escape.Append('c');
-                    break;
-                }
+                    {
+                        escape.Append('\\');
+                        escape.Append('c');
+                        break;
+                    }
                 case (char)0x5C:
-                {
-                    escape.Append('\\');
-                    escape.Append('\\');
-                    break;
-                }
+                    {
+                        escape.Append('\\');
+                        escape.Append('\\');
+                        break;
+                    }
                 default:
-                {
-                    escape.Append(data[i]);
-                    break;
-                }
+                    {
+                        escape.Append(data[i]);
+                        break;
+                    }
             }
 
         return escape.ToString();

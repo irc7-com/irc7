@@ -155,8 +155,8 @@ public class Channel : ChatObject, IChannel
         return EnumIrcError.ERR_NOCHANOP;
     }
 
-    public void ProcessChannelError(EnumIrcError error, IServer server, IUser source, ChatObject target = null,
-        string data = null)
+    public void ProcessChannelError(EnumIrcError error, IServer server, IUser source, ChatObject target,
+        string data)
     {
         switch (error)
         {
@@ -220,10 +220,11 @@ public class Channel : ChatObject, IChannel
 
     public override void Send(string message)
     {
-        Send(message, null);
+        foreach (var channelMember in _members)
+            channelMember.GetUser().Send(message);
     }
 
-    public override void Send(string message, ChatObject u = null)
+    public override void Send(string message, ChatObject u)
     {
         foreach (var channelMember in _members)
             if (channelMember.GetUser() != u)

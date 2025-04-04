@@ -53,11 +53,14 @@ public class DataStore : IDataStore
         return value;
     }
 
-    public T GetAs<T>(string key)
+    public T GetAs<T>(string key) where T : new()
     {
         var json = Get(key);
-        if (json == null) return default(T);
-        return JsonSerializer.Deserialize<T>(json) ?? default(T);
+        if (json == null)
+        {
+            return new T();
+        }
+        return JsonSerializer.Deserialize<T>(json) ?? new T();
     }
 
     public List<KeyValuePair<string, string>> GetList()

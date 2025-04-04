@@ -27,6 +27,6 @@ public class NTLM2SessionResponseTests
         var result =
             ntlmAlgorithms.Ntlm2SessionResponse(password, challenge.ToAsciiString(), lmResponse.ToAsciiString());
 
-        Assert.AreEqual(expectedResult, result);
+        Assert.That(expectedResult, Is.EqualTo(result));
     }
 }

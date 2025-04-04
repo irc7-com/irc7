@@ -26,7 +26,7 @@ public class DirectoryServer : ApolloServer
         ICommandCollection commands, IUserFactory userFactory = null,
         ICredentialProvider? ntlmCredentialProvider = null, string? chatServerIp = null)
         : base(socketServer, securityManager,
-            floodProtectionManager, dataStore, channels, commands, userFactory ?? new ApolloUserFactory(),
+            floodProtectionManager, dataStore, channels, userFactory ?? new ApolloUserFactory(),
             ntlmCredentialProvider)
     {
         DisableGuestMode = true;

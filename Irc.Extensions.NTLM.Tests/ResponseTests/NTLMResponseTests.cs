@@ -21,7 +21,7 @@ public class NTLMResponseTests
         var ntlmAlgorithms = new NtlmResponses();
         var result = ntlmAlgorithms.NtlmResponse(password, challenge.ToAsciiString());
 
-        Assert.AreEqual(expectedResult, result);
+        Assert.That(expectedResult, Is.EqualTo(result));
     }
 
     [Test]

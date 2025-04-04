@@ -139,10 +139,10 @@ internal class Program
         var channels = new List<IChannel>();
         return serverType switch
         {
-            IrcType.IRC => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new UserFactory()),
-            IrcType.IRCX => new ExtendedServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new ExtendedUserFactory(), credentialProvider),
+            IrcType.IRC => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, new UserFactory()),
+            IrcType.IRCX => new ExtendedServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, new ExtendedUserFactory(), credentialProvider),
             IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, securityManager, floodProtectionManager, dataStoreServerConfig, channels, chatServerIp),
-            _ => new ApolloServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new ApolloUserFactory(), credentialProvider)
+            _ => new ApolloServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, new ApolloUserFactory(), credentialProvider)
         };
     }
 

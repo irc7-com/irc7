@@ -28,10 +28,10 @@ public class ApolloServer : ExtendedServer
 
     public ApolloServer(ISocketServer socketServer, ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
-        ICommandCollection commands, IUserFactory userFactory = null,
+        IUserFactory userFactory = null,
         ICredentialProvider? ntlmCredentialProvider = null)
         : base(socketServer, securityManager,
-            floodProtectionManager, dataStore, channels, commands, userFactory ?? new ApolloUserFactory(),
+            floodProtectionManager, dataStore, channels, userFactory ?? new ApolloUserFactory(),
             ntlmCredentialProvider)
     {
         if (SupportPackages.Contains("GateKeeper"))
@@ -104,7 +104,7 @@ public class ApolloServer : ExtendedServer
                 {
                     var modeRule = user.GetModes().GetMode(mode);
                     modeRule?.Set(1);
-                    modeRule?.DispatchModeChange((ChatObject)user, (ChatObject)user, true);
+                    modeRule?.DispatchModeChange((ChatObject)user, (ChatObject)user, true, string.Empty);
                 }
             }
 

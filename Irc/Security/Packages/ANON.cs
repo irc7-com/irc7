@@ -38,7 +38,7 @@ public class ANON : SupportPackage
         {
             Level = EnumUserAccessLevel.Member,
             Domain = GetType().Name,
-            Username = null,
+            Username = string.Empty,
             Guest = true
         };
     }

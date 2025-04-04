@@ -26,7 +26,6 @@ public class Server : ChatObject, IServer
     private readonly ISecurityManager _securityManager;
     private readonly ISocketServer _socketServer;
     private readonly IUserFactory _userFactory;
-    public readonly ICommandCollection Commands;
     private readonly ConcurrentQueue<IUser> PendingNewUserQueue = new();
     private readonly ConcurrentQueue<IUser> PendingRemoveUserQueue = new();
     public IDictionary<EnumProtocolType, IProtocol> _protocols = new Dictionary<EnumProtocolType, IProtocol>();
@@ -41,7 +40,6 @@ public class Server : ChatObject, IServer
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
         IList<IChannel> channels,
-        ICommandCollection commands,
         IUserFactory userFactory) : base(new ModeCollection(), dataStore)
     {
         Title = Name;
@@ -50,7 +48,6 @@ public class Server : ChatObject, IServer
         _floodProtectionManager = floodProtectionManager;
         _dataStore = dataStore;
         Channels = channels;
-        Commands = commands;
         _userFactory = userFactory;
         _processingTask = new Task(Process);
         _processingTask.Start();
@@ -61,7 +58,7 @@ public class Server : ChatObject, IServer
         _dataStore.Set("supported.channel.modes",
             new ChannelModes().GetSupportedModes());
         _dataStore.Set("supported.user.modes", new UserModes().GetSupportedModes());
-        SupportPackages = _dataStore.GetAs<string[]>(Resources.ConfigSaslPackages) ?? Array.Empty<string>();
+        SupportPackages = _dataStore.GetAs<List<string>>(Resources.ConfigSaslPackages)?.ToArray() ?? Array.Empty<string>();
 
         if (MaxAnonymousConnections > 0) _securityManager.AddSupportPackage(new ANON());
 
@@ -125,7 +122,7 @@ public class Server : ChatObject, IServer
 
     public string[] GetMOTD()
     {
-        return _dataStore.GetAs<string[]>(Resources.ConfigMotd);
+        return _dataStore.GetAs<List<string>>(Resources.ConfigMotd).ToArray() ?? Array.Empty<string>();
     }
 
     public void AddUser(IUser user)
@@ -209,7 +206,7 @@ public class Server : ChatObject, IServer
         return _protocols;
     }
 
-    public Version ServerVersion { get; set; } = Assembly.GetExecutingAssembly().GetName().Version;
+    public Version ServerVersion { get; set; } = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0);
 
     public IDataStore GetDataStore()
     {
@@ -391,8 +388,13 @@ public class Server : ChatObject, IServer
         }
     }
 
-    protected void AddCommand(ICommand command, EnumProtocolType fromProtocol = EnumProtocolType.IRC,
-        string name = null)
+    protected void AddCommand(ICommand command)
+    {
+        foreach (var protocol in _protocols)
+                protocol.Value.AddCommand(command, command.GetName());
+    }
+
+    protected void AddCommand(ICommand command, EnumProtocolType fromProtocol, string name)
     {
         foreach (var protocol in _protocols)
             if (protocol.Key >= fromProtocol)

@@ -60,8 +60,17 @@ public class Auth : Command, ICommand
 
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
                 {
-                    var securityToken = supportPackage.CreateSecurityChallenge().ToEscape();
-                    chatFrame.User.Send(Raw.RPL_AUTH_SEC_REPLY(packageName, securityToken));
+                    var securityToken = supportPackage.CreateSecurityChallenge();
+
+                    // If the security token could not be created, disconnect the user
+                    if (securityToken == string.Empty)
+                    {
+                        chatFrame.User.Disconnect(Raw.IRCX_ERR_RESOURCE_907(chatFrame.Server, chatFrame.User));
+                        return;
+                    }
+
+                    var securityTokenEscaped = securityToken.ToEscape();
+                    chatFrame.User.Send(Raw.RPL_AUTH_SEC_REPLY(packageName, securityTokenEscaped));
                     // Send reply
                     return;
                 }

@@ -24,10 +24,14 @@ public class Protocol : IProtocol
         throw new NotImplementedException();
     }
 
-    public void AddCommand(ICommand command, string name = null)
+    public void AddCommand(ICommand command, string name)
     {
-        if (!Commands.ContainsKey(name == null ? command.GetName() : name))
+        if (!Commands.ContainsKey(!string.IsNullOrWhiteSpace(name) ? command.GetName() : name))
             Commands.Add(name ?? command.GetName(), command);
+    }
+    public void AddCommand(ICommand command)
+    {
+        if (!Commands.ContainsKey(command.GetName())) Commands.Add(command.GetName(), command);
     }
 
     public void FlushCommands()
@@ -47,9 +51,16 @@ public class Protocol : IProtocol
         throw new NotImplementedException();
     }
 
-    public void UpdateCommand(ICommand command, string name = null)
+    public void UpdateCommand(ICommand command)
     {
-        var commandName = name ?? command.GetName();
+        var commandName = command.GetName();
+        if (Commands.ContainsKey(commandName))
+            Commands[commandName] = command;
+    }
+
+    public void UpdateCommand(ICommand command, string name)
+    {
+        var commandName = !string.IsNullOrWhiteSpace(name) ? name : command.GetName();
         if (Commands.ContainsKey(commandName))
             Commands[commandName] = command;
     }

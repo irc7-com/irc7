@@ -13,7 +13,7 @@ public interface IChannel
     IChannelMember GetMember(IUser User);
     IChannelMember GetMemberByNickname(string nickname);
     bool HasUser(IUser user);
-    void Send(string message, ChatObject u = null);
+    void Send(string message, ChatObject u);
     void Send(string message);
     void Send(string message, EnumChannelAccessLevel accessLevel);
     IChannel Join(IUser user, EnumChannelAccessResult accessResult = EnumChannelAccessResult.NONE);
@@ -26,8 +26,7 @@ public interface IChannel
     bool CanBeModifiedBy(IChatObject source);
     EnumIrcError CanModifyMember(IChannelMember source, IChannelMember target, EnumChannelAccessLevel requiredLevel);
 
-    void ProcessChannelError(EnumIrcError error, IServer server, IUser source, ChatObject target = null,
-        string data = null);
+    void ProcessChannelError(EnumIrcError error, IServer server, IUser source, ChatObject target, string data);
 
     IChannel SendTopic(IUser user);
     IChannel SendTopic();

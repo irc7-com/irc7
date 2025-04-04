@@ -39,7 +39,7 @@ public class AuthX : Command, ICommand
             var bytesInt = JsonSerializer.Deserialize<int[]>(nonceString);
             challenge_bytes = bytesInt.Select(b => (byte)b).ToArray();
         }
-        catch (Exception e)
+        catch (Exception)
         {
             chatFrame.User.Send(Raw.IRCX_ERR_BADVALUE_906(chatFrame.Server, chatFrame.User,
                 "Could not deserialize nonce string"));

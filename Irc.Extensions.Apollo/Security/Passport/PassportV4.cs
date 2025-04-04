@@ -255,7 +255,7 @@ public class PassportV4
 
     private static byte[] u64(string s)
     {
-        byte[] b = null;
+        byte[]? b = null;
         if (s == null) return b;
         //s = HttpUtility.UrlDecode(s);
 

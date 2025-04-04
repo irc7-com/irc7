@@ -6,7 +6,7 @@ namespace Irc.Interfaces;
 public interface ISupportPackage
 {
     SupportPackage CreateInstance(ICredentialProvider? credentialProvider);
-    string? CreateSecurityChallenge();
+    string CreateSecurityChallenge();
     EnumSupportPackageSequence InitializeSecurityContext(string token, string ip);
     EnumSupportPackageSequence AcceptSecurityContext(string token, string ip);
     string GetDomain();

@@ -48,7 +48,7 @@ public class ChatObject : IChatObject
         throw new NotImplementedException();
     }
 
-    public virtual void Send(string message, ChatObject except = null)
+    public virtual void Send(string message, ChatObject except)
     {
         throw new NotImplementedException();
     }

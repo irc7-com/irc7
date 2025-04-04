@@ -23,9 +23,9 @@ public class ExtendedServer : global::Irc.Objects.Server.Server, IServer, IExten
 {
     public ExtendedServer(ISocketServer socketServer, ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
-        ICommandCollection commands, IUserFactory userFactory = null, ICredentialProvider? credentialProvider = null) :
+        IUserFactory userFactory = null, ICredentialProvider? credentialProvider = null) :
         base(socketServer, securityManager,
-            floodProtectionManager, dataStore, channels, commands, userFactory ?? new ExtendedUserFactory())
+            floodProtectionManager, dataStore, channels, userFactory ?? new ExtendedUserFactory())
     {
         if (SupportPackages.Contains("NTLM"))
             GetSecurityManager()

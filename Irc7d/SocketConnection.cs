@@ -155,17 +155,15 @@ public class SocketConnection : IConnection
                 }
                 else
                 {
-                    //DisconnectSocket(connection, args);
                     _socket.Close();
                 }
             }
             // For all outstanding bytes loop that arent async callback
             while (!_socket.SafeHandle.IsInvalid && _socket.Connected && !_socket.ReceiveAsync(socketAsyncEventArgs));
         }
-        catch (ObjectDisposedException e)
+        catch (ObjectDisposedException)
         {
             // Socket has closed & disposed
-            //DisconnectSocket(connection, args);
             _socket.Close();
         }
         finally

@@ -122,13 +122,17 @@ public class GateKeeper : SupportPackage, ISupportPackage
         }
     }
 
-    public override string? CreateSecurityChallenge()
+    public override string CreateSecurityChallenge()
     {
         ServerToken.Sequence = (int)EnumSupportPackageSequence.SSP_SEC;
         ServerToken.Version = ServerVersion;
         SetChallenge(Guid.NewGuid().ToByteArray());
         var message = new StringBuilder(Marshal.SizeOf(ServerToken) + challenge.Length);
-        message.Append(ServerToken.Serialize<GateKeeperToken>().ToAsciiString());
+
+        var serialized = ServerToken.Serialize<GateKeeperToken>();
+        if (serialized.Length != Marshal.SizeOf(ServerToken)) return string.Empty;
+
+        message.Append(serialized.ToAsciiString());
         message.Append(challenge);
         return message.ToString();
     }

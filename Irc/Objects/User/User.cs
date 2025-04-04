@@ -68,7 +68,6 @@ public class User : ChatObject, IUser
     public DateTime LoggedOn { get; private set; } = DateTime.UtcNow;
 
     public IServer Server { get; }
-    public event EventHandler<string> OnSend;
 
     public void BroadcastToChannels(string data, bool ExcludeUser)
     {
@@ -282,7 +281,7 @@ public class User : ChatObject, IUser
     {
         var mode = Modes[Resources.UserModeAdmin];
         mode.Set(true);
-        mode.DispatchModeChange(this, this, true);
+        mode.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Administrator;
         Send(Raw.IRCX_RPL_YOUREADMIN_386(Server, this));
     }
@@ -291,7 +290,7 @@ public class User : ChatObject, IUser
     {
         var mode = Modes[Resources.UserModeOper];
         mode.Set(true);
-        mode.DispatchModeChange(this, this, true);
+        mode.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Sysop;
         Send(Raw.IRCX_RPL_YOUREOPER_381(Server, this));
     }
@@ -300,7 +299,7 @@ public class User : ChatObject, IUser
     {
         var mode = Modes[Resources.UserModeOper];
         mode.Set(true);
-        mode.DispatchModeChange(this, this, true);
+        mode.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Guide;
         Send(Raw.IRCX_RPL_YOUREGUIDE_629(Server, this));
     }
