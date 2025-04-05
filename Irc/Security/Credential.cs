@@ -4,12 +4,12 @@ namespace Irc.Security;
 
 public class Credential : ICredential
 {
-    public string Domain { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set; }
-    public string Nickname { get; set; }
-    public string UserGroup { get; set; }
-    public string Modes { get; set; }
+    public string Domain { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public string Nickname { get; set; } = string.Empty;
+    public string UserGroup { get; set; } = string.Empty;
+    public string Modes { get; set; } = string.Empty;
     public bool Guest { get; set; }
     public long IssuedAt { get; set; }
     public EnumUserAccessLevel Level { get; set; }

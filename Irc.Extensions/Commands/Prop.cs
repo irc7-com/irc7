@@ -89,13 +89,13 @@ public class Prop : Command, ICommand
         }
         else
         {
-            IExtendedChatObject chatObject = null;
+            IExtendedChatObject? chatObject;
 
             // <$> The $ value is used to indicate the user that originated the request.
             if (objectName == "$")
-                chatObject = (IExtendedChatObject)chatFrame.User;
+                chatObject = (IExtendedChatObject?)chatFrame.User;
             else
-                chatObject = (IExtendedChatObject)chatFrame.Server.GetChatObject(objectName);
+                chatObject = (IExtendedChatObject?)chatFrame.Server.GetChatObject(objectName);
 
             if (chatObject == null)
             {

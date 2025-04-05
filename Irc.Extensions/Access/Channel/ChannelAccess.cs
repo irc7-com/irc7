@@ -10,7 +10,7 @@ namespace Irc.Extensions.Access.Channel
     {
         public ChannelAccess()
         {
-            accessEntries = new Dictionary<Enumerations.EnumAccessLevel, List<AccessEntry>>()
+            AccessEntries = new Dictionary<Enumerations.EnumAccessLevel, List<AccessEntry>>()
             {
                 { Enumerations.EnumAccessLevel.OWNER, new List<AccessEntry>() },
                 { Enumerations.EnumAccessLevel.HOST, new List<AccessEntry>() },

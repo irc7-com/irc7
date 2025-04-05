@@ -3,7 +3,7 @@ using Irc.Enumerations;
 using Irc.Interfaces;
 using Version = Irc.Commands.Version;
 
-namespace Irc;
+namespace Irc.Protocols;
 
 public class Irc : Protocol, IProtocol
 {
@@ -40,7 +40,7 @@ public class Irc : Protocol, IProtocol
         AddCommand(new WebIrc());
     }
 
-    public new ICommand GetCommand(string name)
+    public new ICommand? GetCommand(string name)
     {
         Commands.TryGetValue(name, out var command);
         return command;

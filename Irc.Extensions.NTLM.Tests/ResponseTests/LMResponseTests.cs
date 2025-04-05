@@ -22,7 +22,7 @@ public class LMResponseTests
         var ntlmAlgorithms = new NtlmResponses();
         var result = ntlmAlgorithms.LmResponse(password, challenge.ToAsciiString());
 
-        Assert.AreEqual(expectedResult.ToAsciiString(), result);
+        Assert.That(expectedResult.ToAsciiString(), Is.EqualTo(result));
     }
 
     [Test]

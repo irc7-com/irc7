@@ -64,17 +64,4 @@ public static class Tools
     {
         return CSVToArray(CSV, false);
     }
-
-    public static string HexToString(string Hex)
-    {
-        if (Hex.Length == 0) return null;
-
-        var OutputString = new StringBuilder(Hex.Length / 2);
-        var HexStr = Hex;
-
-        for (var c = 0; c < OutputString.Length; c++)
-            OutputString[c] = (char)Convert.ToByte(HexStr.Substring(c * 2, 2));
-
-        return OutputString.ToString();
-    }
 }

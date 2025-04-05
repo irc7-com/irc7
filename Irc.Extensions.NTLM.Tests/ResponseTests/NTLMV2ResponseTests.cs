@@ -32,7 +32,7 @@ public class NTLMV2ResponseTests
         var ntlmAlgorithms = new NtlmResponses();
         var result = ntlmAlgorithms.NtlmV2Response(username, password, challenge.ToAsciiString(), blob.ToAsciiString());
 
-        Assert.AreEqual(expectedResult.ToAsciiString(), result);
+        Assert.That(expectedResult.ToAsciiString(), Is.EqualTo(result));
     }
 
     //[Test, Ignore("Temporarily disabled")]
@@ -51,7 +51,7 @@ public class NTLMV2ResponseTests
         var result = ntlmAlgorithms.NtlmV2Response(username.ToUnicodeString(), password.ToUnicodeString(),
             serverChallenge, dataBlob);
 
-        Assert.AreEqual(expectedResult, result);
+        Assert.That(expectedResult, Is.EqualTo(result));
     }
 
     //[Test, Ignore("Temporarily disabled")]
@@ -70,7 +70,7 @@ public class NTLMV2ResponseTests
         var result = ntlmAlgorithms.NtlmV2Response(username.ToUnicodeString(), password.ToUnicodeString(),
             serverChallenge, dataBlob);
 
-        Assert.AreEqual(expectedResult, result);
+        Assert.That(expectedResult, Is.EqualTo(result));
     }
 
     [Test]

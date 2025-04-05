@@ -13,6 +13,7 @@ using Irc.Factories;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Objects;
+using Irc.Objects.Collections;
 using Irc.Objects.Server;
 using Irc.Security;
 using Irc7d;
@@ -21,12 +22,18 @@ namespace Irc.Extensions.Objects.Server;
 
 public class ExtendedServer : global::Irc.Objects.Server.Server, IServer, IExtendedChatObject, IExtendedServerObject
 {
+    private readonly ICredentialProvider? _credentialProvider;
+
     public ExtendedServer(ISocketServer socketServer, ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
-        ICommandCollection commands, IUserFactory userFactory = null, ICredentialProvider? credentialProvider = null) :
+        ICredentialProvider? credentialProvider = null) :
         base(socketServer, securityManager,
-            floodProtectionManager, dataStore, channels, commands, userFactory ?? new ExtendedUserFactory())
+            floodProtectionManager, dataStore, channels)
     {
+        _credentialProvider = credentialProvider;
+        PropCollection = new PropCollection();
+        UserFactory = new ExtendedUserFactory();
+        
         if (SupportPackages.Contains("NTLM"))
             GetSecurityManager()
                 .AddSupportPackage(new Security.Packages.NTLM(credentialProvider ?? new NtlmProvider()));
@@ -40,8 +47,13 @@ public class ExtendedServer : global::Irc.Objects.Server.Server, IServer, IExten
 
         var modes = new ExtendedChannelModes().GetSupportedModes();
         modes = new string(modes.OrderBy(c => c).ToArray());
-        _dataStore.Set("supported.channel.modes", modes);
-        _dataStore.Set("supported.user.modes", new ExtendedUserModes().GetSupportedModes());
+        _DataStore.Set("supported.channel.modes", modes);
+        _DataStore.Set("supported.user.modes", new ExtendedUserModes().GetSupportedModes());
+    }
+
+    public new ICredentialProvider? GetCredentialManager()
+    {
+        return _credentialProvider;
     }
 
     public IPropCollection PropCollection { get; }
@@ -61,7 +73,8 @@ public class ExtendedServer : global::Irc.Objects.Server.Server, IServer, IExten
     {
         var channel = (ExtendedChannel)CreateChannel(name);
         channel.ChannelStore.Set("topic", name);
-        channel.PropCollection.GetProp(ExtendedResources.ChannelPropOwnerkey).SetValue(key);
+        var ownerkeyProp = channel.PropCollection.GetProp(ExtendedResources.ChannelPropOwnerkey);
+        ownerkeyProp?.SetValue(key);
         channel.Modes.NoExtern = true;
         channel.Modes.TopicOp = true;
         channel.Modes.UserLimit = 50;

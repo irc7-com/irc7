@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Irc.Enumerations;
 using Irc.Extensions.Apollo;
 using Irc.Extensions.Apollo.Interfaces;
@@ -27,25 +28,32 @@ public class Esubmit : Command, ICommand
         var targets = targetName.Split(',', StringSplitOptions.RemoveEmptyEntries);
         foreach (var target in targets)
         {
+            // TODO: Consider combining the below two blocks
             if (!Channel.ValidName(target))
             {
                 chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, target));
                 return;
             }
 
-            var chatObject = (IChatObject)chatFrame.Server.GetChannelByName(target);
-            var channel = (IChannel)chatObject;
-            var channelMember = channel.GetMember(chatFrame.User);
+            var chatObject = (IChatObject?)chatFrame.Server.GetChannelByName(target);
+            var channel = (IChannel?)chatObject;
+            if (channel == null)
+            {
+                chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, target));
+                return;
+            }
+            
+            var channelMember = channel?.GetMember(chatFrame.User);
             var isOnChannel = channelMember != null;
 
             if (!isOnChannel)
             {
                 chatFrame.User.Send(
-                    Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, chatFrame.User, channel));
+                    Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, chatFrame.User, channel!));
                 return;
             }
 
-            if (!((IApolloChannelModes)channel.Modes).OnStage)
+            if (!((IApolloChannelModes)channel!.Modes).OnStage)
             {
                 chatFrame.User.Send(
                     Raw.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));

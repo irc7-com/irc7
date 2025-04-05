@@ -19,12 +19,13 @@ public class Admin : Command, ICommand
          <- :sky-8a15b323126 258 Sky :This is the second line about Admin
          <- :sky-8a15b323126 259 Sky :
         */
-        var hasAdminInfo = false;
         var adminInfo1 = chatFrame.Server.GetDataStore().Get(Resources.ConfigAdminInfo1);
         var adminInfo2 = chatFrame.Server.GetDataStore().Get(Resources.ConfigAdminInfo2);
         var adminInfo3 = chatFrame.Server.GetDataStore().Get(Resources.ConfigAdminInfo3);
-
-        if (!string.IsNullOrWhiteSpace(adminInfo1))
+        
+        var hasAdminInfo = !string.IsNullOrWhiteSpace(adminInfo1);
+        
+        if (hasAdminInfo)
         {
             chatFrame.User.Send(IrcRaws.IRC_RAW_256(chatFrame.Server, chatFrame.User));
             chatFrame.User.Send(IrcRaws.IRC_RAW_257(chatFrame.Server, chatFrame.User, adminInfo1));

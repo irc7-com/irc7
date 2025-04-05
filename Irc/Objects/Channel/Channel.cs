@@ -30,16 +30,16 @@ public class Channel : ChatObject, IChannel
         return Name;
     }
 
-    public IChannelMember GetMember(IUser User)
+    public IChannelMember? GetMember(IUser user)
     {
         foreach (var channelMember in _members)
-            if (channelMember.GetUser() == User)
+            if (channelMember.GetUser() == user)
                 return channelMember;
 
         return null;
     }
 
-    public IChannelMember GetMemberByNickname(string nickname)
+    public IChannelMember? GetMemberByNickname(string nickname)
     {
         return _members.FirstOrDefault(member =>
             string.Compare(member.GetUser().GetAddress().Nickname, nickname, true) == 0);
@@ -112,7 +112,7 @@ public class Channel : ChatObject, IChannel
         return _members;
     }
 
-    public IChannelModes GetModes()
+    public new IChannelModes GetModes()
     {
         return (IChannelModes)_modes;
     }
@@ -155,8 +155,8 @@ public class Channel : ChatObject, IChannel
         return EnumIrcError.ERR_NOCHANOP;
     }
 
-    public void ProcessChannelError(EnumIrcError error, IServer server, IUser source, ChatObject target = null,
-        string data = null)
+    public void ProcessChannelError(EnumIrcError error, IServer server, IUser source, ChatObject target,
+        string data)
     {
         switch (error)
         {
@@ -220,10 +220,11 @@ public class Channel : ChatObject, IChannel
 
     public override void Send(string message)
     {
-        Send(message, null);
+        foreach (var channelMember in _members)
+            channelMember.GetUser().Send(message);
     }
 
-    public override void Send(string message, ChatObject u = null)
+    public override void Send(string message, ChatObject u)
     {
         foreach (var channelMember in _members)
             if (channelMember.GetUser() != u)
@@ -237,7 +238,7 @@ public class Channel : ChatObject, IChannel
                 channelMember.GetUser().Send(message);
     }
 
-    public virtual EnumChannelAccessResult GetAccess(IUser user, string key, bool IsGoto = false)
+    public virtual EnumChannelAccessResult GetAccess(IUser user, string? key, bool IsGoto = false)
     {
         var accessPermissions = GetAccessEx(user, key, IsGoto);
         return accessPermissions == EnumChannelAccessResult.NONE
@@ -280,7 +281,7 @@ public class Channel : ChatObject, IChannel
     private void RemoveMember(IUser user)
     {
         var member = _members.Where(m => m.GetUser() == user).FirstOrDefault();
-        _members.Remove(member);
+        if (member != null) _members.Remove(member);
         user.RemoveChannel(this);
     }
 
@@ -306,7 +307,7 @@ public class Channel : ChatObject, IChannel
         return regex.Match(channel).Success;
     }
 
-    public EnumChannelAccessResult GetAccessEx(IUser user, string key, bool IsGoto = false)
+    public EnumChannelAccessResult GetAccessEx(IUser user, string? key, bool IsGoto = false)
     {
         var operCheck = CheckOper(user);
         var keyCheck = CheckMemberKey(user, key);
@@ -330,7 +331,7 @@ public class Channel : ChatObject, IChannel
         return EnumChannelAccessResult.NONE;
     }
 
-    protected EnumChannelAccessResult CheckMemberKey(IUser user, string key)
+    protected EnumChannelAccessResult CheckMemberKey(IUser user, string? key)
     {
         if (string.IsNullOrWhiteSpace(key)) return EnumChannelAccessResult.NONE;
 

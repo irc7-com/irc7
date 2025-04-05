@@ -15,7 +15,7 @@ internal class Key : ModeRuleChannel, IModeRule
     {
         var channel = (IChannel)target;
         var member = channel.GetMember((IUser)source);
-        if (member.GetLevel() >= EnumChannelAccessLevel.ChatHost)
+        if (member?.GetLevel() >= EnumChannelAccessLevel.ChatHost)
         {
             // Unset key
             if (!flag && parameter == channel.Modes.Key)

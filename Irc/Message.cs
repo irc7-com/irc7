@@ -1,12 +1,13 @@
 ﻿using Irc.Commands;
+using Irc.Interfaces;
 
 namespace Irc;
 
 public class Message
 {
     private readonly IProtocol _protocol;
-    private ICommand _command;
-    private string _commandName;
+    private ICommand? _command;
+    private string _commandName = string.Empty;
 
     /*
        <message>  ::= [':' <prefix> <SPACE> ] <command> <params> <crlf>
@@ -31,18 +32,18 @@ public class Message
     {
         _protocol = protocol;
         OriginalText = message;
-        parse();
+        Parse();
     }
 
     public List<string> Parameters { get; } = new();
 
     public string OriginalText { get; }
 
-    public string GetPrefix { get; private set; }
+    public string GetPrefix { get; private set; } = string.Empty;
 
     public bool HasCommand { get; private set; }
 
-    public ICommand GetCommand()
+    public ICommand? GetCommand()
     {
         return _command;
     }
@@ -81,7 +82,7 @@ public class Message
         return false;
     }
 
-    private void parse()
+    private void Parse()
     {
         var trimmedText = OriginalText.TrimStart();
         if (string.IsNullOrWhiteSpace(trimmedText)) return;

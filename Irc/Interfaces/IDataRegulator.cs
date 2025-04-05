@@ -11,7 +11,7 @@ public interface IDataRegulator
     int PushIncoming(Message message);
     int PushOutgoing(string message);
     Message PopIncoming();
-    Message PeekIncoming();
+    Message? PeekIncoming();
     string PopOutgoing();
     void Purge();
 }

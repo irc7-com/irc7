@@ -48,7 +48,7 @@ public class ModeEngine
                         continue;
                     }
 
-                    string parameter = null;
+                    string parameter = string.Empty;
                     if (modeRule.RequiresParameter)
                     {
                         if (modeParameters != null && modeParameters.Count > 0)
@@ -67,14 +67,13 @@ public class ModeEngine
 
 
                     modeOperations.Enqueue(
-                        new ModeOperation
-                        {
-                            Mode = modeRule,
-                            Source = source,
-                            Target = target,
-                            ModeFlag = modeFlag,
-                            ModeParameter = parameter
-                        }
+                        new ModeOperation(
+                            mode: modeRule,
+                            source: source,
+                            target: target,
+                            modeFlag: modeFlag,
+                            modeParameter: parameter
+                        )
                     );
 
                     break;

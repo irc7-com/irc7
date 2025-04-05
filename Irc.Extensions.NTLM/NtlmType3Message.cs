@@ -9,19 +9,19 @@ public class NtlmType3Message
 
     private readonly string _data;
     private readonly Dictionary<NtlmFlag, bool> _flags = new();
-    private string _lmResponseData;
-    private NTLMShared.NTLMSSPMessageType3 _messageType3;
-    private string _ntlmResponseData;
-    private string _sessionKeyData;
+    private string _lmResponseData = string.Empty;
+    private NtlmShared.NTLMSSPMessageType3 _messageType3;
+    private string _ntlmResponseData = string.Empty;
+    private string _sessionKeyData = string.Empty;
 
-    private string _targetNameData;
-    private string _userNameData;
-    private string _workstationNameData;
+    private string _targetNameData = string.Empty;
+    private string _userNameData = string.Empty;
+    private string _workstationNameData = string.Empty;
 
     public uint Flags;
-    private NTLMShared.NTLMSSPOSVersion OSVersionInfo;
+    private NtlmShared.NtlmssposVersion _osVersionInfo;
 
-    private NTLMShared.NTLMSSPSecurityBuffer SessionKeySecBuf;
+    private NtlmShared.NtlmsspSecurityBuffer _sessionKeySecBuf;
 
     public NtlmType3Message(string data)
     {
@@ -36,7 +36,7 @@ public class NtlmType3Message
 
     public void Parse(byte[] data)
     {
-        _messageType3 = data.Deserialize<NTLMShared.NTLMSSPMessageType3>();
+        _messageType3 = data.Deserialize<NtlmShared.NTLMSSPMessageType3>();
         CopySecurityBuffers();
         EnumerateFlags();
     }
@@ -59,25 +59,25 @@ public class NtlmType3Message
             _workstationNameData =
                 _data.Substring(_messageType3.WorkstationName.Offset, _messageType3.WorkstationName.Length);
 
-        var legagyNTLM = _messageType3.LMResponse.Offset == 52 || _messageType3.NTLMResponse.Offset == 52 ||
+        var legacyNtlm = _messageType3.LMResponse.Offset == 52 || _messageType3.NTLMResponse.Offset == 52 ||
                          _messageType3.TargetName.Offset == 52 || _messageType3.UserName.Offset == 52 ||
                          _messageType3.WorkstationName.Offset == 52;
 
-        if (legagyNTLM)
+        if (legacyNtlm)
         {
             Flags = (uint)(NtlmFlag.NTLMSSP_NEGOTIATE_NTLM | NtlmFlag.NTLMSSP_NEGOTIATE_OEM);
         }
         else
         {
-            SessionKeySecBuf = _data.Substring(52, Marshal.SizeOf<NTLMShared.NTLMSSPSecurityBuffer>()).ToByteArray()
-                .Deserialize<NTLMShared.NTLMSSPSecurityBuffer>();
+            _sessionKeySecBuf = _data.Substring(52, Marshal.SizeOf<NtlmShared.NtlmsspSecurityBuffer>()).ToByteArray()
+                .Deserialize<NtlmShared.NtlmsspSecurityBuffer>();
             Flags = _data.Substring(60, sizeof(uint)).ToByteArray().Deserialize<uint>();
-            OSVersionInfo = _data.Substring(64, Marshal.SizeOf<NTLMShared.NTLMSSPOSVersion>()).ToByteArray()
-                .Deserialize<NTLMShared.NTLMSSPOSVersion>();
+            _osVersionInfo = _data.Substring(64, Marshal.SizeOf<NtlmShared.NtlmssposVersion>()).ToByteArray()
+                .Deserialize<NtlmShared.NtlmssposVersion>();
 
-            if (SessionKeySecBuf.Length > 0 &&
-                SessionKeySecBuf.Offset + SessionKeySecBuf.Length <= _data.Length)
-                _sessionKeyData = _data.Substring(SessionKeySecBuf.Offset, SessionKeySecBuf.Length);
+            if (_sessionKeySecBuf.Length > 0 &&
+                _sessionKeySecBuf.Offset + _sessionKeySecBuf.Length <= _data.Length)
+                _sessionKeyData = _data.Substring(_sessionKeySecBuf.Offset, _sessionKeySecBuf.Length);
         }
     }
 

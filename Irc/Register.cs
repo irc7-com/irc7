@@ -32,7 +32,7 @@ public static class Register
             chatFrame.User.Send(Raw.IRCX_RPL_GUSERS_266(chatFrame.Server, chatFrame.User,
                 chatFrame.Server.GetUsers().Count, 10000));
 
-            var motd = chatFrame.Server.GetMOTD();
+            var motd = chatFrame.Server.GetMotd();
             if (motd == null)
             {
                 chatFrame.User.Send(Raw.IRCX_ERR_NOMOTD_422(chatFrame.Server, chatFrame.User));

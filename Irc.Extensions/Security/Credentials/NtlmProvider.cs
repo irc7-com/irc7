@@ -1,4 +1,5 @@
-﻿using Irc.Security;
+﻿using Irc.Interfaces;
+using Irc.Security;
 
 namespace Irc.Extensions.Security.Credentials;
 

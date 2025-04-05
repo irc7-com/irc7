@@ -8,8 +8,8 @@ namespace Irc.Extensions.Interfaces
         EnumAccessError Add(AccessEntry accessEntry);
         EnumAccessError Clear(EnumUserAccessLevel userAccessLevel, EnumAccessLevel accessLevel);
         EnumAccessError Delete(AccessEntry accessEntry);
-        List<AccessEntry> Get(EnumAccessLevel accessLevel);
-        AccessEntry Get(EnumAccessLevel accessLevel, string mask);
+        List<AccessEntry>? Get(EnumAccessLevel accessLevel);
+        AccessEntry? Get(EnumAccessLevel accessLevel, string mask);
         Dictionary<EnumAccessLevel, List<AccessEntry>> GetEntries();
     }
 }

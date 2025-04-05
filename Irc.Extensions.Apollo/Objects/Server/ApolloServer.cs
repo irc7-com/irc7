@@ -12,6 +12,7 @@ using Irc.Extensions.Apollo.Security.Passport;
 using Irc.Extensions.Commands;
 using Irc.Extensions.Objects.Server;
 using Irc.Extensions.Security;
+using Irc.Extensions.Security.Credentials;
 using Irc.Extensions.Security.Packages;
 using Irc.Factories;
 using Irc.Interfaces;
@@ -24,21 +25,22 @@ namespace Irc.Extensions.Apollo.Objects.Server;
 
 public class ApolloServer : ExtendedServer
 {
-    private readonly PassportV4 passport;
+    private readonly PassportV4 _passport = new PassportV4(string.Empty, string.Empty);
 
     public ApolloServer(ISocketServer socketServer, ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
-        ICommandCollection commands, IUserFactory userFactory = null,
         ICredentialProvider? ntlmCredentialProvider = null)
         : base(socketServer, securityManager,
-            floodProtectionManager, dataStore, channels, commands, userFactory ?? new ApolloUserFactory(),
+            floodProtectionManager, dataStore, channels,
             ntlmCredentialProvider)
     {
+        UserFactory = new ApolloUserFactory();
+        
         if (SupportPackages.Contains("GateKeeper"))
         {
-            passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
-            securityManager.AddSupportPackage(new GateKeeper());
-            securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(passport)));
+            _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
+            securityManager.AddSupportPackage(new GateKeeper(new DefaultProvider()));
+            securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(_passport)));
         }
 
         AddProtocol(EnumProtocolType.IRC3, new Irc3());
@@ -57,8 +59,8 @@ public class ApolloServer : ExtendedServer
         var modes = new ApolloChannelModes().GetSupportedModes();
         modes = new string(modes.OrderBy(c => c).ToArray());
 
-        _dataStore.Set("supported.channel.modes", modes);
-        _dataStore.Set("supported.user.modes", new ApolloUserModes().GetSupportedModes());
+        _DataStore.Set("supported.channel.modes", modes);
+        _DataStore.Set("supported.user.modes", new ApolloUserModes().GetSupportedModes());
     }
 
     public override IChannel CreateChannel(string name)
@@ -70,7 +72,7 @@ public class ApolloServer : ExtendedServer
     {
         if (name == Resources.UserPropMsnRegCookie && user.IsAuthenticated() && !user.IsRegistered())
         {
-            var nickname = passport.ValidateRegCookie(value);
+            var nickname = _passport.ValidateRegCookie(value);
             if (nickname != null)
             {
                 var encodedNickname = Encoding.Latin1.GetString(Encoding.UTF8.GetBytes(nickname));
@@ -82,8 +84,11 @@ public class ApolloServer : ExtendedServer
         }
         else if (name == Resources.UserPropSubscriberInfo && user.IsAuthenticated() && user.IsRegistered())
         {
+            var issuedAt = user.GetSupportPackage()?.GetCredentials()?.GetIssuedAt();
+            if (!issuedAt.HasValue) return;
+            
             var subscribedString =
-                passport.ValidateSubscriberInfo(value, user.GetSupportPackage().GetCredentials().GetIssuedAt());
+                _passport.ValidateSubscriberInfo(value, issuedAt.Value);
             int.TryParse(subscribedString, out var subscribed);
             if ((subscribed & 1) == 1) ((ApolloUser)user).GetProfile().Registered = true;
         }
@@ -94,7 +99,7 @@ public class ApolloServer : ExtendedServer
         }
         else if (name == Resources.UserPropRole && user.IsAuthenticated())
         {
-            var dict = passport.ValidateRole(value);
+            var dict = _passport.ValidateRole(value);
             if (dict == null) return;
 
             if (dict.ContainsKey("umode"))
@@ -104,7 +109,7 @@ public class ApolloServer : ExtendedServer
                 {
                     var modeRule = user.GetModes().GetMode(mode);
                     modeRule?.Set(1);
-                    modeRule?.DispatchModeChange((ChatObject)user, (ChatObject)user, true);
+                    modeRule?.DispatchModeChange((ChatObject)user, (ChatObject)user, true, string.Empty);
                 }
             }
 

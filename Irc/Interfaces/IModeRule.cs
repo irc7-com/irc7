@@ -11,5 +11,5 @@ public interface IModeRule
     char GetModeChar();
 
     EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter);
-    void DispatchModeChange(IChatObject source, IChatObject target, bool flag, string parameter = null);
+    void DispatchModeChange(IChatObject source, IChatObject target, bool flag, string parameter);
 }

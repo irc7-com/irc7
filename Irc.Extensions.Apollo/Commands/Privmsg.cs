@@ -6,6 +6,7 @@ using Irc.Extensions.Apollo.Objects.User;
 using Irc.Interfaces;
 using Irc.Objects;
 using Irc.Objects.Channel;
+using Irc.Objects.User;
 
 namespace Irc.Extensions.Apollo.Commands;
 
@@ -19,7 +20,7 @@ public class Privmsg : IrcPrivmsg, ICommand
     }
 
     // TODO: Refactor this as it duplicates Privmsg
-    public static void SendMessage(IChatFrame chatFrame, bool Notice)
+    public new static void SendMessage(IChatFrame chatFrame, bool notice)
     {
         var targetName = chatFrame.Message.Parameters.First();
         var message = chatFrame.Message.Parameters[1];
@@ -27,11 +28,11 @@ public class Privmsg : IrcPrivmsg, ICommand
         var targets = targetName.Split(',', StringSplitOptions.RemoveEmptyEntries);
         foreach (var target in targets)
         {
-            IChatObject chatObject = null;
+            IChatObject? chatObject = null;
             if (Channel.ValidName(target))
-                chatObject = (IChatObject)chatFrame.Server.GetChannelByName(target);
+                chatObject = (IChatObject?)chatFrame.Server.GetChannelByName(target);
             else
-                chatObject = (IChatObject)chatFrame.Server.GetUserByNickname(target);
+                chatObject = (IChatObject?)chatFrame.Server.GetUserByNickname(target);
 
             if (chatObject == null)
             {
@@ -66,7 +67,7 @@ public class Privmsg : IrcPrivmsg, ICommand
                     // No External Messages
                     (!isOnChannel && noExtern) ||
                     // Moderated
-                    (isOnChannel && moderated && channelMember.IsNormal())
+                    (isOnChannel && moderated && channelMember!.IsNormal())
                 )
                 {
                     chatFrame.User.Send(
@@ -74,12 +75,12 @@ public class Privmsg : IrcPrivmsg, ICommand
                     return;
                 }
 
-                if (Notice) ((Channel)chatObject).SendNotice(chatFrame.User, message);
+                if (notice) ((Channel)chatObject).SendNotice(chatFrame.User, message);
                 else ((Channel)chatObject).SendMessage(chatFrame.User, message);
             }
             else if (chatObject is User)
             {
-                if (Notice)
+                if (notice)
                     ((User)chatObject).Send(
                         Raw.RPL_NOTICE_USER(chatFrame.Server, chatFrame.User, chatObject, message)
                     );

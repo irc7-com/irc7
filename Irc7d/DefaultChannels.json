@@ -20,6 +20,10 @@
       "t": 1,
       "l": 50,
       "k": 1
+    },
+    "Props": {
+      "OWNERKEY": "OWNERKEY",
+      "HOSTKEY": "HOSTKEY"
     }
   },
   {

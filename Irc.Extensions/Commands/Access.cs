@@ -6,6 +6,7 @@ using Irc.Interfaces;
 using Irc.Objects;
 using Irc.Objects.Channel;
 using Irc.Objects.Server;
+using Irc.Objects.User;
 
 namespace Irc.Extensions.Commands;
 
@@ -33,7 +34,7 @@ internal class Access : Command, ICommand
             return;
         }
 
-        var targetObject = (IExtendedChatObject)chatFrame.Server.GetChatObject(objectName);
+        var targetObject = (IExtendedChatObject?)chatFrame.Server.GetChatObject(objectName);
         if (targetObject == null)
         {
             // No such object

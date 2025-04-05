@@ -3,8 +3,8 @@
 public class RegCookie
 {
     public long issueDate;
-    public string nickname;
-    public string salt;
+    public string nickname = string.Empty;
+    public string salt = string.Empty;
     public int version;
 
     public RegCookie(int version)

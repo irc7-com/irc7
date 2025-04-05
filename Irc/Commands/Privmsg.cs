@@ -2,6 +2,7 @@
 using Irc.Interfaces;
 using Irc.Objects;
 using Irc.Objects.Channel;
+using Irc.Objects.User;
 
 namespace Irc.Commands;
 
@@ -29,11 +30,11 @@ public class Privmsg : Command, ICommand
         var targets = targetName.Split(',', StringSplitOptions.RemoveEmptyEntries);
         foreach (var target in targets)
         {
-            IChatObject chatObject = null;
+            IChatObject? chatObject = null;
             if (Channel.ValidName(target))
-                chatObject = (IChatObject)chatFrame.Server.GetChannelByName(target);
+                chatObject = (IChatObject?)chatFrame.Server.GetChannelByName(target);
             else
-                chatObject = (IChatObject)chatFrame.Server.GetUserByNickname(target);
+                chatObject = (IChatObject?)chatFrame.Server.GetUserByNickname(target);
 
             if (chatObject == null)
             {
@@ -42,9 +43,8 @@ public class Privmsg : Command, ICommand
                 return;
             }
 
-            if (chatObject is Channel)
+            if (chatObject is Channel channel)
             {
-                var channel = (IChannel)chatObject;
                 var channelMember = channel.GetMember(chatFrame.User);
                 var isOnChannel = channelMember != null;
                 var noExtern = channel.Modes.NoExtern;
@@ -54,7 +54,7 @@ public class Privmsg : Command, ICommand
                     // No External Messages
                     (!isOnChannel && noExtern) ||
                     // Moderated
-                    (isOnChannel && moderated && channelMember.IsNormal())
+                    (isOnChannel && moderated && channelMember!.IsNormal())
                 )
                 {
                     chatFrame.User.Send(
@@ -62,8 +62,8 @@ public class Privmsg : Command, ICommand
                     return;
                 }
 
-                if (Notice) ((Channel)chatObject).SendNotice(chatFrame.User, message);
-                else ((Channel)chatObject).SendMessage(chatFrame.User, message);
+                if (Notice) channel.SendNotice(chatFrame.User, message);
+                else channel.SendMessage(chatFrame.User, message);
             }
             else if (chatObject is User)
             {

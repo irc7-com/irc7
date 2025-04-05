@@ -18,18 +18,22 @@ internal class Ircx : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
+        // TODO: This code is really ugly and needs cleaning up
         var protocol = chatFrame.User.GetProtocol().GetProtocolType();
         if (protocol < EnumProtocolType.IRCX)
         {
             protocol = EnumProtocolType.IRCX;
-            chatFrame.User.SetProtocol(chatFrame.Server.GetProtocol(protocol));
+            var nominatedProtocol = chatFrame.Server.GetProtocol(protocol);
+            if (nominatedProtocol == null)
+            {
+                throw new Exception("Ircx protocol could not be found.");
+            }
+            chatFrame.User.SetProtocol(nominatedProtocol);
         }
 
-        var isircx = protocol > EnumProtocolType.IRC;
         chatFrame.User.Modes.ToggleModeChar(ExtendedResources.UserModeIrcx, true);
 
-
-        chatFrame.User.Send(Raw.IRCX_RPL_IRCX_800(chatFrame.Server, chatFrame.User, isircx ? 1 : 0, 0,
+        chatFrame.User.Send(Raw.IRCX_RPL_IRCX_800(chatFrame.Server, chatFrame.User, 1, 0,
             chatFrame.Server.MaxInputBytes, Resources.IRCXOptions));
     }
 }

@@ -17,14 +17,14 @@ internal class NtlmType1MessageTests
     public void NtlmType1Message_InsufficientMessageLengthThrowsException()
     {
         Assert.Throws<ArgumentException>(() =>
-            new NtlmType1Message(new string('A', Marshal.SizeOf<NTLMShared.NTLMSSPMessageType1>() - 1)));
+            new NtlmType1Message(new string('A', Marshal.SizeOf<NtlmShared.NTLMSSPMessageType1>() - 1)));
     }
 
     [Test]
     public void NtlmType1Message_DoesNotStartWithSignatureThrowsException()
     {
         Assert.Throws<ArgumentException>(() =>
-            new NtlmType1Message(new string('A', Marshal.SizeOf<NTLMShared.NTLMSSPMessageType1>())));
+            new NtlmType1Message(new string('A', Marshal.SizeOf<NtlmShared.NTLMSSPMessageType1>())));
     }
 
     [Test]
@@ -33,9 +33,9 @@ internal class NtlmType1MessageTests
         var ntlmMessage1 =
             new NtlmType1Message("NTLMSSP\0\u0001\0\0\0\a\u0082\b¢\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\n\0ðU\0\0\0\u000f");
 
-        Assert.AreEqual(NTLMShared.NTLMSignature, ntlmMessage1.Signature.ToAsciiString());
-        Assert.AreEqual(10, ntlmMessage1.ClientVersion.Major);
-        Assert.AreEqual(ntlmMessage1.EnumeratedFlags[NtlmFlag.NTLMSSP_NEGOTIATE_NTLM2], true);
+        Assert.That(ntlmMessage1.Signature.ToAsciiString(), Is.EqualTo(NtlmShared.NtlmSignature));
+        Assert.That(ntlmMessage1.ClientVersion.Major, Is.EqualTo(10));
+        Assert.That(ntlmMessage1.EnumeratedFlags[NtlmFlag.NTLMSSP_NEGOTIATE_NTLM2], Is.True);
     }
 
     [Test]

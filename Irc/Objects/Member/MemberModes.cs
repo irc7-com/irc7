@@ -1,5 +1,6 @@
 ﻿using Irc.Constants;
 using Irc.Interfaces;
+using Irc.Objects.Collections;
 
 namespace Irc.Objects;
 
@@ -7,8 +8,8 @@ public class MemberModes : ModeCollection, IMemberModes
 {
     public MemberModes()
     {
-        modes.Add(Resources.MemberModeHost, new Modes.Channel.Member.Operator());
-        modes.Add(Resources.MemberModeVoice, new Modes.Channel.Member.Voice());
+        Modes.Add(Resources.MemberModeHost, new Modes.Channel.Member.Operator());
+        Modes.Add(Resources.MemberModeVoice, new Modes.Channel.Member.Voice());
     }
 
     public string GetListedMode()
@@ -32,7 +33,7 @@ public class MemberModes : ModeCollection, IMemberModes
     public bool IsOwner()
     {
         // TODO: Need to think about a better way of handling the below
-        return modes.ContainsKey(Resources.MemberModeOwner) && GetModeChar(Resources.MemberModeOwner) > 0;
+        return Modes.ContainsKey(Resources.MemberModeOwner) && GetModeChar(Resources.MemberModeOwner) > 0;
     }
 
     public bool IsHost()
@@ -52,12 +53,12 @@ public class MemberModes : ModeCollection, IMemberModes
 
     public void SetHost(bool flag)
     {
-        modes[Resources.MemberModeHost].Set(flag ? 1 : 0);
+        Modes[Resources.MemberModeHost].Set(flag ? 1 : 0);
     }
 
     public void SetVoice(bool flag)
     {
-        modes[Resources.MemberModeVoice].Set(flag ? 1 : 0);
+        Modes[Resources.MemberModeVoice].Set(flag ? 1 : 0);
     }
 
     public void SetNormal()
