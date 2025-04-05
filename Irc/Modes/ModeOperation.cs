@@ -7,6 +7,15 @@ namespace Irc.Modes;
 
 public class ModeOperation
 {
+    public ModeOperation(IModeRule mode, IUser source, ChatObject target, bool modeFlag, string modeParameter)
+    {
+        Mode = mode;
+        Source = source;
+        Target = target;
+        ModeFlag = modeFlag;
+        ModeParameter = modeParameter;
+    }
+
     public IModeRule Mode { get; set; }
     public IUser Source { get; set; }
     public ChatObject Target { get; set; }
@@ -15,7 +24,7 @@ public class ModeOperation
 
     public void Execute()
     {
-        var result = Mode.Evaluate((ChatObject)Source, Target, ModeFlag, ModeParameter);
+        var result = Mode?.Evaluate((ChatObject)Source, Target, ModeFlag, ModeParameter);
 
         switch (result)
         {
@@ -24,7 +33,7 @@ public class ModeOperation
                 // -> sky-8a15b323126 MODE #test +l hello
                 // < - :sky - 8a15b323126 461 Sky MODE +l :Not enough parameters
                 Source.Send(Raw.IRCX_ERR_NEEDMOREPARAMS_461(Source.Server, Source,
-                    $"{Resources.CommandMode} {Mode.GetModeChar()}"));
+                    $"{Resources.CommandMode} {Mode?.GetModeChar()}"));
                 break;
             }
             case EnumIrcError.ERR_NOCHANOP:

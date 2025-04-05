@@ -13,7 +13,7 @@ public class SupportPackage : ISupportPackage
     public uint ServerVersion;
     public bool Authenticated { get; protected set; }
 
-    public virtual SupportPackage CreateInstance(ICredentialProvider? credentialProvider)
+    public virtual SupportPackage CreateInstance(ICredentialProvider credentialProvider)
     {
         throw new NotImplementedException();
     }

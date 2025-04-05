@@ -2,6 +2,7 @@
 using Irc.Helpers;
 using Irc.Interfaces;
 using Irc.Security;
+using NLog.Fluent;
 
 namespace Irc.Extensions.Security.Packages;
 // NTLM Implementation by Sky
@@ -10,14 +11,14 @@ namespace Irc.Extensions.Security.Packages;
 
 public class NTLM : SupportPackage, ISupportPackage
 {
-    private readonly ICredentialProvider? _credentialProvider;
-    private readonly NTLMShared.TargetInformation _targetInformation = new();
+    private ICredentialProvider _credentialProvider;
+    private readonly NtlmShared.TargetInformation _targetInformation = new();
     private ICredential? _credential;
-    private NtlmType1Message _message1;
-    private NtlmType2Message _message2;
-    private NtlmType3Message _message3;
+    private NtlmType1Message? _message1;
+    private NtlmType2Message? _message2;
+    private NtlmType3Message? _message3;
 
-    public NTLM(ICredentialProvider? credentialProvider)
+    public NTLM(ICredentialProvider credentialProvider)
     {
         Listed = true;
         _credentialProvider = credentialProvider;
@@ -25,9 +26,9 @@ public class NTLM : SupportPackage, ISupportPackage
 
     public string ServerDomain { get; set; } = "cg";
 
-    public override SupportPackage CreateInstance(ICredentialProvider? credentialProvider)
+    public override SupportPackage CreateInstance(ICredentialProvider credentialProvider)
     {
-        return new NTLM(credentialProvider ?? _credentialProvider);
+        return new NTLM(credentialProvider);
     }
 
     public ICredential? GetCredentials()
@@ -41,14 +42,14 @@ public class NTLM : SupportPackage, ISupportPackage
         {
             _message1 = new NtlmType1Message(data);
 
-            var isOEM = !_message1.EnumeratedFlags[NtlmFlag.NTLMSSP_NEGOTIATE_UNICODE];
+            var isOem = !_message1.EnumeratedFlags[NtlmFlag.NTLMSSP_NEGOTIATE_UNICODE];
 
-            _targetInformation.DomainName = isOEM ? "DOMAIN" : "DOMAIN".ToUnicodeString();
-            _targetInformation.ServerName = isOEM ? "TK2CHATCHATA01" : "TK2CHATCHATA01".ToUnicodeString();
+            _targetInformation.DomainName = isOem ? "DOMAIN" : "DOMAIN".ToUnicodeString();
+            _targetInformation.ServerName = isOem ? "TK2CHATCHATA01" : "TK2CHATCHATA01".ToUnicodeString();
             _targetInformation.DnsDomainName =
-                isOEM ? "TK2CHATCHATA01.Microsoft.Com" : "TK2CHATCHATA01.Microsoft.Com".ToUnicodeString();
+                isOem ? "TK2CHATCHATA01.Microsoft.Com" : "TK2CHATCHATA01.Microsoft.Com".ToUnicodeString();
             _targetInformation.DnsServerName =
-                isOEM ? "TK2CHATCHATA01.Microsoft.Com" : "TK2CHATCHATA01.Microsoft.Com".ToUnicodeString();
+                isOem ? "TK2CHATCHATA01.Microsoft.Com" : "TK2CHATCHATA01.Microsoft.Com".ToUnicodeString();
 
             return EnumSupportPackageSequence.SSP_OK;
         }
@@ -60,6 +61,12 @@ public class NTLM : SupportPackage, ISupportPackage
 
     public override string CreateSecurityChallenge()
     {
+        if (_message1 == null)
+        {
+            Log.Debug("NTLM::CreateSecurityChallenge called but no message1 was received");
+            return string.Empty;
+        }
+        
         try
         {
             _message2 = new NtlmType2Message(_message1.Flags, _targetInformation.DomainName, _targetInformation);
@@ -74,6 +81,12 @@ public class NTLM : SupportPackage, ISupportPackage
     public override EnumSupportPackageSequence AcceptSecurityContext(string data, string ip)
     {
         if (_credentialProvider == null) return EnumSupportPackageSequence.SSP_FAILED;
+        
+        if (_message2 == null)
+        {
+            Log.Debug("NTLM::AcceptSecurityContext called but no message2 was received");
+            return EnumSupportPackageSequence.SSP_FAILED;
+        }
 
         try
         {

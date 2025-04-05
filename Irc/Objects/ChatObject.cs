@@ -39,7 +39,11 @@ public class ChatObject : IChatObject
 
     public string Name
     {
-        get => DataStore.Get("Name") ?? Resources.Wildcard;
+        get
+        {
+            var storeNick = DataStore.Get("Name");
+            return string.IsNullOrWhiteSpace(storeNick) ? Resources.Wildcard : storeNick;
+        }
         set => DataStore.Set("Name", value);
     }
 

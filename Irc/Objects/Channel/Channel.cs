@@ -30,16 +30,16 @@ public class Channel : ChatObject, IChannel
         return Name;
     }
 
-    public IChannelMember GetMember(IUser User)
+    public IChannelMember? GetMember(IUser user)
     {
         foreach (var channelMember in _members)
-            if (channelMember.GetUser() == User)
+            if (channelMember.GetUser() == user)
                 return channelMember;
 
         return null;
     }
 
-    public IChannelMember GetMemberByNickname(string nickname)
+    public IChannelMember? GetMemberByNickname(string nickname)
     {
         return _members.FirstOrDefault(member =>
             string.Compare(member.GetUser().GetAddress().Nickname, nickname, true) == 0);
@@ -281,7 +281,7 @@ public class Channel : ChatObject, IChannel
     private void RemoveMember(IUser user)
     {
         var member = _members.Where(m => m.GetUser() == user).FirstOrDefault();
-        _members.Remove(member);
+        if (member != null) _members.Remove(member);
         user.RemoveChannel(this);
     }
 

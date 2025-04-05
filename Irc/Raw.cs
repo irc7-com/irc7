@@ -631,7 +631,7 @@ public static class Raw
     public static string IRCX_RPL_FINDS_613(IServer server, IUser user)
     {
         //return $":{server} 613 {user} :%s %s";
-        return $":{server} 613 {user} :{server.RemoteIP} 6667";
+        return $":{server} 613 {user} :{server.RemoteIp} 6667";
     }
 
     public static string IRCX_RPL_LISTRSTART_614(IServer server, IUser user)

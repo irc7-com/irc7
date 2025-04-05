@@ -34,7 +34,7 @@ internal class Access : Command, ICommand
             return;
         }
 
-        var targetObject = (IExtendedChatObject)chatFrame.Server.GetChatObject(objectName);
+        var targetObject = (IExtendedChatObject?)chatFrame.Server.GetChatObject(objectName);
         if (targetObject == null)
         {
             // No such object

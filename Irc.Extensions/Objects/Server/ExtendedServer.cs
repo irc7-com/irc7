@@ -13,6 +13,7 @@ using Irc.Factories;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Objects;
+using Irc.Objects.Collections;
 using Irc.Objects.Server;
 using Irc.Security;
 using Irc7d;
@@ -23,10 +24,13 @@ public class ExtendedServer : global::Irc.Objects.Server.Server, IServer, IExten
 {
     public ExtendedServer(ISocketServer socketServer, ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
-        IUserFactory userFactory = null, ICredentialProvider? credentialProvider = null) :
+        ICredentialProvider? credentialProvider = null) :
         base(socketServer, securityManager,
-            floodProtectionManager, dataStore, channels, userFactory ?? new ExtendedUserFactory())
+            floodProtectionManager, dataStore, channels)
     {
+        PropCollection = new PropCollection();
+        UserFactory = new ExtendedUserFactory();
+        
         if (SupportPackages.Contains("NTLM"))
             GetSecurityManager()
                 .AddSupportPackage(new Security.Packages.NTLM(credentialProvider ?? new NtlmProvider()));
@@ -40,8 +44,8 @@ public class ExtendedServer : global::Irc.Objects.Server.Server, IServer, IExten
 
         var modes = new ExtendedChannelModes().GetSupportedModes();
         modes = new string(modes.OrderBy(c => c).ToArray());
-        _dataStore.Set("supported.channel.modes", modes);
-        _dataStore.Set("supported.user.modes", new ExtendedUserModes().GetSupportedModes());
+        _DataStore.Set("supported.channel.modes", modes);
+        _DataStore.Set("supported.user.modes", new ExtendedUserModes().GetSupportedModes());
     }
 
     public IPropCollection PropCollection { get; }
@@ -61,7 +65,8 @@ public class ExtendedServer : global::Irc.Objects.Server.Server, IServer, IExten
     {
         var channel = (ExtendedChannel)CreateChannel(name);
         channel.ChannelStore.Set("topic", name);
-        channel.PropCollection.GetProp(ExtendedResources.ChannelPropOwnerkey).SetValue(key);
+        var ownerkeyProp = channel.PropCollection.GetProp(ExtendedResources.ChannelPropOwnerkey);
+        ownerkeyProp?.SetValue(key);
         channel.Modes.NoExtern = true;
         channel.Modes.TopicOp = true;
         channel.Modes.UserLimit = 50;

@@ -7,7 +7,7 @@ public class ExtendedMemberModes : global::Irc.Objects.Member.Member, IMemberMod
 {
     public ExtendedMemberModes(IUser User): base(User)
     {
-        modes.Add(ExtendedResources.MemberModeOwner, new global::Irc.Modes.Channel.Member.Owner());
+        Modes.Add(ExtendedResources.MemberModeOwner, new global::Irc.Modes.Channel.Member.Owner());
     }
 
     public new string GetListedMode()
@@ -42,6 +42,6 @@ public class ExtendedMemberModes : global::Irc.Objects.Member.Member, IMemberMod
 
     public void SetOwner(bool flag)
     {
-        modes[ExtendedResources.MemberModeOwner].Set(flag ? 1 : 0);
+        Modes[ExtendedResources.MemberModeOwner].Set(flag ? 1 : 0);
     }
 }

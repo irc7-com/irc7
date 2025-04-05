@@ -1,20 +1,21 @@
 ﻿using System.Runtime.InteropServices;
-using Irc.Extensions.NTLM;
 using Irc.Helpers;
+
+namespace Irc.Extensions.NTLM;
 
 public class NtlmType1Message
 {
-    private NTLMShared.NTLMSSPMessageType1 _messageType1;
+    private NtlmShared.NTLMSSPMessageType1 _messageType1;
 
     public NtlmType1Message(string message)
     {
         Parse(message);
     }
 
-    public byte[] Signature { get; private set; }
-    public string SuppliedWorkstation { get; private set; }
-    public string SuppliedDomain { get; private set; }
-    public Version ClientVersion { get; private set; }
+    public byte[] Signature { get; private set; } = Array.Empty<byte>();
+    public string SuppliedWorkstation { get; private set; } = string.Empty;
+    public string SuppliedDomain { get; private set; } = string.Empty;
+    public Version ClientVersion { get; private set; } = new Version(0, 0);
 
     public Dictionary<NtlmFlag, bool> EnumeratedFlags { get; } = new();
 
@@ -25,13 +26,13 @@ public class NtlmType1Message
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("Message cannot be blank");
 
-        if (message.Length < Marshal.SizeOf<NTLMShared.NTLMSSPMessageType1>())
+        if (message.Length < Marshal.SizeOf<NtlmShared.NTLMSSPMessageType1>())
             throw new ArgumentException("Message does not meet minimum length requirements");
 
-        if (!message.StartsWith(NTLMShared.NTLMSignature))
+        if (!message.StartsWith(NtlmShared.NtlmSignature))
             throw new ArgumentException("Message does not meet minimum requirements");
 
-        _messageType1 = message.ToByteArray().Deserialize<NTLMShared.NTLMSSPMessageType1>();
+        _messageType1 = message.ToByteArray().Deserialize<NtlmShared.NTLMSSPMessageType1>();
 
         Signature = _messageType1.Signature;
         ClientVersion = new Version(_messageType1.OSVersionInfo.Major, _messageType1.OSVersionInfo.Minor,

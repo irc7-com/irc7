@@ -52,7 +52,7 @@ public class Auth : Command, ICommand
                 }
 
                 var supportPackageSequence =
-                    supportPackage.InitializeSecurityContext(token, chatFrame.Server.RemoteIP);
+                    supportPackage.InitializeSecurityContext(token, chatFrame.Server.RemoteIp);
 
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
                 {
@@ -74,7 +74,7 @@ public class Auth : Command, ICommand
             else if (sequence == "S")
             {
                 var supportPackageSequence =
-                    supportPackage.AcceptSecurityContext(token, chatFrame.Server.RemoteIP);
+                    supportPackage.AcceptSecurityContext(token, chatFrame.Server.RemoteIp);
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
                 {
                     chatFrame.User.Authenticate();

@@ -38,9 +38,9 @@ internal class Mode : Command, ICommand
 
             // Lookup object
             if (Channel.ValidName(objectName))
-                chatObject = (ChatObject)chatFrame.Server.GetChannelByName(objectName);
+                chatObject = (ChatObject?)chatFrame.Server.GetChannelByName(objectName);
             else
-                chatObject = (ChatObject)chatFrame.Server.GetUserByNickname(objectName, chatFrame.User);
+                chatObject = (ChatObject?)chatFrame.Server.GetUserByNickname(objectName, chatFrame.User);
 
             // Execute / List
             if (chatObject == null)

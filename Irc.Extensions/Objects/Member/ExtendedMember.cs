@@ -13,11 +13,11 @@ namespace Irc.Extensions.Objects.Member;
 
 public class ExtendedMember : ExtendedMemberModes, IChannelMember
 {
-    public ExtendedMember(IUser User) : base(User)
+    public ExtendedMember(IUser user) : base(user)
     {
     }
     public void SetOwner(bool flag)
     {
-        modes[Resources.MemberModeOwner].Set(flag ? 1 : 0);
+        Modes[Resources.MemberModeOwner].Set(flag ? 1 : 0);
     }
 }

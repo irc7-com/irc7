@@ -1,9 +1,8 @@
 ﻿using Irc.Commands;
 using Irc.Enumerations;
-using Irc.Extensions.Apollo.Directory;
 using Irc.Interfaces;
 
-namespace Irc.Extensions.Apollo.Commands;
+namespace Irc.Extensions.Apollo.Directory.Commands;
 
 internal class Finds : Command, ICommand
 {

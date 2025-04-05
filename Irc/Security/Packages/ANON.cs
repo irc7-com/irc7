@@ -1,4 +1,5 @@
 ﻿using Irc.Enumerations;
+using Irc.Interfaces;
 using Irc.Security;
 
 namespace Irc.Extensions.Security.Packages;

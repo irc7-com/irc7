@@ -8,6 +8,7 @@ using Irc.IO;
 using Irc.Modes;
 using Irc.Objects.Server;
 using Irc7d;
+using Microsoft.VisualBasic;
 using NLog;
 
 namespace Irc.Objects.User;
@@ -351,10 +352,15 @@ public class User : ChatObject, IUser
     {
         var userAddress = GetAddress();
         var credentials = GetSupportPackage().GetCredentials();
+
+        if (credentials == null)
+        {
+            throw new Exception("Register: No credentials provided");
+        }
+        
         userAddress.User = credentials.GetUsername() ?? userAddress.MaskedIp;
         userAddress.Host = credentials.GetDomain();
         userAddress.Server = Server.Name;
-        userAddress.RealName = credentials.Guest ? string.Empty : null;
 
         LoggedOn = DateTime.UtcNow;
         _authenticated = true;

@@ -10,21 +10,21 @@ public class PassportV4
 {
     public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
 
-    private readonly string appid;
-    private readonly byte[] cryptKey;
-    private readonly string secret;
-    private readonly byte[] signKey;
+    private readonly string _appid;
+    private readonly byte[] _cryptKey;
+    private readonly string _secret;
+    private readonly byte[] _signKey;
 
     public PassportV4(string appid, string secret)
     {
-        this.appid = appid;
-        this.secret = secret;
+        this._appid = appid;
+        this._secret = secret;
 
-        cryptKey = derive(secret, "ENCRYPTION");
-        signKey = derive(secret, "SIGNATURE");
+        _cryptKey = Derive(secret, "ENCRYPTION");
+        _signKey = Derive(secret, "SIGNATURE");
     }
 
-    public PassportCredentials ValidateTicketAndProfile(string ticket, string profile)
+    public PassportCredentials? ValidateTicketAndProfile(string ticket, string profile)
     {
         var ticketData = Decrypt(ticket);
         var profileData = Decrypt(profile);
@@ -69,7 +69,7 @@ public class PassportV4
         return null;
     }
 
-    public string ValidateRegCookie(string regcookie)
+    public string? ValidateRegCookie(string regcookie)
     {
         var regcookieData = Decrypt(regcookie);
 
@@ -77,7 +77,7 @@ public class PassportV4
         return nick;
     }
 
-    public string ValidateSubscriberInfo(string subscriberInfo, long issuedAt)
+    public string? ValidateSubscriberInfo(string subscriberInfo, long issuedAt)
     {
         var subscriberInfoData = Decrypt(subscriberInfo);
 
@@ -100,18 +100,27 @@ public class PassportV4
 
     private Dictionary<string, string> Decrypt(string cookie)
     {
-        cookie = DecodeToken(cookie, cryptKey);
-        cookie = ValidateToken(cookie, signKey);
-        if (cookie == null) return new Dictionary<string, string>();
+        var decodedToken = DecodeToken(cookie, _cryptKey);
+        if (decodedToken == null) return new Dictionary<string, string>();
+        
+        var validatedToken = ValidateToken(cookie, _signKey);
+        if (validatedToken == null) return new Dictionary<string, string>();
+        
         var nvc = HttpUtility.ParseQueryString(cookie);
         return nvc.AllKeys.ToDictionary(k => k, v => nvc[v]);
     }
 
 
-    private static byte[] derive(string secret, string prefix)
+    private static byte[] Derive(string secret, string prefix)
     {
         using (var hashAlg = HashAlgorithm.Create("SHA256"))
         {
+            if (hashAlg == null)
+            {
+                Log.Debug("Derive: Could not create Hash algorithm SHA256");
+                return [];
+            }
+            
             const int keyLength = 16;
             var data = Encoding.Default.GetBytes(prefix + secret);
             var hashOutput = hashAlg.ComputeHash(data);
@@ -121,7 +130,7 @@ public class PassportV4
         }
     }
 
-    public string DecodeToken(string token, byte[] cryptKey)
+    public string? DecodeToken(string token, byte[] cryptKey)
     {
         if (cryptKey == null || cryptKey.Length == 0)
             throw new InvalidOperationException("Error: DecodeToken: Secret key was not set. Aborting.");
@@ -133,7 +142,7 @@ public class PassportV4
         }
 
         const int ivLength = 16;
-        var ivAndEncryptedValue = u64(token);
+        var ivAndEncryptedValue = U64(token);
 
         if (ivAndEncryptedValue == null ||
             ivAndEncryptedValue.Length <= ivLength ||
@@ -143,11 +152,11 @@ public class PassportV4
             return null;
         }
 
-        Rijndael aesAlg = null;
-        MemoryStream memStream = null;
-        CryptoStream cStream = null;
-        StreamReader sReader = null;
-        string decodedValue = null;
+        Rijndael? aesAlg = null;
+        MemoryStream? memStream = null;
+        CryptoStream? cStream = null;
+        StreamReader? sReader = null;
+        string decodedValue;
 
         try
         {
@@ -186,7 +195,7 @@ public class PassportV4
         return decodedValue;
     }
 
-    public string ValidateToken(string token, byte[] signKey)
+    public string? ValidateToken(string token, byte[] signKey)
     {
         if (string.IsNullOrEmpty(token))
         {
@@ -204,9 +213,9 @@ public class PassportV4
         }
 
         bodyAndSig[1] = HttpUtility.UrlDecode(bodyAndSig[1]);
-        var sig = u64(bodyAndSig[1]);
+        var sig = U64(bodyAndSig[1]);
 
-        if (sig == null)
+        if (sig.Length == 0)
         {
             Log.Debug("Error: ValidateToken: Could not extract the signature from the token.");
             return null;
@@ -214,7 +223,7 @@ public class PassportV4
 
         var sig2 = SignToken(bodyAndSig[0], signKey);
 
-        if (sig2 == null)
+        if (sig2.Length == 0)
         {
             Log.Debug("Error: ValidateToken: Could not generate a signature for the token.");
             return null;
@@ -242,7 +251,7 @@ public class PassportV4
         if (string.IsNullOrEmpty(token))
         {
             Log.Debug("Attempted to sign null token.");
-            return null;
+            return [];
         }
 
         using (HashAlgorithm hashAlg = new HMACSHA256(signKey))
@@ -253,21 +262,18 @@ public class PassportV4
         }
     }
 
-    private static byte[] u64(string s)
+    private static byte[] U64(string s)
     {
-        byte[]? b = null;
-        if (s == null) return b;
-        //s = HttpUtility.UrlDecode(s);
+        if (string.IsNullOrWhiteSpace(s)) return [];
 
         try
         {
-            b = Convert.FromBase64String(s);
+            return Convert.FromBase64String(s);
         }
         catch (Exception e)
         {
             Log.Debug("Error: u64: Base64 conversion error: " + s + ", " + e);
+            return [];
         }
-
-        return b;
     }
 }

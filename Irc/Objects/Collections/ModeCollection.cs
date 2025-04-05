@@ -1,16 +1,16 @@
 ﻿using Irc.Interfaces;
 
-namespace Irc.Objects;
+namespace Irc.Objects.Collections;
 
 public class ModeCollection : IModeCollection
 {
-    protected Dictionary<char, IModeRule> modes = new();
+    protected Dictionary<char, IModeRule> Modes = new();
     // TODO: <CHANKEY> Below is temporary until implemented properly
-    protected string keypass = string.Empty;
+    protected string Keypass = string.Empty;
 
     public void SetModeChar(char mode, int value)
     {
-        if (modes.ContainsKey(mode)) modes[mode].Set(value);
+        if (Modes.ContainsKey(mode)) Modes[mode].Set(value);
     }
 
     public void ToggleModeChar(char mode, bool flag)
@@ -20,40 +20,40 @@ public class ModeCollection : IModeCollection
 
     public int GetModeChar(char mode)
     {
-        modes.TryGetValue(mode, out var value);
-        return value.Get();
+        Modes.TryGetValue(mode, out var value);
+        return value?.Get() ?? 0;
     }
 
     public string GetModeString() {
-        return $"{new string(modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}";
+        return $"{new string(Modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}";
     }
 
     public IModeRule GetMode(char mode)
     {
-        modes.TryGetValue(mode, out var value);
-        return value;
+        Modes.TryGetValue(mode, out var value);
+        return value ?? throw new KeyNotFoundException();
     }
     public IModeRule this[char mode]
     {
         get
         {
-            modes.TryGetValue(mode, out var modeRule);
-            return modeRule;
+            Modes.TryGetValue(mode, out var modeRule);
+            return modeRule ?? throw new KeyNotFoundException();
         }
     }
 
     public string GetSupportedModes()
     {
-        return new(modes.Keys.OrderBy(x => x).ToArray());
+        return new(Modes.Keys.OrderBy(x => x).ToArray());
     }
 
     public bool HasMode(char mode)
     {
-        return modes.Keys.Contains(mode);
+        return Modes.Keys.Contains(mode);
     }
 
     public override string ToString()
     {
-        return $"+{new string(modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}";
+        return $"+{new string(Modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}";
     }
 }

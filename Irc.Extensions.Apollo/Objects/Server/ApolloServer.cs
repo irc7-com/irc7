@@ -24,21 +24,22 @@ namespace Irc.Extensions.Apollo.Objects.Server;
 
 public class ApolloServer : ExtendedServer
 {
-    private readonly PassportV4 passport;
+    private readonly PassportV4 _passport = new PassportV4(string.Empty, string.Empty);
 
     public ApolloServer(ISocketServer socketServer, ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
-        IUserFactory userFactory = null,
         ICredentialProvider? ntlmCredentialProvider = null)
         : base(socketServer, securityManager,
-            floodProtectionManager, dataStore, channels, userFactory ?? new ApolloUserFactory(),
+            floodProtectionManager, dataStore, channels,
             ntlmCredentialProvider)
     {
+        UserFactory = new ApolloUserFactory();
+        
         if (SupportPackages.Contains("GateKeeper"))
         {
-            passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
+            _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
             securityManager.AddSupportPackage(new GateKeeper());
-            securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(passport)));
+            securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(_passport)));
         }
 
         AddProtocol(EnumProtocolType.IRC3, new Irc3());
@@ -57,8 +58,8 @@ public class ApolloServer : ExtendedServer
         var modes = new ApolloChannelModes().GetSupportedModes();
         modes = new string(modes.OrderBy(c => c).ToArray());
 
-        _dataStore.Set("supported.channel.modes", modes);
-        _dataStore.Set("supported.user.modes", new ApolloUserModes().GetSupportedModes());
+        _DataStore.Set("supported.channel.modes", modes);
+        _DataStore.Set("supported.user.modes", new ApolloUserModes().GetSupportedModes());
     }
 
     public override IChannel CreateChannel(string name)
@@ -70,7 +71,7 @@ public class ApolloServer : ExtendedServer
     {
         if (name == Resources.UserPropMsnRegCookie && user.IsAuthenticated() && !user.IsRegistered())
         {
-            var nickname = passport.ValidateRegCookie(value);
+            var nickname = _passport.ValidateRegCookie(value);
             if (nickname != null)
             {
                 var encodedNickname = Encoding.Latin1.GetString(Encoding.UTF8.GetBytes(nickname));
@@ -82,8 +83,11 @@ public class ApolloServer : ExtendedServer
         }
         else if (name == Resources.UserPropSubscriberInfo && user.IsAuthenticated() && user.IsRegistered())
         {
+            var issuedAt = user.GetSupportPackage()?.GetCredentials()?.GetIssuedAt();
+            if (!issuedAt.HasValue) return;
+            
             var subscribedString =
-                passport.ValidateSubscriberInfo(value, user.GetSupportPackage().GetCredentials().GetIssuedAt());
+                _passport.ValidateSubscriberInfo(value, issuedAt.Value);
             int.TryParse(subscribedString, out var subscribed);
             if ((subscribed & 1) == 1) ((ApolloUser)user).GetProfile().Registered = true;
         }
@@ -94,7 +98,7 @@ public class ApolloServer : ExtendedServer
         }
         else if (name == Resources.UserPropRole && user.IsAuthenticated())
         {
-            var dict = passport.ValidateRole(value);
+            var dict = _passport.ValidateRole(value);
             if (dict == null) return;
 
             if (dict.ContainsKey("umode"))

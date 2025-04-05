@@ -11,7 +11,7 @@ public interface IChannel
     IChannelModes Modes { get; }
     string GetName();
     IChannelMember? GetMember(IUser User);
-    IChannelMember GetMemberByNickname(string nickname);
+    IChannelMember? GetMemberByNickname(string nickname);
     bool HasUser(IUser user);
     void Send(string message, ChatObject u);
     void Send(string message);
@@ -33,6 +33,6 @@ public interface IChannel
     IChannel SendNames(IUser user);
     bool Allows(IUser user);
     IChannelModes GetModes();
-    EnumChannelAccessResult GetAccess(IUser user, string key, bool IsGoto = false);
+    EnumChannelAccessResult GetAccess(IUser user, string? key, bool IsGoto = false);
     bool InviteMember(IUser user);
 }

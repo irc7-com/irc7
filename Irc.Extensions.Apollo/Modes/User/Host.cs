@@ -22,7 +22,11 @@ public class Host : ModeRuleChannel, IModeRule
             var user = (IUser)source;
             var channel = (ApolloChannel)user.GetChannels().LastOrDefault().Key;
             var member = user.GetChannels().LastOrDefault().Value;
-            if (channel.PropCollection.GetProp("OWNERKEY").GetValue(target) == parameter)
+
+            var ownerkeyProp = channel.PropCollection.GetProp("OWNERKEY");
+            var hostkeyProp = channel.PropCollection.GetProp("HOSTKEY");
+            
+            if (ownerkeyProp?.GetValue(target) == parameter)
             {
                 if (member.IsHost())
                 {
@@ -33,7 +37,7 @@ public class Host : ModeRuleChannel, IModeRule
                 member.SetOwner(true);
                 channel.Modes.GetMode('q').DispatchModeChange(source, channel, true, target.ToString());
             }
-            else if (channel.PropCollection.GetProp("HOSTKEY").GetValue(target) == parameter)
+            else if (hostkeyProp?.GetValue(target) == parameter)
             {
                 if (member.IsOwner())
                 {

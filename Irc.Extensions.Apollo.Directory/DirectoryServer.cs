@@ -18,17 +18,18 @@ namespace Irc.Extensions.Apollo.Directory;
 
 public class DirectoryServer : ApolloServer
 {
-    public string ChatServerIP;
-    public string ChatServerPORT;
+    public readonly string ChatServerIp = String.Empty;
+    public readonly string ChatServerPort = String.Empty;
 
     public DirectoryServer(ISocketServer socketServer, ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
-        ICommandCollection commands, IUserFactory userFactory = null,
         ICredentialProvider? ntlmCredentialProvider = null, string? chatServerIp = null)
         : base(socketServer, securityManager,
-            floodProtectionManager, dataStore, channels, userFactory ?? new ApolloUserFactory(),
+            floodProtectionManager, dataStore, channels,
             ntlmCredentialProvider)
     {
+        UserFactory = new ApolloUserFactory();
+
         DisableGuestMode = true;
         DisableUserRegistration = true;
 
@@ -36,9 +37,9 @@ public class DirectoryServer : ApolloServer
         {
             var parts = chatServerIp.Split(':');
             if (parts.Length > 0)
-                ChatServerIP = parts[0];
+                ChatServerIp = parts[0];
             if (parts.Length > 1)
-                ChatServerPORT = parts[1];
+                ChatServerPort = parts[1];
         }
 
         FlushCommands();

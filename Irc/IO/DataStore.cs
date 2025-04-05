@@ -6,9 +6,9 @@ namespace Irc.IO;
 public class DataStore : IDataStore
 {
     private readonly bool _persist;
-    private readonly string _section;
+    private readonly string _section = string.Empty;
     private readonly Dictionary<string, string> _sets = new(StringComparer.InvariantCultureIgnoreCase);
-    private string _id;
+    private string _id = string.Empty;
 
     public DataStore(string id, string section, bool persist = true)
     {
@@ -52,13 +52,13 @@ public class DataStore : IDataStore
     public string Get(string key)
     {
         _sets.TryGetValue(key, out var value);
-        return value;
+        return value ?? string.Empty;
     }
 
     public T GetAs<T>(string key) where T : new()
     {
         var json = Get(key);
-        if (json == null)
+        if (string.IsNullOrEmpty(json))
         {
             return new T();
         }

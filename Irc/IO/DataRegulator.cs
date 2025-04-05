@@ -64,7 +64,7 @@ public class DataRegulator : IDataRegulator
         return _outgoingBytes;
     }
 
-    public Message PeekIncoming()
+    public Message? PeekIncoming()
     {
         if (_incomingQueue.Count <= 0) return null; 
         return _incomingQueue.Peek();

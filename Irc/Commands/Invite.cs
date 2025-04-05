@@ -99,7 +99,7 @@ internal class Invite : Command, ICommand
             return;
         }
 
-        targetUser.Send(Raw.RPL_INVITE(chatFrame.Server, chatFrame.User, targetUser, chatFrame.Server.RemoteIP,
+        targetUser.Send(Raw.RPL_INVITE(chatFrame.Server, chatFrame.User, targetUser, chatFrame.Server.RemoteIp,
             targetChannel));
     }
 }

@@ -33,7 +33,7 @@ public interface IServer
     string SecurityPackages { get; }
     int SysopCount { get; }
     int UnknownConnectionCount { get; }
-    string RemoteIP { set; get; }
+    string RemoteIp { set; get; }
     bool DisableGuestMode { set; get; }
     bool DisableUserRegistration { get; set; }
     Guid Id { get; }
@@ -58,12 +58,12 @@ public interface IServer
     IDictionary<EnumProtocolType, IProtocol> GetProtocols();
     IDataStore GetDataStore();
     IChannel? GetChannelByName(string name);
-    ChatObject GetChatObject(string name);
+    ChatObject? GetChatObject(string name);
     IProtocol GetProtocol(EnumProtocolType protocolType);
     ISecurityManager GetSecurityManager();
     ICredentialProvider? GetCredentialManager();
     void Shutdown();
     string ToString();
-    string[] GetMOTD();
-    void SetMOTD(string motd);
+    string[] GetMotd();
+    void SetMotd(string motd);
 }

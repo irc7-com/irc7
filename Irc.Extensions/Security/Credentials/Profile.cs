@@ -2,5 +2,5 @@
 
 public class Profile
 {
-    public string Id;
+    public string Id = String.Empty;
 }

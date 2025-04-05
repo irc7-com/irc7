@@ -1,4 +1,5 @@
 ﻿using Irc.Extensions.Security;
+using Irc.Interfaces;
 
 namespace Irc.Security;
 
@@ -15,7 +16,7 @@ public class SecurityManager : ISecurityManager
         UpdateSupportPackages();
     }
 
-    public SupportPackage CreatePackageInstance(string name, ICredentialProvider? credentialProvider)
+    public SupportPackage CreatePackageInstance(string name, ICredentialProvider credentialProvider)
     {
         if (!_supportProviders.TryGetValue(name, out var supportPackage))
         {

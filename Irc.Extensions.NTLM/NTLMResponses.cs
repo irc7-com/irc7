@@ -107,7 +107,7 @@ public class NtlmResponses
         if (string.IsNullOrWhiteSpace(dataBlob))
             throw new ArgumentException("Data Blob (NTLM Parameter) cannot be empty");
 
-        var ntlMv2Blob = new NTLMShared.NTLMv2Blob(dataBlob);
+        var ntlMv2Blob = new NtlmShared.NtlMv2Blob(dataBlob);
 
         // 1. ResponseKeyNT
         var ResponseKeyNT = NtowFv2(unicodePassword, unicodeUsername.ToUpper(), ntlMv2Blob.ClientTarget);

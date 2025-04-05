@@ -18,7 +18,7 @@ public class PropCollection : IPropCollection
         properties[prop.Name.ToUpper()] = prop;
     }
 
-    public IPropRule GetProp(string name)
+    public IPropRule? GetProp(string name)
     {
         properties.TryGetValue(name, out var rule);
         return rule;

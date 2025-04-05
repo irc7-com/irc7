@@ -1,16 +1,14 @@
 ﻿using System.Globalization;
 using Irc.Extensions.Security;
+using Irc.Interfaces;
 using Irc.Security;
 
 namespace Irc.Extensions.Apollo.Security.Packages;
 
-public class NTLMPassport : global::Irc.Extensions.Security.Packages.NTLM
+public class NtlmPassport : global::Irc.Extensions.Security.Packages.NTLM
 {
-    private readonly ICredentialProvider? _credentialProvider;
-
-    public string Puid;
-
-    public NTLMPassport(ICredentialProvider? credentialProvider) : base(credentialProvider)
+    private readonly ICredentialProvider _credentialProvider;
+    public NtlmPassport(ICredentialProvider credentialProvider) : base(credentialProvider)
     {
         _credentialProvider = credentialProvider;
         ServerSequence = EnumSupportPackageSequence.SSP_INIT;
@@ -18,7 +16,7 @@ public class NTLMPassport : global::Irc.Extensions.Security.Packages.NTLM
         Listed = false;
     }
 
-    public override SupportPackage CreateInstance(ICredentialProvider? credentialProvider)
+    public override SupportPackage CreateInstance(ICredentialProvider credentialProvider)
     {
         return new GateKeeperPassport(_credentialProvider);
     }
@@ -38,11 +36,11 @@ public class NTLMPassport : global::Irc.Extensions.Security.Packages.NTLM
 
         if (ServerSequence == EnumSupportPackageSequence.SSP_CREDENTIALS)
         {
-            var ticket = extractCookie(data);
-            if (ticket == null) return EnumSupportPackageSequence.SSP_FAILED;
+            var ticket = ExtractCookie(data);
+            if (string.IsNullOrWhiteSpace(ticket)) return EnumSupportPackageSequence.SSP_FAILED;
 
-            var profile = extractCookie(data.Substring(8 + ticket.Length));
-            if (profile == null) return EnumSupportPackageSequence.SSP_FAILED;
+            var profile = ExtractCookie(data.Substring(8 + ticket.Length));
+            if (string.IsNullOrWhiteSpace(profile)) return EnumSupportPackageSequence.SSP_FAILED;
 
             Credentials = _credentialProvider.ValidateTokens(
                 new Dictionary<string, string>
@@ -60,13 +58,13 @@ public class NTLMPassport : global::Irc.Extensions.Security.Packages.NTLM
         return EnumSupportPackageSequence.SSP_FAILED;
     }
 
-    private string extractCookie(string cookie)
+    private string ExtractCookie(string cookie)
     {
-        if (cookie.Length < 8) return null;
+        if (cookie.Length < 8) return string.Empty;
 
         int.TryParse(cookie.Substring(0, 8), NumberStyles.HexNumber, null, out var cookieLen);
 
-        if (cookie.Length < 8 + cookieLen) return null;
+        if (cookie.Length < 8 + cookieLen) return string.Empty;
 
         return cookie.Substring(8, cookieLen);
     }
