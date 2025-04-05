@@ -20,7 +20,7 @@ public class Privmsg : IrcPrivmsg, ICommand
     }
 
     // TODO: Refactor this as it duplicates Privmsg
-    public static void SendMessage(IChatFrame chatFrame, bool notice)
+    public new static void SendMessage(IChatFrame chatFrame, bool notice)
     {
         var targetName = chatFrame.Message.Parameters.First();
         var message = chatFrame.Message.Parameters[1];

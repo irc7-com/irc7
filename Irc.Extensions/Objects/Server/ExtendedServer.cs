@@ -22,12 +22,15 @@ namespace Irc.Extensions.Objects.Server;
 
 public class ExtendedServer : global::Irc.Objects.Server.Server, IServer, IExtendedChatObject, IExtendedServerObject
 {
+    private readonly ICredentialProvider? _credentialProvider;
+
     public ExtendedServer(ISocketServer socketServer, ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
         ICredentialProvider? credentialProvider = null) :
         base(socketServer, securityManager,
             floodProtectionManager, dataStore, channels)
     {
+        _credentialProvider = credentialProvider;
         PropCollection = new PropCollection();
         UserFactory = new ExtendedUserFactory();
         
@@ -46,6 +49,11 @@ public class ExtendedServer : global::Irc.Objects.Server.Server, IServer, IExten
         modes = new string(modes.OrderBy(c => c).ToArray());
         _DataStore.Set("supported.channel.modes", modes);
         _DataStore.Set("supported.user.modes", new ExtendedUserModes().GetSupportedModes());
+    }
+
+    public new ICredentialProvider? GetCredentialManager()
+    {
+        return _credentialProvider;
     }
 
     public IPropCollection PropCollection { get; }

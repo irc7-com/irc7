@@ -24,7 +24,7 @@ public class ExtendedMemberModes : global::Irc.Objects.Member.Member, IMemberMod
         return base.GetModeChar();
     }
 
-    public bool IsNormal()
+    public new bool IsNormal()
     {
         return !IsOwner() && base.IsNormal();
     }
@@ -35,12 +35,12 @@ public class ExtendedMemberModes : global::Irc.Objects.Member.Member, IMemberMod
         base.SetNormal();
     }
 
-    public bool IsOwner()
+    public new bool IsOwner()
     {
         return GetModeChar(ExtendedResources.MemberModeOwner) > 0;
     }
 
-    public void SetOwner(bool flag)
+    public new void SetOwner(bool flag)
     {
         Modes[ExtendedResources.MemberModeOwner].Set(flag ? 1 : 0);
     }

@@ -131,7 +131,7 @@ internal class Program
         };
     }
 
-    private static Server ConfigureServer(IrcType serverType, SocketServer socketServer, NTLMCredentials credentialProvider, string? chatServerIp)
+    private static Server ConfigureServer(IrcType serverType, SocketServer socketServer, NtlmCredentials credentialProvider, string? chatServerIp)
     {
         var floodProtectionManager = new FloodProtectionManager();
         var securityManager = new SecurityManager();
@@ -146,24 +146,24 @@ internal class Program
         };
     }
 
-    private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer, NTLMCredentials credentialProvider, SecurityManager securityManager, FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig, List<IChannel> channels, string? chatServerIp)
+    private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer, NtlmCredentials credentialProvider, SecurityManager securityManager, FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig, List<IChannel> channels, string? chatServerIp)
     {
         var server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, credentialProvider, chatServerIp);
 
         return server;
     }
     
-    private static async Task<NTLMCredentials> LoadCredentials()
+    private static async Task<NtlmCredentials> LoadCredentials()
     {
         if (File.Exists("DefaultCredentials.json"))
         {
             var credentials =
                 JsonSerializer.Deserialize<Dictionary<string, Credential>>(
                     await File.ReadAllTextAsync("DefaultCredentials.json")) ?? new Dictionary<string, Credential>();
-            return new NTLMCredentials(credentials);
+            return new NtlmCredentials(credentials);
         }
 
-        return new NTLMCredentials(new Dictionary<string, Credential>());
+        return new NtlmCredentials(new Dictionary<string, Credential>());
     }
 
     private static void InitializeDefaultChannels(IServer server, IrcType serverType)

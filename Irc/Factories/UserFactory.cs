@@ -16,7 +16,8 @@ public class UserFactory : IUserFactory
 {
     public IUser Create(IServer server, IConnection connection)
     {
-        return new User(connection, server.GetProtocol(EnumProtocolType.IRC),
+        var protocol = server.GetProtocol(EnumProtocolType.IRC) ?? new Protocols.Irc();
+        return new User(connection, protocol,
             new DataRegulator(server.MaxInputBytes, server.MaxOutputBytes),
             new FloodProtectionProfile(), new DataStore(connection.GetId().ToString(), "store"), new UserModes(),
             server);

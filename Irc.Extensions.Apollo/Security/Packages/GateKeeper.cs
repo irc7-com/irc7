@@ -14,6 +14,7 @@ namespace Irc.Extensions.Security.Packages;
 
 public class GateKeeper : SupportPackage, ISupportPackage
 {
+    protected readonly ICredentialProvider CredentialProvider;
     public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
 
     private static readonly string Signature = "GKSSP\0";
@@ -24,8 +25,9 @@ public class GateKeeper : SupportPackage, ISupportPackage
     private byte[] _challengeBytes = [];
     protected GateKeeperToken ServerToken;
 
-    public GateKeeper()
+    public GateKeeper(ICredentialProvider credentialProvider)
     {
+        CredentialProvider = credentialProvider;
         Guest = true;
         ServerToken.Signature = Signature.ToByteArray();
         ServerSequence = EnumSupportPackageSequence.SSP_INIT;
@@ -33,7 +35,7 @@ public class GateKeeper : SupportPackage, ISupportPackage
 
     public override SupportPackage CreateInstance(ICredentialProvider credentialProvider)
     {
-        return new GateKeeper();
+        return new GateKeeper(credentialProvider);
     }
 
     public override EnumSupportPackageSequence InitializeSecurityContext(string token, string ip)
@@ -110,14 +112,14 @@ public class GateKeeper : SupportPackage, ISupportPackage
         return EnumSupportPackageSequence.SSP_FAILED;
     }
 
-    public void SetChallenge(byte[] new_challenge)
+    public new void SetChallenge(byte[] newChallenge)
     {
-        if (_challengeBytes == null || _challenge == null)
+        if (_challengeBytes.Length == 0 || _challenge.Length == 0)
         {
             _challengeBytes = new byte[8];
             _challenge = new char[8];
 
-            Array.Copy(new_challenge, 0, _challengeBytes, 0, 8);
+            Array.Copy(newChallenge, 0, _challengeBytes, 0, 8);
             Array.Copy(_challengeBytes, 0, _challenge, 0, 8);
         }
     }

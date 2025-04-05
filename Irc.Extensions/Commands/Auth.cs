@@ -40,8 +40,11 @@ public class Auth : Command, ICommand
             {
                 try
                 {
+                    var credentialManager = chatFrame.Server.GetCredentialManager();
+                    if (credentialManager == null) throw new ArgumentNullException(nameof(credentialManager));
+                    
                     supportPackage = chatFrame.Server.GetSecurityManager()
-                        .CreatePackageInstance(packageName, chatFrame.Server.GetCredentialManager());
+                        .CreatePackageInstance(packageName, credentialManager);
                     
                     chatFrame.User.SetSupportPackage(supportPackage);
                 }

@@ -1,6 +1,7 @@
 using System;
 using Irc.Extensions.Apollo.Security.Packages;
 using Irc.Extensions.Security;
+using Irc.Extensions.Security.Credentials;
 using Irc.Extensions.Security.Packages;
 using Irc.Helpers;
 using NUnit.Framework;
@@ -17,7 +18,7 @@ public class GateKeeperTests
     [Test]
     public void AcceptSecurityContext_V1_Auth_Fails_If_Guid_Exists()
     {
-        var gateKeeper = new GateKeeper();
+        var gateKeeper = new GateKeeper(new DefaultProvider());
         var gateKeeperToken = new GateKeeperToken();
         gateKeeperToken.Signature = "GKSSP\0".ToByteArray();
         gateKeeperToken.Version = 1;
@@ -39,7 +40,7 @@ public class GateKeeperTests
     [Test]
     public void AcceptSecurityContext_Auth_Fails_If_Guest_And_Guid_Blank()
     {
-        var gateKeeper = new GateKeeper();
+        var gateKeeper = new GateKeeper(new DefaultProvider());
         gateKeeper.Guest = true;
 
         var gateKeeperToken = new GateKeeperToken();
@@ -65,7 +66,7 @@ public class GateKeeperTests
     [Test]
     public void AcceptSecurityContext_Auth_Succeeds_If_Not_Guest_And_Guid_Blank()
     {
-        var gateKeeper = new GateKeeper();
+        var gateKeeper = new GateKeeper(new DefaultProvider());
         gateKeeper.Guest = false;
 
         var gateKeeperToken = new GateKeeperToken();
@@ -93,7 +94,7 @@ public class GateKeeperTests
     {
         var ip = "1.2.3.4";
 
-        var gateKeeper = new GateKeeper();
+        var gateKeeper = new GateKeeper(new DefaultProvider());
         gateKeeper.Guest = false;
 
         var gateKeeperToken = new GateKeeperToken();

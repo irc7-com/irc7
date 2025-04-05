@@ -4,7 +4,7 @@ using Irc.Extensions.Commands;
 
 namespace Irc.Extensions.Protocols;
 
-public class IrcX : Irc
+public class IrcX : Irc.Protocols.Irc
 {
     public IrcX(): base()
     {

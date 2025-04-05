@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
+using Irc.Interfaces;
 using NLog;
 
 namespace Irc7d;
@@ -35,7 +36,7 @@ public class SocketServer : Socket, ISocketServer
     public int BuffSize { get; }
     public int CurrentConnections { get; } = 0;
 
-    public void Listen()
+    public new void Listen()
     {
         Bind(new IPEndPoint(Ip, Port));
         Listen(Backlog);
@@ -50,7 +51,7 @@ public class SocketServer : Socket, ISocketServer
         AcceptAsync(acceptAsync);
     }
 
-    public void Close()
+    public new void Close()
     {
         Close();
     }

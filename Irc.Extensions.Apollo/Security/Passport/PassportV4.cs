@@ -107,20 +107,14 @@ public class PassportV4
         if (validatedToken == null) return new Dictionary<string, string>();
         
         var nvc = HttpUtility.ParseQueryString(cookie);
-        return nvc.AllKeys.ToDictionary(k => k, v => nvc[v]);
+        return nvc.AllKeys.ToDictionary(k => k ?? string.Empty, v => nvc[v] ?? string.Empty);
     }
 
 
     private static byte[] Derive(string secret, string prefix)
     {
-        using (var hashAlg = HashAlgorithm.Create("SHA256"))
+        using (var hashAlg = SHA256.Create())
         {
-            if (hashAlg == null)
-            {
-                Log.Debug("Derive: Could not create Hash algorithm SHA256");
-                return [];
-            }
-            
             const int keyLength = 16;
             var data = Encoding.Default.GetBytes(prefix + secret);
             var hashOutput = hashAlg.ComputeHash(data);
@@ -144,7 +138,7 @@ public class PassportV4
         const int ivLength = 16;
         var ivAndEncryptedValue = U64(token);
 
-        if (ivAndEncryptedValue == null ||
+        if (ivAndEncryptedValue.Length == 0 ||
             ivAndEncryptedValue.Length <= ivLength ||
             ivAndEncryptedValue.Length % ivLength != 0)
         {
@@ -152,7 +146,7 @@ public class PassportV4
             return null;
         }
 
-        Rijndael? aesAlg = null;
+        Aes? aesAlg = null;
         MemoryStream? memStream = null;
         CryptoStream? cStream = null;
         StreamReader? sReader = null;
@@ -160,7 +154,7 @@ public class PassportV4
 
         try
         {
-            aesAlg = new RijndaelManaged();
+            aesAlg = Aes.Create();
             aesAlg.KeySize = 128;
             aesAlg.Key = cryptKey;
             aesAlg.Padding = PaddingMode.PKCS7;

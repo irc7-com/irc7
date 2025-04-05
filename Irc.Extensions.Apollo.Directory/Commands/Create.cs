@@ -14,12 +14,12 @@ internal class Create : Command, ICommand
         _isAds = isAds;
     }
 
-    public EnumCommandDataType GetDataType()
+    public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;
     }
 
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
         var messageToSend = Raw.IRCX_RPL_FINDS_613(chatFrame.Server, chatFrame.User);
         if (_isAds)

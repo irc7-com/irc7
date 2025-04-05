@@ -65,7 +65,7 @@ public class ExtendedChannel : global::Irc.Objects.Channel.Channel, IExtendedCha
         return userAccessLevel;
     }
 
-    public override EnumChannelAccessResult GetAccess(IUser user, string key, bool IsGoto = false)
+    public override EnumChannelAccessResult GetAccess(IUser user, string? key, bool isGoto = false)
     {
         var hostKeyCheck = CheckHostKey(user, key);
 
@@ -103,7 +103,7 @@ public class ExtendedChannel : global::Irc.Objects.Channel.Channel, IExtendedCha
 
         var accessPermissions = (EnumChannelAccessResult)new[]
         {
-            (int)GetAccessEx(user, key, IsGoto),
+            (int)GetAccessEx(user, key, isGoto),
             (int)hostKeyCheck,
             (int)accessResult
         }.Max();
@@ -114,7 +114,7 @@ public class ExtendedChannel : global::Irc.Objects.Channel.Channel, IExtendedCha
     }
 
 
-    protected EnumChannelAccessResult CheckHostKey(IUser user, string key)
+    protected EnumChannelAccessResult CheckHostKey(IUser user, string? key)
     {
         if (string.IsNullOrWhiteSpace(key)) return EnumChannelAccessResult.NONE;
         

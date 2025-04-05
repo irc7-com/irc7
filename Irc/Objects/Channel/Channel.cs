@@ -112,7 +112,7 @@ public class Channel : ChatObject, IChannel
         return _members;
     }
 
-    public IChannelModes GetModes()
+    public new IChannelModes GetModes()
     {
         return (IChannelModes)_modes;
     }
@@ -238,7 +238,7 @@ public class Channel : ChatObject, IChannel
                 channelMember.GetUser().Send(message);
     }
 
-    public virtual EnumChannelAccessResult GetAccess(IUser user, string key, bool IsGoto = false)
+    public virtual EnumChannelAccessResult GetAccess(IUser user, string? key, bool IsGoto = false)
     {
         var accessPermissions = GetAccessEx(user, key, IsGoto);
         return accessPermissions == EnumChannelAccessResult.NONE
@@ -307,7 +307,7 @@ public class Channel : ChatObject, IChannel
         return regex.Match(channel).Success;
     }
 
-    public EnumChannelAccessResult GetAccessEx(IUser user, string key, bool IsGoto = false)
+    public EnumChannelAccessResult GetAccessEx(IUser user, string? key, bool IsGoto = false)
     {
         var operCheck = CheckOper(user);
         var keyCheck = CheckMemberKey(user, key);
@@ -331,7 +331,7 @@ public class Channel : ChatObject, IChannel
         return EnumChannelAccessResult.NONE;
     }
 
-    protected EnumChannelAccessResult CheckMemberKey(IUser user, string key)
+    protected EnumChannelAccessResult CheckMemberKey(IUser user, string? key)
     {
         if (string.IsNullOrWhiteSpace(key)) return EnumChannelAccessResult.NONE;
 

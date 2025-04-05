@@ -22,7 +22,7 @@ public class Owner : ModeRule, IModeRule
     {
     }
 
-    public EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
+    public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
         var channel = (IChannel)target;
         

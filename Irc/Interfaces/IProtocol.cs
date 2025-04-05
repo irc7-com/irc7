@@ -1,13 +1,12 @@
 ﻿using Irc.Commands;
 using Irc.Enumerations;
-using Irc.Interfaces;
 using Irc.Objects;
 
-namespace Irc;
+namespace Irc.Interfaces;
 
 public interface IProtocol
 {
-    ICommand GetCommand(string name);
+    ICommand? GetCommand(string name);
     Dictionary<string, ICommand> GetCommands();
     void AddCommand(ICommand command, string name);
     void FlushCommands();

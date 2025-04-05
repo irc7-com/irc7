@@ -1,4 +1,4 @@
-﻿namespace Irc.Extensions.Apollo.Security.Credentials;
+﻿namespace Irc.Extensions.Security.Credentials;
 
 public class Profile
 {

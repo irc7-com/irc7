@@ -12,6 +12,7 @@ using Irc.Extensions.Apollo.Security.Passport;
 using Irc.Extensions.Commands;
 using Irc.Extensions.Objects.Server;
 using Irc.Extensions.Security;
+using Irc.Extensions.Security.Credentials;
 using Irc.Extensions.Security.Packages;
 using Irc.Factories;
 using Irc.Interfaces;
@@ -38,7 +39,7 @@ public class ApolloServer : ExtendedServer
         if (SupportPackages.Contains("GateKeeper"))
         {
             _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
-            securityManager.AddSupportPackage(new GateKeeper());
+            securityManager.AddSupportPackage(new GateKeeper(new DefaultProvider()));
             securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(_passport)));
         }
 

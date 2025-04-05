@@ -4,12 +4,12 @@ using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Extensions.Security;
-using Irc.Extensions.Security.Packages;
 using Irc.Factories;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Objects.Collections;
 using Irc.Security;
+using Irc.Security.Packages;
 using Irc7d;
 using NLog;
 using Version = System.Version;
@@ -61,7 +61,7 @@ public class Server : ChatObject, IServer
 
         if (MaxAnonymousConnections > 0) _securityManager.AddSupportPackage(new ANON());
 
-        Protocols.Add(EnumProtocolType.IRC, new Irc());
+        Protocols.Add(EnumProtocolType.IRC, new Protocols.Irc());
 
         socketServer.OnClientConnecting += (sender, connection) =>
         {

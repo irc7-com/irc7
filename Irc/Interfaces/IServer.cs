@@ -49,7 +49,7 @@ public interface IServer
     IUser CreateUser(IConnection connection);
     IList<IUser> GetUsers();
     IUser? GetUserByNickname(string nickname);
-    IUser GetUserByNickname(string nickname, IUser currentUser);
+    IUser? GetUserByNickname(string nickname, IUser currentUser);
     IList<IUser> GetUsersByList(string nicknames, char separator);
     IList<IUser> GetUsersByList(List<string> nicknames, char separator);
     IList<IChannel> GetChannels();
@@ -59,7 +59,7 @@ public interface IServer
     IDataStore GetDataStore();
     IChannel? GetChannelByName(string name);
     ChatObject? GetChatObject(string name);
-    IProtocol GetProtocol(EnumProtocolType protocolType);
+    IProtocol? GetProtocol(EnumProtocolType protocolType);
     ISecurityManager GetSecurityManager();
     ICredentialProvider? GetCredentialManager();
     void Shutdown();

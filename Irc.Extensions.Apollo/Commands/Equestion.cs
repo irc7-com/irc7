@@ -19,7 +19,7 @@ public class Equestion : Command, ICommand
     }
 
     // EQUESTION %#OnStage Nickname :Why am I here?
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
         var targetName = chatFrame.Message.Parameters.First();
         var nickname = chatFrame.Message.Parameters[1];

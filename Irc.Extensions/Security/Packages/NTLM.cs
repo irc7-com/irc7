@@ -2,6 +2,7 @@
 using Irc.Helpers;
 using Irc.Interfaces;
 using Irc.Security;
+using NLog;
 using NLog.Fluent;
 
 namespace Irc.Extensions.Security.Packages;
@@ -11,6 +12,8 @@ namespace Irc.Extensions.Security.Packages;
 
 public class NTLM : SupportPackage, ISupportPackage
 {
+    public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
+
     private ICredentialProvider _credentialProvider;
     private readonly NtlmShared.TargetInformation _targetInformation = new();
     private ICredential? _credential;
@@ -31,7 +34,7 @@ public class NTLM : SupportPackage, ISupportPackage
         return new NTLM(credentialProvider);
     }
 
-    public ICredential? GetCredentials()
+    public new ICredential? GetCredentials()
     {
         return _credential;
     }

@@ -16,7 +16,7 @@ public class ExtendedMember : ExtendedMemberModes, IChannelMember
     public ExtendedMember(IUser user) : base(user)
     {
     }
-    public void SetOwner(bool flag)
+    public new void SetOwner(bool flag)
     {
         Modes[Resources.MemberModeOwner].Set(flag ? 1 : 0);
     }

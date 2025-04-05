@@ -1,8 +1,8 @@
 ﻿using Irc.Enumerations;
+using Irc.Extensions.Security;
 using Irc.Interfaces;
-using Irc.Security;
 
-namespace Irc.Extensions.Security.Packages;
+namespace Irc.Security.Packages;
 
 public class ANON : SupportPackage
 {
@@ -13,22 +13,22 @@ public class ANON : SupportPackage
         Listed = true;
     }
 
-    public EnumSupportPackageSequence InitializeSecurityContext(string data, string ip)
+    public new EnumSupportPackageSequence InitializeSecurityContext(string data, string ip)
     {
         return EnumSupportPackageSequence.SSP_AUTHENTICATED;
     }
 
-    public EnumSupportPackageSequence AcceptSecurityContext(string data, string ip)
+    public new EnumSupportPackageSequence AcceptSecurityContext(string data, string ip)
     {
         return EnumSupportPackageSequence.SSP_AUTHENTICATED;
     }
 
-    public string GetDomain()
+    public new string GetDomain()
     {
         return nameof(ANON);
     }
 
-    public string GetPackageName()
+    public new string GetPackageName()
     {
         return nameof(ANON);
     }
@@ -44,7 +44,7 @@ public class ANON : SupportPackage
         };
     }
 
-    public SupportPackage CreateInstance(ICredentialProvider credentialProvider)
+    public new SupportPackage CreateInstance(ICredentialProvider credentialProvider)
     {
         return new ANON();
     }

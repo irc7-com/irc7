@@ -2,11 +2,11 @@
 using System.Text;
 using Irc.Constants;
 using Irc.Enumerations;
-using Irc.Extensions.Security.Packages;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Modes;
 using Irc.Objects.Server;
+using Irc.Security.Packages;
 using Irc7d;
 using Microsoft.VisualBasic;
 using NLog;
@@ -395,7 +395,7 @@ public class User : ChatObject, IUser
         };
     }
 
-    public virtual bool CanBeModifiedBy(ChatObject source)
+    public new virtual bool CanBeModifiedBy(ChatObject source)
     {
         return source == this;
     }

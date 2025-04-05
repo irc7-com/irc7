@@ -6,7 +6,7 @@ public class ModeCollection : IModeCollection
 {
     protected Dictionary<char, IModeRule> Modes = new();
     // TODO: <CHANKEY> Below is temporary until implemented properly
-    protected string Keypass = string.Empty;
+    protected string? Keypass = string.Empty;
 
     public void SetModeChar(char mode, int value)
     {

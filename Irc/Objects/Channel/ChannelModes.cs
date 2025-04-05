@@ -44,7 +44,7 @@ k - set a channel key (password).
         set => Modes[Resources.ChannelModeInvite].Set(Convert.ToInt32(value));
     }
 
-    public string Key
+    public string? Key
     {
         get => Keypass;
         set

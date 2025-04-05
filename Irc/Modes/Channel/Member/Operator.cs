@@ -22,7 +22,7 @@ public class Operator : ModeRule, IModeRule
     {
     }
 
-    public EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
+    public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
         // TODO: Consider combining below blocks
         var channel = (IChannel)target;

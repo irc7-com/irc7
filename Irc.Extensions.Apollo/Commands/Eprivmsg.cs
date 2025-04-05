@@ -19,7 +19,7 @@ public class Eprivmsg : Command, ICommand
     }
 
     // EPRIVMSG %#OnStage :Why am I here?
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
         var targetName = chatFrame.Message.Parameters.First();
         var message = chatFrame.Message.Parameters[1];
