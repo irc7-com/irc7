@@ -15,8 +15,8 @@ public class Address
 
     public record UserHostPair
     {
-        public string User { get; set; }
-        public string Host { get; set; }
+        public string User { get; set; } = string.Empty;
+        public string Host { get; set; } = string.Empty;
 
         public override string ToString()
         {
@@ -26,27 +26,27 @@ public class Address
 
     public UserHostPair UserHost = new();
 
-    public string Nickname { private set; get; }
+    public string Nickname { private set; get; } = string.Empty;
 
     public string User { set => UserHost.User = value; get => UserHost.User; }
 
     // TODO: NOTE: In Apollo, domain names are not supported in the host field; it must be a valid IP address.
     public string Host { set => UserHost.Host = value; get => UserHost.Host; }
-    public string Server { set; get; }
+    public string Server { set; get; } = string.Empty;
 
-    public string RealName { set; get; }
-    public string RemoteIP { protected set; get; }
-    public string MaskedIP { protected set; get; }
+    public string RealName { set; get; } = string.Empty;
+    public string RemoteIp { protected set; get; } = string.Empty;
+    public string MaskedIp { protected set; get; } = string.Empty;
 
     public void SetNickname(string nickname)
     {
         Nickname = nickname;
     }
 
-    public void SetIP(string address)
+    public void SetIp(string address)
     {
-        RemoteIP = address;
-        MaskedIP = ObfuscatedAddress(address);
+        RemoteIp = address;
+        MaskedIp = ObfuscatedAddress(address);
     }
 
     public string GetUserHost()

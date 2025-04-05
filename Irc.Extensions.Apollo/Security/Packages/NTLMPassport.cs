@@ -44,14 +44,14 @@ public class NTLMPassport : global::Irc.Extensions.Security.Packages.NTLM
             var profile = extractCookie(data.Substring(8 + ticket.Length));
             if (profile == null) return EnumSupportPackageSequence.SSP_FAILED;
 
-            _credentials = _credentialProvider.ValidateTokens(
+            Credentials = _credentialProvider.ValidateTokens(
                 new Dictionary<string, string>
                 {
                     { "ticket", ticket },
                     { "profile", profile }
                 });
 
-            if (_credentials == null) return EnumSupportPackageSequence.SSP_FAILED;
+            if (Credentials == null) return EnumSupportPackageSequence.SSP_FAILED;
 
             Authenticated = true;
             return EnumSupportPackageSequence.SSP_OK;

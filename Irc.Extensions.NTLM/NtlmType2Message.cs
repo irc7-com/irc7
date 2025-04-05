@@ -58,7 +58,7 @@ public class NtlmType2Message
         var targetOffset = 0;
 
         var requestTarget = _flags[NtlmFlag.NTLMSSP_REQUEST_TARGET];
-        var requestTargetInformation = _flags[NtlmFlag.NTLMSSP_NEGOTIATE_TARGET_INFO] | (_targetInformation != null);
+        var requestTargetInformation = _flags[NtlmFlag.NTLMSSP_NEGOTIATE_TARGET_INFO] | true;
 
         if (requestTarget)
         {
@@ -85,14 +85,14 @@ public class NtlmType2Message
             targetPayload.Append(_targetInformation.ServerName);
 
             var dnsDomainNameSubBlock =
-                new NTLMShared.NTLMSSPSubBlock(4, (short)_targetInformation.DNSDomainName.Length);
+                new NTLMShared.NTLMSSPSubBlock(4, (short)_targetInformation.DnsDomainName.Length);
             targetPayload.Append(dnsDomainNameSubBlock.Serialize<NTLMShared.NTLMSSPSubBlock>().ToAsciiString());
-            targetPayload.Append(_targetInformation.DNSDomainName);
+            targetPayload.Append(_targetInformation.DnsDomainName);
 
             var dnsServerNameSubBlock =
-                new NTLMShared.NTLMSSPSubBlock(3, (short)_targetInformation.DNSServerName.Length);
+                new NTLMShared.NTLMSSPSubBlock(3, (short)_targetInformation.DnsServerName.Length);
             targetPayload.Append(dnsServerNameSubBlock.Serialize<NTLMShared.NTLMSSPSubBlock>().ToAsciiString());
-            targetPayload.Append(_targetInformation.DNSServerName);
+            targetPayload.Append(_targetInformation.DnsServerName);
 
             var terminatorSubBlock = new NTLMShared.NTLMSSPSubBlock(0, 0);
             targetPayload.Append(terminatorSubBlock.Serialize<NTLMShared.NTLMSSPSubBlock>().ToAsciiString());

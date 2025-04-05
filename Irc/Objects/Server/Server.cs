@@ -88,10 +88,10 @@ public class Server : ChatObject, IServer
 
     // Server Properties To be moved to another class later
     public string Title { get; private set; }
-    public bool AnnonymousAllowed { get; }
-    public int ChannelCount { get; }
-    public IList<ChatObject> IgnoredUsers { get; }
-    public IList<string> Info { get; }
+    public bool AnnonymousAllowed { get; } = true;
+    public int ChannelCount { get; } = 0;
+    public IList<ChatObject> IgnoredUsers { get; } = new List<ChatObject>();
+    public IList<string> Info { get; } = new List<string>();
     public int MaxMessageLength { get; } = 512;
     public int MaxInputBytes { get; private set; } = 512;
     public int MaxOutputBytes { get; private set; } = 4096;

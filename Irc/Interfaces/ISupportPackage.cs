@@ -11,7 +11,7 @@ public interface ISupportPackage
     EnumSupportPackageSequence AcceptSecurityContext(string token, string ip);
     string GetDomain();
     string GetPackageName();
-    ICredential GetCredentials();
+    ICredential? GetCredentials();
     bool IsAuthenticated();
     void SetChallenge(byte[] new_challenge);
 }

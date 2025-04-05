@@ -20,7 +20,8 @@ internal class Invite : Command, ICommand
         // Invite <nick>
         // Invite <nick> <channel>
 
-        var targetNickname = chatFrame.Message.Parameters.FirstOrDefault();
+        // Minimum parameters is 1 so this should work without fail
+        var targetNickname = chatFrame.Message.Parameters.First();
         var targetUser = chatFrame.Server.GetUserByNickname(targetNickname);
 
         if (targetUser == null)
@@ -60,12 +61,20 @@ internal class Invite : Command, ICommand
             return;
         }
 
-        var member = targetChannel.GetMember(chatFrame.User);
+        /*
+         * The following block makes sure the user requesting another user to be invited
+         * is actually on the channel they are inviting them to, or if the user is not
+         * a guide and above it will not honor the request.
+         */
+        var currentMember = targetChannel.GetMember(chatFrame.User);
 
-        if (member == null && chatFrame.User.GetLevel() < EnumUserAccessLevel.Guide)
+        if (currentMember == null || chatFrame.User.GetLevel() < EnumUserAccessLevel.Guide)
+        {
             chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, chatFrame.User, targetChannel));
+            return;
+        }
 
-        ProcessInvite(chatFrame, member, targetChannel, targetUser);
+        ProcessInvite(chatFrame, currentMember, targetChannel, targetUser);
     }
 
     public static void ProcessInvite(IChatFrame chatFrame, IChannelMember member, IChannel targetChannel,

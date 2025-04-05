@@ -10,7 +10,7 @@ using Irc.Objects.Server;
 using Irc7d;
 using NLog;
 
-namespace Irc.Objects;
+namespace Irc.Objects.User;
 
 public class User : ChatObject, IUser
 {
@@ -31,7 +31,6 @@ public class User : ChatObject, IUser
     private bool _registered;
     private ISupportPackage _supportPackage;
     public IDictionary<IChannel, IChannelMember> Channels;
-    public string Client;
 
     public DateTime LastPing = DateTime.UtcNow;
     public long PingCount;
@@ -57,7 +56,7 @@ public class User : ChatObject, IUser
             if (message.HasCommand) _dataRegulator.PushIncoming(message);
         };
 
-        Address.SetIP(connection.GetIp());
+        Address.SetIp(connection.GetIp());
     }
 
     public override EnumUserAccessLevel Level => GetLevel();
@@ -352,7 +351,7 @@ public class User : ChatObject, IUser
     {
         var userAddress = GetAddress();
         var credentials = GetSupportPackage().GetCredentials();
-        userAddress.User = credentials.GetUsername() ?? userAddress.MaskedIP;
+        userAddress.User = credentials.GetUsername() ?? userAddress.MaskedIp;
         userAddress.Host = credentials.GetDomain();
         userAddress.Server = Server.Name;
         userAddress.RealName = credentials.Guest ? string.Empty : null;

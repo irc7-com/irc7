@@ -32,7 +32,7 @@ public class ANON : SupportPackage
         return nameof(ANON);
     }
 
-    public override ICredential GetCredentials()
+    public override ICredential? GetCredentials()
     {
         return new Credential
         {
@@ -50,6 +50,6 @@ public class ANON : SupportPackage
 
     public string CreateSecurityChallenge(EnumSupportPackageSequence stage)
     {
-        return null;
+        return string.Empty;
     }
 }

@@ -51,7 +51,7 @@ internal class Kill : Command, ICommand
             channel.GetMembers().Remove(member);
             channel.Send(Raw.RPL_KILL_IRC(user, targetUser, reason));
             targetUser.Disconnect(
-                Raw.IRCX_CLOSINGLINK_007_SYSTEMKILL(server, targetUser, targetUser.GetAddress().RemoteIP));
+                Raw.IRCX_CLOSINGLINK_007_SYSTEMKILL(server, targetUser, targetUser.GetAddress().RemoteIp));
         }
     }
 }

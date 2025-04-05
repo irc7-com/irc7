@@ -34,7 +34,7 @@ internal class Mode : Command, ICommand
         {
             var objectName = chatFrame.Message.Parameters.First();
 
-            ChatObject chatObject = null;
+            ChatObject? chatObject = null;
 
             // Lookup object
             if (Channel.ValidName(objectName))
@@ -60,7 +60,7 @@ internal class Mode : Command, ICommand
     public void ProcessModes(IChatFrame chatFrame, ChatObject chatObject)
     {
         // Perform mode operation
-        Queue<string> modeParameters = null;
+        Queue<string> modeParameters = new();
         if (chatFrame.Message.Parameters.Count > 2)
             modeParameters = new Queue<string>(chatFrame.Message.Parameters.Skip(2).ToArray());
         ModeEngine.Breakdown(chatFrame.User, chatObject, chatFrame.Message.Parameters[1], modeParameters);

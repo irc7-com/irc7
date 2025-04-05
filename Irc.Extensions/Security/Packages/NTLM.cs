@@ -30,7 +30,7 @@ public class NTLM : SupportPackage, ISupportPackage
         return new NTLM(credentialProvider ?? _credentialProvider);
     }
 
-    public ICredential GetCredentials()
+    public ICredential? GetCredentials()
     {
         return _credential;
     }
@@ -45,9 +45,9 @@ public class NTLM : SupportPackage, ISupportPackage
 
             _targetInformation.DomainName = isOEM ? "DOMAIN" : "DOMAIN".ToUnicodeString();
             _targetInformation.ServerName = isOEM ? "TK2CHATCHATA01" : "TK2CHATCHATA01".ToUnicodeString();
-            _targetInformation.DNSDomainName =
+            _targetInformation.DnsDomainName =
                 isOEM ? "TK2CHATCHATA01.Microsoft.Com" : "TK2CHATCHATA01.Microsoft.Com".ToUnicodeString();
-            _targetInformation.DNSServerName =
+            _targetInformation.DnsServerName =
                 isOEM ? "TK2CHATCHATA01.Microsoft.Com" : "TK2CHATCHATA01.Microsoft.Com".ToUnicodeString();
 
             return EnumSupportPackageSequence.SSP_OK;
@@ -58,16 +58,16 @@ public class NTLM : SupportPackage, ISupportPackage
         }
     }
 
-    public override string? CreateSecurityChallenge()
+    public override string CreateSecurityChallenge()
     {
         try
         {
             _message2 = new NtlmType2Message(_message1.Flags, _targetInformation.DomainName, _targetInformation);
-            return _message2.ToString();
+            return _message2.ToString() ?? string.Empty;
         }
         catch (Exception)
         {
-            return null;
+            return string.Empty;
         }
     }
 

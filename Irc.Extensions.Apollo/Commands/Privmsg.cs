@@ -6,6 +6,7 @@ using Irc.Extensions.Apollo.Objects.User;
 using Irc.Interfaces;
 using Irc.Objects;
 using Irc.Objects.Channel;
+using Irc.Objects.User;
 
 namespace Irc.Extensions.Apollo.Commands;
 

@@ -34,11 +34,11 @@ public static class SerializationExtensions
         {
             pBuf = Marshal.AllocHGlobal(size);
             Marshal.Copy(bytes, 0, pBuf, size);
-            return Marshal.PtrToStructure<T>(pBuf);
+            return (Marshal.PtrToStructure<T>(pBuf) ?? default)!;
         }
         catch (Exception)
         {
-            return default;
+            return default!;
         }
         finally
         {

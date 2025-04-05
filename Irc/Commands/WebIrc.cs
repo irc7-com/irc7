@@ -72,7 +72,7 @@ public class WebIrc : Command, ICommand
                     .Select(y =>
                     {
                         var parts = y.Split('=', StringSplitOptions.RemoveEmptyEntries);
-                        var key = parts.FirstOrDefault();
+                        var key = parts.FirstOrDefault() ?? string.Empty;
                         var value = parts.Length > 1 ? parts[1] : string.Empty;
                         return new KeyValuePair<string, string>(key, value);
                     })

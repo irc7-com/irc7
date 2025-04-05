@@ -57,10 +57,10 @@ public class NTLMShared
 
     public class TargetInformation
     {
-        public string DomainName { get; set; }
-        public string ServerName { get; set; }
-        public string DNSDomainName { get; set; }
-        public string DNSServerName { get; set; }
+        public string DomainName { get; set; } = string.Empty;
+        public string ServerName { get; set; } = string.Empty;
+        public string DnsDomainName { get; set; } = string.Empty;
+        public string DnsServerName { get; set; } = string.Empty;
     }
 
     public class NTLMv2Blob

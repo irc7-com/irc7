@@ -17,14 +17,12 @@ public class SecurityManager : ISecurityManager
 
     public SupportPackage CreatePackageInstance(string name, ICredentialProvider? credentialProvider)
     {
-        try
+        if (!_supportProviders.TryGetValue(name, out var supportPackage))
         {
-            return _supportProviders[name].CreateInstance(credentialProvider);
+            throw new InvalidOperationException($"No support package found for {name}");
         }
-        catch (Exception)
-        {
-            return null;
-        }
+        
+        return supportPackage.CreateInstance(credentialProvider);
     }
 
     public string GetSupportedPackages()

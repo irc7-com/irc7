@@ -22,8 +22,10 @@ public class DataStore : IDataStore
         if (!string.IsNullOrWhiteSpace(path))
         {
             // Workaround for forced case comparison
-            // (specifying PropertyNameCaseInsensitive = true in JsonSerializerOptions also didnt work)
+            // (specifying PropertyNameCaseInsensitive = true in JsonSerializerOptions also didn't work)
             var tempSet = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path));
+            if (tempSet == null) return;
+            
             foreach (var kvp in tempSet)
             {
                 _sets.Add(kvp.Key, kvp.Value);

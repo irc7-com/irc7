@@ -48,7 +48,7 @@ public interface IServer
     IChannel CreateChannel(IUser creator, string name, string key);
     IUser CreateUser(IConnection connection);
     IList<IUser> GetUsers();
-    IUser GetUserByNickname(string nickname);
+    IUser? GetUserByNickname(string nickname);
     IUser GetUserByNickname(string nickname, IUser currentUser);
     IList<IUser> GetUsersByList(string nicknames, char separator);
     IList<IUser> GetUsersByList(List<string> nicknames, char separator);
@@ -57,7 +57,7 @@ public interface IServer
     string GetSupportedUserModes();
     IDictionary<EnumProtocolType, IProtocol> GetProtocols();
     IDataStore GetDataStore();
-    IChannel GetChannelByName(string name);
+    IChannel? GetChannelByName(string name);
     ChatObject GetChatObject(string name);
     IProtocol GetProtocol(EnumProtocolType protocolType);
     ISecurityManager GetSecurityManager();

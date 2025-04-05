@@ -5,7 +5,7 @@ namespace Irc.Security;
 
 public class SupportPackage : ISupportPackage
 {
-    protected ICredential _credentials;
+    protected ICredential? Credentials;
     public bool Guest;
     public bool Listed = true;
     public EnumSupportPackageSequence ServerSequence;
@@ -18,7 +18,7 @@ public class SupportPackage : ISupportPackage
         throw new NotImplementedException();
     }
 
-    public virtual string? CreateSecurityChallenge()
+    public virtual string CreateSecurityChallenge()
     {
         throw new NotImplementedException();
     }
@@ -43,9 +43,9 @@ public class SupportPackage : ISupportPackage
         return GetType().Name;
     }
 
-    public virtual ICredential GetCredentials()
+    public virtual ICredential? GetCredentials()
     {
-        return _credentials;
+        return Credentials;
     }
 
     public bool IsAuthenticated()
@@ -53,7 +53,7 @@ public class SupportPackage : ISupportPackage
         return Authenticated;
     }
 
-    public void SetChallenge(byte[] new_challenge)
+    public void SetChallenge(byte[] newChallenge)
     {
         throw new NotImplementedException();
     }

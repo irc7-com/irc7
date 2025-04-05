@@ -146,7 +146,7 @@ internal class MD4
             return padding;
         }
 
-        return null;
+        return Array.Empty<byte>();
     }
 
     /* F, G and H are basic MD4 functions. */

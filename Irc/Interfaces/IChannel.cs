@@ -10,7 +10,7 @@ public interface IChannel
     IDataStore ChannelStore { get; }
     IChannelModes Modes { get; }
     string GetName();
-    IChannelMember GetMember(IUser User);
+    IChannelMember? GetMember(IUser User);
     IChannelMember GetMemberByNickname(string nickname);
     bool HasUser(IUser user);
     void Send(string message, ChatObject u);

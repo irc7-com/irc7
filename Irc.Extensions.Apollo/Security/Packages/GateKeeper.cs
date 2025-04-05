@@ -94,7 +94,7 @@ public class GateKeeper : SupportPackage, ISupportPackage
                     ServerSequence = EnumSupportPackageSequence.SSP_AUTHENTICATED;
                     Authenticated = true;
 
-                    _credentials = new Credential
+                    Credentials = new Credential
                     {
                         Level = EnumUserAccessLevel.Member,
                         Domain = GetType().Name,

@@ -25,7 +25,7 @@ public class GateKeeperTests
 
         var token = $"{gateKeeperToken.Serialize<GateKeeperToken>().ToAsciiString()}";
 
-        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.InitializeSecurityContext(token, null)));
+        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.InitializeSecurityContext(token, string.Empty)));
 
         gateKeeperToken.Version = 1;
         gateKeeperToken.Sequence = (int)EnumSupportPackageSequence.SSP_EXT;
@@ -33,7 +33,7 @@ public class GateKeeperTests
         token =
             $"{gateKeeperToken.Serialize<GateKeeperToken>().ToAsciiString()}{new Guid().ToByteArray().ToAsciiString()}{new Guid().ToByteArray().ToAsciiString()}";
         gateKeeper.SetChallenge(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
-        Assert.That(EnumSupportPackageSequence.SSP_FAILED, Is.EqualTo(gateKeeper.AcceptSecurityContext(token, null)));
+        Assert.That(EnumSupportPackageSequence.SSP_FAILED, Is.EqualTo(gateKeeper.AcceptSecurityContext(token, string.Empty)));
     }
 
     [Test]
@@ -49,7 +49,7 @@ public class GateKeeperTests
 
         var token = $"{gateKeeperToken.Serialize<GateKeeperToken>().ToAsciiString()}";
 
-        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.InitializeSecurityContext(token, null)));
+        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.InitializeSecurityContext(token, string.Empty)));
 
         gateKeeperToken.Version = 2;
         gateKeeperToken.Sequence = (int)EnumSupportPackageSequence.SSP_EXT;
@@ -59,7 +59,7 @@ public class GateKeeperTests
             $"{gateKeeperToken.Serialize<GateKeeperToken>().ToAsciiString()}{Guid.Parse("e23a3251-b322-8b2b-a34c-c4d0be30c5dd").ToByteArray().ToAsciiString()}{new Guid().ToByteArray().ToAsciiString()}";
         gateKeeper.SetChallenge(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
         gateKeeper.CreateSecurityChallenge();
-        Assert.That(EnumSupportPackageSequence.SSP_FAILED, Is.EqualTo(gateKeeper.AcceptSecurityContext(token, null)));
+        Assert.That(EnumSupportPackageSequence.SSP_FAILED, Is.EqualTo(gateKeeper.AcceptSecurityContext(token, string.Empty)));
     }
 
     [Test]
@@ -75,7 +75,7 @@ public class GateKeeperTests
 
         var token = $"{gateKeeperToken.Serialize<GateKeeperToken>().ToAsciiString()}";
 
-        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.InitializeSecurityContext(token, null)));
+        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.InitializeSecurityContext(token, string.Empty)));
 
         gateKeeperToken.Version = 2;
         gateKeeperToken.Sequence = (int)EnumSupportPackageSequence.SSP_EXT;
@@ -85,7 +85,7 @@ public class GateKeeperTests
             $"{gateKeeperToken.Serialize<GateKeeperToken>().ToAsciiString()}{Guid.Parse("e23a3251-b322-8b2b-a34c-c4d0be30c5dd").ToByteArray().ToAsciiString()}{new Guid().ToByteArray().ToAsciiString()}";
         gateKeeper.SetChallenge(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
         gateKeeper.CreateSecurityChallenge();
-        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.AcceptSecurityContext(token, null)));
+        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.AcceptSecurityContext(token, string.Empty)));
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class GateKeeperTests
 
         var token = $"{gateKeeperToken.Serialize<GateKeeperToken>().ToAsciiString()}";
 
-        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.InitializeSecurityContext(token, null)));
+        Assert.That(EnumSupportPackageSequence.SSP_OK, Is.EqualTo(gateKeeper.InitializeSecurityContext(token, string.Empty)));
 
         gateKeeperToken.Version = 3;
         gateKeeperToken.Sequence = (int)EnumSupportPackageSequence.SSP_EXT;

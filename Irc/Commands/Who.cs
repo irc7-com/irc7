@@ -63,6 +63,7 @@ public class Who : Command, ICommand
         user.Send(Raw.IRCX_RPL_ENDOFWHO_315(server, user, criteria));
     }
 
+    // TODO: The below function needs re-writing
     public static void SendWho(IServer server, IUser user, IList<IUser> chatUsers, string channelName,
         bool ignoreInvisible)
     {
@@ -78,12 +79,12 @@ public class Who : Command, ICommand
                 var address = chatUser.GetAddress();
                 var channels = chatUser.GetChannels();
                 var channel = channels.Count > 0 ? channels.First().Key : null;
-                var channelStoredName = channels.Count > 0 ? channel.GetName() : string.Empty;
+                var channelStoredName = channels.Count > 0 ? channel?.GetName() ?? string.Empty : string.Empty;
                 var goneHome = chatUser.Away ? "G" : "H";
 
                 var chanMode = string.Empty;
                 var channelMember = channel?.GetMember(user);
-                if (channelMember != null) chanMode = channel.GetMember(user).GetModeString();
+                if (channelMember != null) chanMode = channel?.GetMember(user)?.GetModeString();
 
                 var modeString = chatUser.Modes.ToString();
 
