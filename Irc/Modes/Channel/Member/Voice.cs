@@ -15,10 +15,13 @@ public class Voice : ModeRule, IModeRule
     {
         // TODO: Consider merging the below two blocks
         var channel = (IChannel)target;
-        if (!channel.CanBeModifiedBy(source)) return EnumIrcError.ERR_NOTONCHANNEL;
-
-        var sourceMember = channel.GetMember((IUser)source);
-        if (sourceMember == null) return EnumIrcError.ERR_NOTONCHANNEL;
+        var user = (IUser)source;
+        
+        var sourceMember = channel.GetMember(user);
+        if (sourceMember == null || !channel.CanBeModifiedBy((ChatObject)source))
+        {
+            return EnumIrcError.ERR_NOTONCHANNEL;
+        }
         
         var targetMember = channel.GetMemberByNickname(parameter);
         if (targetMember == null) return EnumIrcError.ERR_NOSUCHNICK;

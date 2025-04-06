@@ -56,11 +56,12 @@ internal class Topic : Command, ICommand
 
     public static EnumIrcError ProcessTopic(IChatFrame chatFrame, IChannel channel, IUser source, string topic)
     {
-        // TODO: Consider combining the below two blocks
-        if (!channel.CanBeModifiedBy((ChatObject)source)) return EnumIrcError.ERR_NOTONCHANNEL;
-
         var sourceMember = channel.GetMember(source);
-        if (sourceMember == null) return EnumIrcError.ERR_NOTONCHANNEL;
+        if (sourceMember == null || !channel.CanBeModifiedBy((ChatObject)source))
+        {
+            chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
+            return EnumIrcError.ERR_NOTONCHANNEL;
+        }
         
         if (sourceMember.GetLevel() < EnumChannelAccessLevel.ChatHost && channel.Modes.TopicOp)
             return EnumIrcError.ERR_NOCHANOP;

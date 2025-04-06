@@ -32,15 +32,8 @@ internal class Kick : Command, ICommand
         }
         else
         {
-            // TODO: Below two blocks need combining?
-            if (!channel.CanBeModifiedBy((ChatObject)source))
-            {
-                chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
-                return;
-            }
-            
             var sourceMember = channel.GetMember(source);
-            if (sourceMember == null)
+            if (sourceMember == null || !channel.CanBeModifiedBy((ChatObject)source))
             {
                 chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
                 return;

@@ -15,12 +15,12 @@ namespace Irc.Extensions.Security.Packages;
 public class GateKeeper : SupportPackage, ISupportPackage
 {
     protected readonly ICredentialProvider CredentialProvider;
-    public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
+    private static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
 
     private static readonly string Signature = "GKSSP\0";
 
     // Credit to JD for discovering the below key through XOR'ing (Discovered 2017/05/04)
-    private static readonly string Key = "SRFMKSJANDRESKKC";
+    private const string Key = "SRFMKSJANDRESKKC";
     private char[] _challenge = [];
     private byte[] _challengeBytes = [];
     protected GateKeeperToken ServerToken;

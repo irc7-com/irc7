@@ -8,7 +8,6 @@ using Irc.Modes;
 using Irc.Objects.Server;
 using Irc.Security.Packages;
 using Irc7d;
-using Microsoft.VisualBasic;
 using NLog;
 
 namespace Irc.Objects.User;
