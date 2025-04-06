@@ -48,7 +48,7 @@ internal class Program
 
             _server = ConfigureServer(serverType, socketServer, credentialProvider, options.ChatServerIp);
 
-            _server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0);
+            _server.ServerVersion = new Version(0, 0);
             _server.RemoteIp = options.Fqdn ?? "localhost";
 
             InitializeDefaultChannels(_server, serverType);

@@ -3,6 +3,7 @@ using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
 using Irc.Objects.Server;
+using Irc.Objects.User;
 
 namespace Irc.Commands;
 

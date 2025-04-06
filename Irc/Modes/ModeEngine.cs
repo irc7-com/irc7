@@ -1,4 +1,5 @@
 ﻿using Irc.Constants;
+using Irc.Interfaces;
 using Irc.Objects;
 
 namespace Irc.Modes;
@@ -39,15 +40,15 @@ public class ModeEngine
                     var exists = modeCollection.HasMode(c);
                     var modeValue = exists ? modeCollection.GetModeChar(c) : -1;
 
-                    var modeRule = modeCollection.GetMode(c);
-                    if (modeRule == null)
+                    if (!modeCollection.HasMode(c))
                     {
                         // Unknown mode char
                         // :sky-8a15b323126 472 Sky S :is unknown mode char to me
                         source.Send(Raw.IRCX_ERR_UNKNOWNMODE_472(source.Server, source, c));
                         continue;
                     }
-
+                    
+                    var modeRule = modeCollection[c];
                     string parameter = string.Empty;
                     if (modeRule.RequiresParameter)
                     {

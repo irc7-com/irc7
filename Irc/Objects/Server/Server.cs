@@ -8,6 +8,7 @@ using Irc.Factories;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Objects.Collections;
+using Irc.Objects.User;
 using Irc.Security;
 using Irc.Security.Packages;
 using Irc7d;
@@ -205,7 +206,7 @@ public class Server : ChatObject, IServer
         return Protocols;
     }
 
-    public Version ServerVersion { get; set; } = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0);
+    public Version ServerVersion { get; set; } = new Version(1, 0);
 
     public IDataStore GetDataStore()
     {

@@ -2,6 +2,7 @@
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
+using Irc.Objects.User;
 
 namespace Irc.Modes.User;
 
@@ -16,7 +17,8 @@ public class Oper : ModeRule, IModeRule
         // :sky-8a15b323126 908 Sky :No permissions to perform command
         if (source is IUser && ((IUser)source).IsSysop() && flag == false)
         {
-            target.Modes[Resources.UserModeOper].Set(flag);
+            var userModes = (UserModes)target.Modes;
+            userModes.Oper = flag;
             DispatchModeChange(source, target, flag, parameter);
             return EnumIrcError.OK;
         }

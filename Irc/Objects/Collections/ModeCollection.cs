@@ -28,18 +28,10 @@ public class ModeCollection : IModeCollection
         return $"{new string(Modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}";
     }
 
-    public IModeRule GetMode(char mode)
-    {
-        Modes.TryGetValue(mode, out var value);
-        return value ?? throw new KeyNotFoundException();
-    }
     public IModeRule this[char mode]
     {
-        get
-        {
-            Modes.TryGetValue(mode, out var modeRule);
-            return modeRule ?? throw new KeyNotFoundException();
-        }
+        get => Modes[mode];
+        set => Modes[mode] = value;
     }
 
     public string GetSupportedModes()

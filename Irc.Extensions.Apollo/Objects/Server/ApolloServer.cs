@@ -17,7 +17,9 @@ using Irc.Extensions.Security.Packages;
 using Irc.Factories;
 using Irc.Interfaces;
 using Irc.IO;
+using Irc.Modes;
 using Irc.Objects;
+using Irc.Objects.User;
 using Irc.Security;
 using Irc7d;
 
@@ -107,9 +109,12 @@ public class ApolloServer : ExtendedServer
                 var modes = dict["umode"];
                 foreach (var mode in modes)
                 {
-                    var modeRule = user.GetModes().GetMode(mode);
-                    modeRule?.Set(1);
-                    modeRule?.DispatchModeChange((ChatObject)user, (ChatObject)user, true, string.Empty);
+                    var userModes = (UserModes)user.GetModes();
+                    if (userModes.HasMode(mode))
+                    {
+                        userModes[mode].Set(true);
+                    }
+                    ModeRule.DispatchModeChange(mode, (IChatObject)user, (IChatObject)user, true, string.Empty);
                 }
             }
 

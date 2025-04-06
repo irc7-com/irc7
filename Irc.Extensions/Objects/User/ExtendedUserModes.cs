@@ -1,5 +1,6 @@
 ﻿using Irc.Constants;
 using Irc.Objects;
+using Irc.Objects.User;
 
 namespace Irc.Extensions.Objects.User;
 

@@ -27,8 +27,13 @@ public class ApolloChannel : ExtendedChannel
 
                 if (!joinMember.IsNormal())
                 {
-                    var modeChar = joinMember.IsOwner() ? 'q' : joinMember.IsHost() ? 'o' : 'v';
-                    ((ModeRule)Modes.GetMode(modeChar)).DispatchModeChange((ChatObject)channelUser, modeChar,
+                    var modeChar = joinMember.IsOwner() ? 
+                        Resources.MemberModeOwner : 
+                        joinMember.IsHost() ? 
+                            Resources.MemberModeHost : 
+                            Resources.MemberModeVoice;
+                    
+                   ModeRule.DispatchModeChange((ChatObject)channelUser, modeChar,
                         (ChatObject)user, this, true, user.ToString());
                 }
             }

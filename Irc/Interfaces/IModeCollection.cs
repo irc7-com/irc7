@@ -1,6 +1,4 @@
-﻿using Irc.Interfaces;
-
-namespace Irc.Objects;
+﻿namespace Irc.Interfaces;
 
 public interface IModeCollection
 {
@@ -8,7 +6,6 @@ public interface IModeCollection
     void ToggleModeChar(char mode, bool flag);
     int GetModeChar(char mode);
     string GetModeString();
-    IModeRule GetMode(char mode);
     IModeRule this[char mode] { get; }
     bool HasMode(char mode);
     string GetSupportedModes();

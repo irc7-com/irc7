@@ -37,7 +37,8 @@ public class ModeRuleChannel : ModeRule, IModeRule
 
     public void SetChannelMode(IChatObject source, IChannel target, bool flag, string parameter)
     {
-        target.Modes.GetMode(ModeChar).Set(flag ? 1 : 0);
+        var channelModes = (ChannelModes)target.Modes;
+        channelModes[ModeChar].Set(Convert.ToInt32(flag));
         DispatchModeChange(source, (ChatObject)target, flag, parameter);
     }
 }

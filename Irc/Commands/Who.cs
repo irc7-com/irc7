@@ -5,6 +5,7 @@ using Irc.Interfaces;
 using Irc.Objects;
 using Irc.Objects.Channel;
 using Irc.Objects.Server;
+using Irc.Objects.User;
 
 namespace Irc.Commands;
 
@@ -70,7 +71,8 @@ public class Who : Command, ICommand
         foreach (var chatUser in chatUsers)
         {
             var isCurrentUser = user == chatUser;
-            if (chatUser.Modes.GetMode(Resources.UserModeInvisible).Get() == 0 || ignoreInvisible || isCurrentUser)
+            var userModes = (UserModes)chatUser.Modes;
+            if (!userModes.Invisible || ignoreInvisible || isCurrentUser)
             {
                 // 352     RPL_WHOREPLY
                 //                 "<channel> <user> <host> <server> <nick> \

@@ -287,18 +287,16 @@ public class User : ChatObject, IUser
 
     public virtual void PromoteToSysop()
     {
-        var mode = Modes[Resources.UserModeOper];
-        mode.Set(true);
-        mode.DispatchModeChange(this, this, true, string.Empty);
+        ((UserModes)Modes).Oper = true;
+        ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Sysop;
         Send(Raw.IRCX_RPL_YOUREOPER_381(Server, this));
     }
 
     public virtual void PromoteToGuide()
     {
-        var mode = Modes[Resources.UserModeOper];
-        mode.Set(true);
-        mode.DispatchModeChange(this, this, true, string.Empty);
+        ((UserModes)Modes).Oper = true;
+        ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Guide;
         Send(Raw.IRCX_RPL_YOUREGUIDE_629(Server, this));
     }
