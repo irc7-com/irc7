@@ -1,4 +1,5 @@
 ﻿using Irc.Extensions.Security;
+using Irc.Interfaces;
 
 namespace Irc.Security;
 
@@ -15,16 +16,14 @@ public class SecurityManager : ISecurityManager
         UpdateSupportPackages();
     }
 
-    public SupportPackage CreatePackageInstance(string name, ICredentialProvider? credentialProvider)
+    public SupportPackage CreatePackageInstance(string name, ICredentialProvider credentialProvider)
     {
-        try
+        if (!_supportProviders.TryGetValue(name, out var supportPackage))
         {
-            return _supportProviders[name].CreateInstance(credentialProvider);
+            throw new InvalidOperationException($"No support package found for {name}");
         }
-        catch (Exception)
-        {
-            return null;
-        }
+        
+        return supportPackage.CreateInstance(credentialProvider);
     }
 
     public string GetSupportedPackages()

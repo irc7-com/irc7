@@ -25,8 +25,8 @@ internal class Program
 {
     public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
 
-    private static IServer server;
-    private static CancellationTokenSource cancellationTokenSource;
+    private static IServer? _server;
+    private static CancellationTokenSource _cancellationTokenSource = new();
 
     private static async Task<int> Main(string[] args)
     {
@@ -46,17 +46,17 @@ internal class Program
 
             var credentialProvider = await LoadCredentials();
 
-            server = ConfigureServer(serverType, socketServer, credentialProvider, options.ChatServerIp);
+            _server = ConfigureServer(serverType, socketServer, credentialProvider, options.ChatServerIp);
 
-            server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            server.RemoteIP = options.Fqdn;
+            _server.ServerVersion = new Version(0, 0);
+            _server.RemoteIp = options.Fqdn ?? "localhost";
 
-            InitializeDefaultChannels(server, serverType);
+            InitializeDefaultChannels(_server, serverType);
 
-            cancellationTokenSource = new CancellationTokenSource();
+            _cancellationTokenSource = new CancellationTokenSource();
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
             Console.CancelKeyPress += CurrentDomain_ProcessExit;
-            await Task.Delay(-1, cancellationTokenSource.Token).ContinueWith(t => { });
+            await Task.Delay(-1, _cancellationTokenSource.Token).ContinueWith(t => { });
         });
 
         return await rootCommand.InvokeAsync(args);
@@ -65,8 +65,8 @@ internal class Program
     private static void CurrentDomain_ProcessExit(object? sender, EventArgs e)
     {
         Log.Info("Shutting down...");
-        server.Shutdown();
-        cancellationTokenSource.Cancel();
+        _server?.Shutdown();
+        _cancellationTokenSource.Cancel();
     }
 
     private static (RootCommand, Dictionary<string, Option>) CreateRootCommand()
@@ -131,7 +131,7 @@ internal class Program
         };
     }
 
-    private static Server ConfigureServer(IrcType serverType, SocketServer socketServer, NTLMCredentials credentialProvider, string? chatServerIp)
+    private static Server ConfigureServer(IrcType serverType, SocketServer socketServer, NtlmCredentials credentialProvider, string? chatServerIp)
     {
         var floodProtectionManager = new FloodProtectionManager();
         var securityManager = new SecurityManager();
@@ -139,36 +139,37 @@ internal class Program
         var channels = new List<IChannel>();
         return serverType switch
         {
-            IrcType.IRC => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new UserFactory()),
-            IrcType.IRCX => new ExtendedServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new ExtendedUserFactory(), credentialProvider),
+            IrcType.IRC => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels),
+            IrcType.IRCX => new ExtendedServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, credentialProvider),
             IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, securityManager, floodProtectionManager, dataStoreServerConfig, channels, chatServerIp),
-            _ => new ApolloServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new ApolloUserFactory(), credentialProvider)
+            _ => new ApolloServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, credentialProvider)
         };
     }
 
-    private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer, NTLMCredentials credentialProvider, SecurityManager securityManager, FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig, List<IChannel> channels, string? chatServerIp)
+    private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer, NtlmCredentials credentialProvider, SecurityManager securityManager, FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig, List<IChannel> channels, string? chatServerIp)
     {
-        var server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, null, new ApolloUserFactory(), credentialProvider, chatServerIp);
+        var server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig, channels, credentialProvider, chatServerIp);
 
         return server;
     }
     
-    private static async Task<NTLMCredentials> LoadCredentials()
+    private static async Task<NtlmCredentials> LoadCredentials()
     {
         if (File.Exists("DefaultCredentials.json"))
         {
             var credentials =
                 JsonSerializer.Deserialize<Dictionary<string, Credential>>(
-                    await File.ReadAllTextAsync("DefaultCredentials.json"));
-            return new NTLMCredentials(credentials);
+                    await File.ReadAllTextAsync("DefaultCredentials.json")) ?? new Dictionary<string, Credential>();
+            return new NtlmCredentials(credentials);
         }
 
-        return new NTLMCredentials(new Dictionary<string, Credential>());
+        return new NtlmCredentials(new Dictionary<string, Credential>());
     }
 
     private static void InitializeDefaultChannels(IServer server, IrcType serverType)
     {
         var defaultChannels = JsonSerializer.Deserialize<List<DefaultChannel>>(File.ReadAllText("DefaultChannels.json"));
+        if (defaultChannels == null) return;
 
         foreach (var defaultChannel in defaultChannels)
         {
@@ -185,7 +186,8 @@ internal class Program
             {
                 foreach (var keyValuePair in defaultChannel.Props)
                 {
-                    extendedChannel.PropCollection.GetProp(keyValuePair.Key).SetValue(keyValuePair.Value);
+                    var prop = extendedChannel.PropCollection.GetProp(keyValuePair.Key);
+                    prop?.SetValue(keyValuePair.Value);
                 }
             }
 

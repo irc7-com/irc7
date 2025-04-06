@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Extensions.Apollo.Objects.Channel;
 using Irc.Interfaces;
 using Irc.Modes;
@@ -21,28 +22,33 @@ public class Host : ModeRuleChannel, IModeRule
 
             var user = (IUser)source;
             var channel = (ApolloChannel)user.GetChannels().LastOrDefault().Key;
+            var channelModes = channel.Modes;
             var member = user.GetChannels().LastOrDefault().Value;
-            if (channel.PropCollection.GetProp("OWNERKEY").GetValue(target) == parameter)
+
+            var ownerkeyProp = channel.PropCollection.GetProp("OWNERKEY");
+            var hostkeyProp = channel.PropCollection.GetProp("HOSTKEY");
+            
+            if (ownerkeyProp?.GetValue(target) == parameter)
             {
                 if (member.IsHost())
                 {
                     member.SetHost(false);
-                    channel.Modes.GetMode('o').DispatchModeChange(source, channel, false, target.ToString());
+                    DispatchModeChange(Resources.MemberModeHost, source, channel, false, target.ToString());
                 }
 
                 member.SetOwner(true);
-                channel.Modes.GetMode('q').DispatchModeChange(source, channel, true, target.ToString());
+                DispatchModeChange(Resources.MemberModeOwner, source, channel, true, target.ToString());
             }
-            else if (channel.PropCollection.GetProp("HOSTKEY").GetValue(target) == parameter)
+            else if (hostkeyProp?.GetValue(target) == parameter)
             {
                 if (member.IsOwner())
                 {
                     member.SetOwner(false);
-                    channel.Modes.GetMode('q').DispatchModeChange(source, channel, false, target.ToString());
+                    DispatchModeChange(Resources.MemberModeOwner, source, channel, false, target.ToString());
                 }
 
                 member.SetHost(true);
-                channel.Modes.GetMode('o').DispatchModeChange(source, channel, true, target.ToString());
+                DispatchModeChange(Resources.MemberModeHost, source, channel, true, target.ToString());
             }
 
             return EnumIrcError.OK;

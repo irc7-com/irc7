@@ -10,12 +10,12 @@ internal class Ircvers : Command, ICommand
     {
     }
 
-    public EnumCommandDataType GetDataType()
+    public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.Standard;
     }
 
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
     }
 }

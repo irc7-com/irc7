@@ -1,34 +1,36 @@
 ﻿using Irc.Constants;
+using Irc.Interfaces;
 using Irc.Modes.User;
+using Irc.Objects.Collections;
 
-namespace Irc.Objects;
+namespace Irc.Objects.User;
 
 public class UserModes : ModeCollection, IModeCollection
 {
     public UserModes()
     {
-        modes.Add(Resources.UserModeOper, new Oper());
-        modes.Add(Resources.UserModeInvisible, new Invisible());
-        modes.Add(Resources.UserModeSecure, new Secure());
+        Modes.Add(Resources.UserModeOper, new Oper());
+        Modes.Add(Resources.UserModeInvisible, new Invisible());
+        Modes.Add(Resources.UserModeSecure, new Secure());
         //modes.Add(Resources.UserModeServerNotice, new Modes.User.ServerNotice());
         //modes.Add(Resources.UserModeWallops, new Modes.User.WallOps());
     }
 
     public bool Oper
     {
-        get => modes[Resources.UserModeOper].Get() == 1;
-        set => modes[Resources.UserModeOper].Set(Convert.ToInt32(value));
+        get => Modes[Resources.UserModeOper].Get() == 1;
+        set => Modes[Resources.UserModeOper].Set(Convert.ToInt32(value));
     }
 
     public bool Invisible
     {
-        get => modes[Resources.UserModeInvisible].Get() == 1;
-        set => modes[Resources.UserModeInvisible].Set(Convert.ToInt32(value));
+        get => Modes[Resources.UserModeInvisible].Get() == 1;
+        set => Modes[Resources.UserModeInvisible].Set(Convert.ToInt32(value));
     }
 
     public bool Secure
     {
-        get => modes[Resources.UserModeSecure].Get() == 1;
-        set => modes[Resources.UserModeSecure].Set(Convert.ToInt32(value));
+        get => Modes[Resources.UserModeSecure].Get() == 1;
+        set => Modes[Resources.UserModeSecure].Set(Convert.ToInt32(value));
     }
 }

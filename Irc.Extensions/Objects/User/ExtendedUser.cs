@@ -8,7 +8,7 @@ using Irc7d;
 
 namespace Irc.Extensions.Objects.User;
 
-public class ExtendedUser : global::Irc.Objects.User, IExtendedChatObject
+public class ExtendedUser : global::Irc.Objects.User.User, IExtendedChatObject
 {
     protected UserPropCollection _properties;
     private UserAccess _accessList = new();

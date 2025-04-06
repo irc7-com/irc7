@@ -2,15 +2,15 @@
 using System.Text;
 using Irc.Constants;
 using Irc.Enumerations;
-using Irc.Extensions.Security.Packages;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Modes;
 using Irc.Objects.Server;
+using Irc.Security.Packages;
 using Irc7d;
 using NLog;
 
-namespace Irc.Objects;
+namespace Irc.Objects.User;
 
 public class User : ChatObject, IUser
 {
@@ -31,7 +31,6 @@ public class User : ChatObject, IUser
     private bool _registered;
     private ISupportPackage _supportPackage;
     public IDictionary<IChannel, IChannelMember> Channels;
-    public string Client;
 
     public DateTime LastPing = DateTime.UtcNow;
     public long PingCount;
@@ -57,7 +56,7 @@ public class User : ChatObject, IUser
             if (message.HasCommand) _dataRegulator.PushIncoming(message);
         };
 
-        Address.SetIP(connection.GetIp());
+        Address.SetIp(connection.GetIp());
     }
 
     public override EnumUserAccessLevel Level => GetLevel();
@@ -68,7 +67,6 @@ public class User : ChatObject, IUser
     public DateTime LoggedOn { get; private set; } = DateTime.UtcNow;
 
     public IServer Server { get; }
-    public event EventHandler<string> OnSend;
 
     public void BroadcastToChannels(string data, bool ExcludeUser)
     {
@@ -282,25 +280,23 @@ public class User : ChatObject, IUser
     {
         var mode = Modes[Resources.UserModeAdmin];
         mode.Set(true);
-        mode.DispatchModeChange(this, this, true);
+        mode.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Administrator;
         Send(Raw.IRCX_RPL_YOUREADMIN_386(Server, this));
     }
 
     public virtual void PromoteToSysop()
     {
-        var mode = Modes[Resources.UserModeOper];
-        mode.Set(true);
-        mode.DispatchModeChange(this, this, true);
+        ((UserModes)Modes).Oper = true;
+        ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Sysop;
         Send(Raw.IRCX_RPL_YOUREOPER_381(Server, this));
     }
 
     public virtual void PromoteToGuide()
     {
-        var mode = Modes[Resources.UserModeOper];
-        mode.Set(true);
-        mode.DispatchModeChange(this, this, true);
+        ((UserModes)Modes).Oper = true;
+        ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Guide;
         Send(Raw.IRCX_RPL_YOUREGUIDE_629(Server, this));
     }
@@ -353,10 +349,15 @@ public class User : ChatObject, IUser
     {
         var userAddress = GetAddress();
         var credentials = GetSupportPackage().GetCredentials();
-        userAddress.User = credentials.GetUsername() ?? userAddress.MaskedIP;
+
+        if (credentials == null)
+        {
+            throw new Exception("Register: No credentials provided");
+        }
+        
+        userAddress.User = credentials.GetUsername() ?? userAddress.MaskedIp;
         userAddress.Host = credentials.GetDomain();
         userAddress.Server = Server.Name;
-        userAddress.RealName = credentials.Guest ? string.Empty : null;
 
         LoggedOn = DateTime.UtcNow;
         _authenticated = true;
@@ -391,7 +392,7 @@ public class User : ChatObject, IUser
         };
     }
 
-    public virtual bool CanBeModifiedBy(ChatObject source)
+    public new virtual bool CanBeModifiedBy(ChatObject source)
     {
         return source == this;
     }

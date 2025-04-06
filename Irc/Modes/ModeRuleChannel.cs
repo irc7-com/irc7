@@ -15,7 +15,7 @@ public class ModeRuleChannel : ModeRule, IModeRule
         this.accessLevel = accessLevel;
     }
 
-    public EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
+    public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
         var user = (IUser)source;
         var channel = (IChannel)target;
@@ -23,7 +23,7 @@ public class ModeRuleChannel : ModeRule, IModeRule
 
         if (member == null && !user.IsAdministrator()) return EnumIrcError.ERR_NOTONCHANNEL;
 
-        if (member.GetLevel() < accessLevel) return EnumIrcError.ERR_NOCHANOP;
+        if (member?.GetLevel() < accessLevel) return EnumIrcError.ERR_NOCHANOP;
 
         return EnumIrcError.OK;
     }
@@ -37,7 +37,8 @@ public class ModeRuleChannel : ModeRule, IModeRule
 
     public void SetChannelMode(IChatObject source, IChannel target, bool flag, string parameter)
     {
-        target.Modes.GetMode(ModeChar).Set(flag ? 1 : 0);
+        var channelModes = (ChannelModes)target.Modes;
+        channelModes[ModeChar].Set(Convert.ToInt32(flag));
         DispatchModeChange(source, (ChatObject)target, flag, parameter);
     }
 }

@@ -61,7 +61,7 @@ public class ModeRule : IModeRule
         );
     }
 
-    public void DispatchModeChange(ChatObject recipientObject, char modeChar, ChatObject source, ChatObject target,
+    public static void DispatchModeChange(ChatObject recipientObject, char modeChar, ChatObject source, ChatObject target,
         bool flag, string parameter)
     {
         recipientObject.Send(

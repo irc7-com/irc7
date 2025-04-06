@@ -5,6 +5,7 @@ using Irc.Interfaces;
 using Irc.Objects;
 using Irc.Objects.Channel;
 using Irc.Objects.Server;
+using Irc.Objects.User;
 
 namespace Irc.Commands;
 
@@ -63,13 +64,15 @@ public class Who : Command, ICommand
         user.Send(Raw.IRCX_RPL_ENDOFWHO_315(server, user, criteria));
     }
 
+    // TODO: The below function needs re-writing
     public static void SendWho(IServer server, IUser user, IList<IUser> chatUsers, string channelName,
         bool ignoreInvisible)
     {
         foreach (var chatUser in chatUsers)
         {
             var isCurrentUser = user == chatUser;
-            if (chatUser.Modes.GetMode(Resources.UserModeInvisible).Get() == 0 || ignoreInvisible || isCurrentUser)
+            var userModes = (UserModes)chatUser.Modes;
+            if (!userModes.Invisible || ignoreInvisible || isCurrentUser)
             {
                 // 352     RPL_WHOREPLY
                 //                 "<channel> <user> <host> <server> <nick> \
@@ -78,12 +81,12 @@ public class Who : Command, ICommand
                 var address = chatUser.GetAddress();
                 var channels = chatUser.GetChannels();
                 var channel = channels.Count > 0 ? channels.First().Key : null;
-                var channelStoredName = channels.Count > 0 ? channel.GetName() : string.Empty;
+                var channelStoredName = channels.Count > 0 ? channel?.GetName() ?? string.Empty : string.Empty;
                 var goneHome = chatUser.Away ? "G" : "H";
 
                 var chanMode = string.Empty;
                 var channelMember = channel?.GetMember(user);
-                if (channelMember != null) chanMode = channel.GetMember(user).GetModeString();
+                if (channelMember != null) chanMode = channel?.GetMember(user)?.GetModeString();
 
                 var modeString = chatUser.Modes.ToString();
 

@@ -22,15 +22,18 @@ public class Owner : ModeRule, IModeRule
     {
     }
 
-    public EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
+    public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
         var channel = (IChannel)target;
+        
+        // TODO: Merge the below two blocks
         if (!channel.CanBeModifiedBy(source)) return EnumIrcError.ERR_NOTONCHANNEL;
-
+        
+        var sourceMember = channel.GetMember((IUser)source);
+        if (sourceMember == null) return EnumIrcError.ERR_NOTONCHANNEL;
+        
         var targetMember = channel.GetMemberByNickname(parameter);
         if (targetMember == null) return EnumIrcError.ERR_NOSUCHNICK;
-
-        var sourceMember = channel.GetMember((IUser)source);
 
         var result = sourceMember.CanModify(targetMember, EnumChannelAccessLevel.ChatOwner);
         if (result == EnumIrcError.OK)

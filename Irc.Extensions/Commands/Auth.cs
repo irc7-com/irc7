@@ -1,10 +1,10 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Commands;
+using Irc.Enumerations;
 using Irc.Extensions.Security;
-using Irc.Extensions.Security.Packages;
 using Irc.Helpers;
 using Irc.Interfaces;
 
-namespace Irc.Commands;
+namespace Irc.Extensions.Commands;
 
 public class Auth : Command, ICommand
 {
@@ -31,37 +31,45 @@ public class Auth : Command, ICommand
         {
             var parameters = chatFrame.Message.Parameters;
 
-            var supportPackage = chatFrame.User.GetSupportPackage();
+            ISupportPackage supportPackage = chatFrame.User.GetSupportPackage();
             var packageName = parameters[0];
             var sequence = parameters[1].ToUpper();
             var token = parameters[2].ToLiteral();
 
             if (sequence == "I")
             {
-                var targetPackage = chatFrame.Server.GetSecurityManager()
-                    .CreatePackageInstance(packageName, chatFrame.Server.GetCredentialManager());
-
-                if (targetPackage == null)
+                try
+                {
+                    var credentialManager = chatFrame.Server.GetCredentialManager();
+                    if (credentialManager == null) throw new ArgumentNullException(nameof(credentialManager));
+                    
+                    supportPackage = chatFrame.Server.GetSecurityManager()
+                        .CreatePackageInstance(packageName, credentialManager);
+                    
+                    chatFrame.User.SetSupportPackage(supportPackage);
+                }
+                catch (ArgumentException)
                 {
                     chatFrame.User.Send(Raw.IRCX_ERR_UNKNOWNPACKAGE_912(chatFrame.Server, chatFrame.User, packageName));
                     return;
                 }
 
-                if (supportPackage == null || supportPackage is ANON)
-                {
-                    supportPackage = chatFrame.Server.GetSecurityManager()
-                        .CreatePackageInstance(packageName, chatFrame.Server.GetCredentialManager());
-
-                    chatFrame.User.SetSupportPackage(supportPackage);
-                }
-
                 var supportPackageSequence =
-                    supportPackage.InitializeSecurityContext(token, chatFrame.Server.RemoteIP);
+                    supportPackage.InitializeSecurityContext(token, chatFrame.Server.RemoteIp);
 
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
                 {
-                    var securityToken = supportPackage.CreateSecurityChallenge().ToEscape();
-                    chatFrame.User.Send(Raw.RPL_AUTH_SEC_REPLY(packageName, securityToken));
+                    var securityToken = supportPackage.CreateSecurityChallenge();
+
+                    // If the security token could not be created, disconnect the user
+                    if (securityToken == string.Empty)
+                    {
+                        chatFrame.User.Disconnect(Raw.IRCX_ERR_RESOURCE_907(chatFrame.Server, chatFrame.User));
+                        return;
+                    }
+
+                    var securityTokenEscaped = securityToken.ToEscape();
+                    chatFrame.User.Send(Raw.RPL_AUTH_SEC_REPLY(packageName, securityTokenEscaped));
                     // Send reply
                     return;
                 }
@@ -69,38 +77,38 @@ public class Auth : Command, ICommand
             else if (sequence == "S")
             {
                 var supportPackageSequence =
-                    chatFrame.User.GetSupportPackage().AcceptSecurityContext(token, chatFrame.Server.RemoteIP);
+                    supportPackage.AcceptSecurityContext(token, chatFrame.Server.RemoteIp);
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
                 {
                     chatFrame.User.Authenticate();
 
-                    var credentials = chatFrame.User.GetSupportPackage().GetCredentials();
+                    var credentials = supportPackage.GetCredentials();
                     if (credentials == null)
                     {
-                        // Invalid credentials handle
+                        // TODO: Invalid credentials handle
+                        chatFrame.User.Disconnect("Invalid Credentials");
+                        return;
                     }
-                    else
-                    {
-                        var user = chatFrame.User.GetSupportPackage().GetCredentials().GetUsername();
-                        var domain = chatFrame.User.GetSupportPackage().GetCredentials().GetDomain();
-                        var userAddress = chatFrame.User.GetAddress();
-                        userAddress.User = credentials.GetUsername() ?? userAddress.MaskedIP;
-                        userAddress.Host = credentials.GetDomain();
-                        userAddress.Server = chatFrame.Server.Name;
-                        var nickname = credentials.GetNickname();
-                        if (nickname != null) chatFrame.User.Name = credentials.GetNickname();
-                        if (credentials.Guest && chatFrame.User.GetAddress().RealName == null)
-                            userAddress.RealName = string.Empty;
 
-                        chatFrame.User.SetGuest(credentials.Guest);
-                        chatFrame.User.SetLevel(credentials.GetLevel());
+                    var user = credentials.GetUsername();
+                    var domain = credentials.GetDomain();
+                    var userAddress = chatFrame.User.GetAddress();
+                    userAddress.User = string.IsNullOrWhiteSpace(user) ? userAddress.MaskedIp : user;
+                    userAddress.Host = credentials.GetDomain();
+                    userAddress.Server = chatFrame.Server.Name;
+                    var nickname = credentials.GetNickname();
+                    if (!string.IsNullOrWhiteSpace(nickname)) chatFrame.User.Name = credentials.GetNickname();
+                    if (credentials.Guest && string.IsNullOrWhiteSpace(chatFrame.User.GetAddress().RealName))
+                        userAddress.RealName = string.Empty;
 
-                        // TODO: find another way to work in Utf8 nicknames
-                        if (chatFrame.User.GetLevel() >= EnumUserAccessLevel.Guide) chatFrame.User.Utf8 = true;
+                    chatFrame.User.SetGuest(credentials.Guest);
+                    chatFrame.User.SetLevel(credentials.GetLevel());
 
-                        // Send reply
-                        chatFrame.User.Send(Raw.RPL_AUTH_SUCCESS(packageName, $"{user}@{domain}", 0));
-                    }
+                    // TODO: find another way to work in Utf8 nicknames
+                    if (chatFrame.User.GetLevel() >= EnumUserAccessLevel.Guide) chatFrame.User.Utf8 = true;
+
+                    // Send reply
+                    chatFrame.User.Send(Raw.RPL_AUTH_SUCCESS(packageName, $"{user}@{domain}", 0));
 
                     return;
                 }

@@ -7,13 +7,13 @@ namespace Irc7d;
 
 public class SocketConnection : IConnection
 {
-    private readonly string _fullAddress;
+    private readonly string _fullAddress = string.Empty;
     private readonly Socket _socket;
-    private string _address;
-    private string _hostname;
+    private string _address = string.Empty;
+    private string _hostname = string.Empty;
     private BigInteger _id;
-    private IPAddress _ipAddress;
-    private string _received;
+    private IPAddress _ipAddress = new(0);
+    private string _received = string.Empty;
 
     public SocketConnection(Socket socket)
     {
@@ -30,11 +30,11 @@ public class SocketConnection : IConnection
         }
     }
 
-    public EventHandler<string> OnSend { get; set; }
-    public EventHandler<string> OnReceive { get; set; }
-    public EventHandler<BigInteger> OnConnect { get; set; }
-    public EventHandler<BigInteger> OnDisconnect { get; set; }
-    public EventHandler<Exception> OnError { get; set; }
+    public EventHandler<string>? OnSend { get; set; }
+    public EventHandler<string>? OnReceive { get; set; }
+    public EventHandler<BigInteger>? OnConnect { get; set; }
+    public EventHandler<BigInteger>? OnDisconnect { get; set; }
+    public EventHandler<Exception>? OnError { get; set; }
 
     public string GetIp()
     {
@@ -60,7 +60,7 @@ public class SocketConnection : IConnection
     {
         var sendAsync = new SocketAsyncEventArgs();
         sendAsync.SetBuffer(message.ToByteArray());
-        sendAsync.Completed += (sender, args) => { OnSend(this, message); };
+        sendAsync.Completed += (sender, args) => OnSend?.Invoke(this, message);
 
         if (!_socket.Connected) OnDisconnect?.Invoke(this, GetId());
 
@@ -155,17 +155,15 @@ public class SocketConnection : IConnection
                 }
                 else
                 {
-                    //DisconnectSocket(connection, args);
                     _socket.Close();
                 }
             }
             // For all outstanding bytes loop that arent async callback
             while (!_socket.SafeHandle.IsInvalid && _socket.Connected && !_socket.ReceiveAsync(socketAsyncEventArgs));
         }
-        catch (ObjectDisposedException e)
+        catch (ObjectDisposedException)
         {
             // Socket has closed & disposed
-            //DisconnectSocket(connection, args);
             _socket.Close();
         }
         finally

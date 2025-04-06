@@ -22,15 +22,20 @@ public class Operator : ModeRule, IModeRule
     {
     }
 
-    public EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
+    public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
+        // TODO: Consider combining below blocks
         var channel = (IChannel)target;
-        if (!channel.CanBeModifiedBy(source)) return EnumIrcError.ERR_NOTONCHANNEL;
-
+        var user = (IUser)source;
+        
+        var sourceMember = channel.GetMember(user);
+        if (sourceMember == null || !channel.CanBeModifiedBy((ChatObject)source))
+        {
+            return EnumIrcError.ERR_NOTONCHANNEL;
+        }
+        
         var targetMember = channel.GetMemberByNickname(parameter);
         if (targetMember == null) return EnumIrcError.ERR_NOSUCHNICK;
-
-        var sourceMember = channel.GetMember((IUser)source);
 
         var result = sourceMember.CanModify(targetMember, EnumChannelAccessLevel.ChatHost);
         if (result != EnumIrcError.OK) return result;

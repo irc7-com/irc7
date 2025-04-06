@@ -6,7 +6,7 @@ namespace Irc.Extensions.Access;
 
 public class AccessList : IAccessList
 {
-    protected Dictionary<EnumAccessLevel, List<AccessEntry>> accessEntries = new();
+    protected Dictionary<EnumAccessLevel, List<AccessEntry>> AccessEntries = new();
 
     public EnumAccessError Add(AccessEntry accessEntry)
     {
@@ -31,30 +31,30 @@ public class AccessList : IAccessList
         accessList.Remove(entry);
         return EnumAccessError.SUCCESS;
     }
-    public List<AccessEntry> Get(EnumAccessLevel accessLevel)
+    public List<AccessEntry>? Get(EnumAccessLevel accessLevel)
     {
-        accessEntries.TryGetValue(accessLevel, out var list);
+        AccessEntries.TryGetValue(accessLevel, out var list);
         return list;
     }
-    public AccessEntry Get(EnumAccessLevel accessLevel, string mask)
+    public AccessEntry? Get(EnumAccessLevel accessLevel, string mask)
     {
         var accessList = Get(accessLevel);
         if (accessList == null) return null;
 
         return accessList.FirstOrDefault(entry => entry.Mask == mask);
     }
-    public Dictionary<EnumAccessLevel, List<AccessEntry>> GetEntries() => accessEntries;
+    public Dictionary<EnumAccessLevel, List<AccessEntry>> GetEntries() => AccessEntries;
     public EnumAccessError Clear(EnumUserAccessLevel userAccessLevel, EnumAccessLevel accessLevel)
     {
         bool hasRemaining = false;
-        accessEntries
+        AccessEntries
             .Where((kvp) => (accessLevel == EnumAccessLevel.All || kvp.Key == accessLevel))
             .ToList()
             .ForEach(
                 kvp =>
                 {
-                    accessEntries[kvp.Key] = kvp.Value.Where(accessEntry => (accessEntry.EntryLevel > userAccessLevel)).ToList();
-                    if (accessEntries[kvp.Key].Count > 0)
+                    AccessEntries[kvp.Key] = kvp.Value.Where(accessEntry => (accessEntry.EntryLevel > userAccessLevel)).ToList();
+                    if (AccessEntries[kvp.Key].Count > 0)
                     {
                         hasRemaining = true;
                     }

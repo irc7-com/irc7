@@ -2,6 +2,7 @@ using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
+using Irc.Objects.User;
 using NLog;
 
 namespace Irc.Commands;
@@ -72,7 +73,7 @@ public class WebIrc : Command, ICommand
                     .Select(y =>
                     {
                         var parts = y.Split('=', StringSplitOptions.RemoveEmptyEntries);
-                        var key = parts.FirstOrDefault();
+                        var key = parts.FirstOrDefault() ?? string.Empty;
                         var value = parts.Length > 1 ? parts[1] : string.Empty;
                         return new KeyValuePair<string, string>(key, value);
                     })
@@ -91,7 +92,7 @@ public class WebIrc : Command, ICommand
     {
         Log.Warn($"Unauthorized WEBIRC attempt from {remoteAddress}");
         var originalCommand = chatFrame.Message.OriginalText.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .FirstOrDefault();
+            .First();
         chatFrame.User.Send(Raw.IRCX_ERR_UNKNOWNCOMMAND_421(chatFrame.Server, chatFrame.User, originalCommand));
     }
 }

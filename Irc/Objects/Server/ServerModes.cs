@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Irc.Interfaces;
+using Irc.Objects.Collections;
 
 namespace Irc.Objects.Server
 {

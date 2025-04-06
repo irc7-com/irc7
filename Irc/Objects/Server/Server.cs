@@ -4,11 +4,13 @@ using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Extensions.Security;
-using Irc.Extensions.Security.Packages;
 using Irc.Factories;
 using Irc.Interfaces;
 using Irc.IO;
+using Irc.Objects.Collections;
+using Irc.Objects.User;
 using Irc.Security;
+using Irc.Security.Packages;
 using Irc7d;
 using NLog;
 using Version = System.Version;
@@ -20,52 +22,47 @@ public class Server : ChatObject, IServer
     public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
 
     private readonly CancellationTokenSource _cancellationTokenSource = new();
-    protected readonly IDataStore _dataStore;
+    protected readonly IDataStore _DataStore;
     private readonly IFloodProtectionManager _floodProtectionManager;
     private readonly Task _processingTask;
     private readonly ISecurityManager _securityManager;
     private readonly ISocketServer _socketServer;
-    private readonly IUserFactory _userFactory;
-    public readonly ICommandCollection Commands;
-    private readonly ConcurrentQueue<IUser> PendingNewUserQueue = new();
-    private readonly ConcurrentQueue<IUser> PendingRemoveUserQueue = new();
-    public IDictionary<EnumProtocolType, IProtocol> _protocols = new Dictionary<EnumProtocolType, IProtocol>();
+    protected IUserFactory UserFactory;
+    private readonly ConcurrentQueue<IUser> _pendingNewUserQueue = new();
+    private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
+    public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
 
     public IList<IChannel> Channels;
 
     public IList<IUser> Users = new List<IUser>();
-
-
+    
     public Server(ISocketServer socketServer,
         ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
-        IList<IChannel> channels,
-        ICommandCollection commands,
-        IUserFactory userFactory) : base(new ModeCollection(), dataStore)
+        IList<IChannel> channels) : base(new ModeCollection(), dataStore)
     {
         Title = Name;
         _socketServer = socketServer;
         _securityManager = securityManager;
         _floodProtectionManager = floodProtectionManager;
-        _dataStore = dataStore;
+        _DataStore = dataStore;
         Channels = channels;
-        Commands = commands;
-        _userFactory = userFactory;
+        UserFactory = new UserFactory();
         _processingTask = new Task(Process);
         _processingTask.Start();
 
         LoadSettingsFromDataStore();
 
-        _dataStore.SetAs("creation", DateTime.UtcNow);
-        _dataStore.Set("supported.channel.modes",
+        _DataStore.SetAs("creation", DateTime.UtcNow);
+        _DataStore.Set("supported.channel.modes",
             new ChannelModes().GetSupportedModes());
-        _dataStore.Set("supported.user.modes", new UserModes().GetSupportedModes());
-        SupportPackages = _dataStore.GetAs<string[]>(Resources.ConfigSaslPackages) ?? Array.Empty<string>();
+        _DataStore.Set("supported.user.modes", new UserModes().GetSupportedModes());
+        SupportPackages = _DataStore.GetAs<List<string>>(Resources.ConfigSaslPackages)?.ToArray() ?? Array.Empty<string>();
 
         if (MaxAnonymousConnections > 0) _securityManager.AddSupportPackage(new ANON());
 
-        _protocols.Add(EnumProtocolType.IRC, new Irc());
+        Protocols.Add(EnumProtocolType.IRC, new Protocols.Irc());
 
         socketServer.OnClientConnecting += (sender, connection) =>
         {
@@ -87,14 +84,14 @@ public class Server : ChatObject, IServer
 
     public string[] SupportPackages { get; }
 
-    public DateTime CreationDate => _dataStore.GetAs<DateTime>("creation");
+    public DateTime CreationDate => _DataStore.GetAs<DateTime>("creation");
 
     // Server Properties To be moved to another class later
     public string Title { get; private set; }
-    public bool AnnonymousAllowed { get; }
-    public int ChannelCount { get; }
-    public IList<ChatObject> IgnoredUsers { get; }
-    public IList<string> Info { get; }
+    public bool AnnonymousAllowed { get; } = true;
+    public int ChannelCount { get; } = 0;
+    public IList<ChatObject> IgnoredUsers { get; } = new List<ChatObject>();
+    public IList<string> Info { get; } = new List<string>();
     public int MaxMessageLength { get; } = 512;
     public int MaxInputBytes { get; private set; } = 512;
     public int MaxOutputBytes { get; private set; } = 4096;
@@ -107,35 +104,35 @@ public class Server : ChatObject, IServer
     public int MaxGuestConnections { get; } = 1000;
     public bool BasicAuthentication { get; private set; } = true;
     public bool AnonymousConnections { get; private set; } = true;
-    public int NetInvisibleCount { get; }
-    public int NetServerCount { get; }
-    public int NetUserCount { get; }
+    public int NetInvisibleCount { get; } = 0;
+    public int NetServerCount { get; } = 0;
+    public int NetUserCount { get; } = 0;
     public string SecurityPackages => _securityManager.GetSupportedPackages();
-    public int SysopCount { get; }
+    public int SysopCount { get; } = 0;
     public int UnknownConnectionCount => _socketServer.CurrentConnections - NetUserCount;
-    public string RemoteIP { set; get; }
+    public string RemoteIp { set; get; } = String.Empty;
     public bool DisableGuestMode { set; get; }
     public bool DisableUserRegistration { get; set; }
 
-    public void SetMOTD(string motd)
+    public void SetMotd(string motd)
     {
         var lines = motd.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-        _dataStore.SetAs(Resources.ConfigMotd, lines);
+        _DataStore.SetAs(Resources.ConfigMotd, lines);
     }
 
-    public string[] GetMOTD()
+    public string[] GetMotd()
     {
-        return _dataStore.GetAs<string[]>(Resources.ConfigMotd);
+        return _DataStore.GetAs<List<string>>(Resources.ConfigMotd)?.ToArray() ?? Array.Empty<string>();
     }
 
     public void AddUser(IUser user)
     {
-        PendingNewUserQueue.Enqueue(user);
+        _pendingNewUserQueue.Enqueue(user);
     }
 
     public void RemoveUser(IUser user)
     {
-        PendingRemoveUserQueue.Enqueue(user);
+        _pendingRemoveUserQueue.Enqueue(user);
     }
 
     public void AddChannel(IChannel channel)
@@ -155,7 +152,7 @@ public class Server : ChatObject, IServer
 
     public IUser CreateUser(IConnection connection)
     {
-        return _userFactory.Create(this, connection);
+        return UserFactory.Create(this, connection);
     }
 
     public IList<IUser> GetUsers()
@@ -164,12 +161,12 @@ public class Server : ChatObject, IServer
     }
 
 
-    public IUser GetUserByNickname(string nickname)
+    public IUser? GetUserByNickname(string nickname)
     {
         return Users.FirstOrDefault(user => string.Compare(user.GetAddress().Nickname.Trim(), nickname, true) == 0);
     }
 
-    public IUser GetUserByNickname(string nickname, IUser currentUser)
+    public IUser? GetUserByNickname(string nickname, IUser currentUser)
     {
         if (nickname.ToUpperInvariant() == currentUser.Name.ToUpperInvariant()) return currentUser;
 
@@ -196,24 +193,24 @@ public class Server : ChatObject, IServer
 
     public string GetSupportedChannelModes()
     {
-        return _dataStore.Get("supported.channel.modes");
+        return _DataStore.Get("supported.channel.modes");
     }
 
     public string GetSupportedUserModes()
     {
-        return _dataStore.Get("supported.user.modes");
+        return _DataStore.Get("supported.user.modes");
     }
 
     public IDictionary<EnumProtocolType, IProtocol> GetProtocols()
     {
-        return _protocols;
+        return Protocols;
     }
 
-    public Version ServerVersion { get; set; } = Assembly.GetExecutingAssembly().GetName().Version;
+    public Version ServerVersion { get; set; } = new Version(1, 0);
 
     public IDataStore GetDataStore()
     {
-        return _dataStore;
+        return _DataStore;
     }
 
     public virtual IChannel CreateChannel(IUser creator, string name, string key)
@@ -233,13 +230,13 @@ public class Server : ChatObject, IServer
         return channel;
     }
 
-    public IChannel GetChannelByName(string name)
+    public IChannel? GetChannelByName(string name)
     {
         return Channels.SingleOrDefault(c =>
             string.Equals(c.GetName(), name, StringComparison.InvariantCultureIgnoreCase));
     }
 
-    public ChatObject GetChatObject(string name)
+    public ChatObject? GetChatObject(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
 
@@ -247,23 +244,21 @@ public class Server : ChatObject, IServer
         {
             case "*":
             case "$":
-            {
                 return this;
-            }
             case "%":
             case "#":
             case "&":
-                return (ChatObject)GetChannelByName(name);
+                return (ChatObject?)GetChannelByName(name);
             default:
             {
-                return (ChatObject)GetUserByNickname(name);
+                return (ChatObject?)GetUserByNickname(name);
             }
         }
     }
 
-    public IProtocol GetProtocol(EnumProtocolType protocolType)
+    public IProtocol? GetProtocol(EnumProtocolType protocolType)
     {
-        if (_protocols.TryGetValue(protocolType, out var protocol)) return protocol;
+        if (Protocols.TryGetValue(protocolType, out var protocol)) return protocol;
         return null;
     }
 
@@ -290,17 +285,17 @@ public class Server : ChatObject, IServer
 
     public void LoadSettingsFromDataStore()
     {
-        var title = _dataStore.Get(Resources.ConfigServerTitle);
-        var maxInputBytes = _dataStore.GetAs<int>(Resources.ConfigMaxInputBytes);
-        var maxOutputBytes = _dataStore.GetAs<int>(Resources.ConfigMaxOutputBytes);
-        var pingInterval = _dataStore.GetAs<int>(Resources.ConfigPingInterval);
-        var pingAttempts = _dataStore.GetAs<int>(Resources.ConfigPingAttempts);
-        var maxChannels = _dataStore.GetAs<int>(Resources.ConfigMaxChannels);
-        var maxConnections = _dataStore.GetAs<int>(Resources.ConfigMaxConnections);
-        var maxAuthenticatedConnections = _dataStore.GetAs<int>(Resources.ConfigMaxAuthenticatedConnections);
-        var maxAnonymousConnections = _dataStore.GetAs<int>(Resources.ConfigMaxAnonymousConnections);
-        var basicAuthentication = _dataStore.GetAs<bool>(Resources.ConfigBasicAuthentication);
-        var anonymousConnections = _dataStore.GetAs<bool>(Resources.ConfigAnonymousConnections);
+        var title = _DataStore.Get(Resources.ConfigServerTitle);
+        var maxInputBytes = _DataStore.GetAs<int>(Resources.ConfigMaxInputBytes);
+        var maxOutputBytes = _DataStore.GetAs<int>(Resources.ConfigMaxOutputBytes);
+        var pingInterval = _DataStore.GetAs<int>(Resources.ConfigPingInterval);
+        var pingAttempts = _DataStore.GetAs<int>(Resources.ConfigPingAttempts);
+        var maxChannels = _DataStore.GetAs<int>(Resources.ConfigMaxChannels);
+        var maxConnections = _DataStore.GetAs<int>(Resources.ConfigMaxConnections);
+        var maxAuthenticatedConnections = _DataStore.GetAs<int>(Resources.ConfigMaxAuthenticatedConnections);
+        var maxAnonymousConnections = _DataStore.GetAs<int?>(Resources.ConfigMaxAnonymousConnections);
+        var basicAuthentication = _DataStore.GetAs<bool?>(Resources.ConfigBasicAuthentication);
+        var anonymousConnections = _DataStore.GetAs<bool?>(Resources.ConfigAnonymousConnections);
 
         if (!string.IsNullOrWhiteSpace(title)) Title = title;
         if (maxInputBytes > 0) MaxInputBytes = maxInputBytes;
@@ -310,14 +305,14 @@ public class Server : ChatObject, IServer
         if (maxChannels > 0) MaxChannels = maxChannels;
         if (maxConnections > 0) MaxConnections = maxConnections;
         if (maxAuthenticatedConnections > 0) MaxAuthenticatedConnections = maxAuthenticatedConnections;
-        if (maxAnonymousConnections != null) MaxAnonymousConnections = maxAnonymousConnections;
-        if (basicAuthentication != null) BasicAuthentication = basicAuthentication;
-        if (anonymousConnections != null) AnonymousConnections = anonymousConnections;
+        if (maxAnonymousConnections.HasValue) MaxAnonymousConnections = maxAnonymousConnections.Value;
+        if (basicAuthentication.HasValue) BasicAuthentication = basicAuthentication.Value;
+        if (anonymousConnections.HasValue) AnonymousConnections = anonymousConnections.Value;
     }
 
     private void Process()
     {
-        var backoffMS = 0;
+        var backoffMs = 0;
         while (!_cancellationTokenSource.IsCancellationRequested)
         {
             var hasWork = false;
@@ -333,7 +328,7 @@ public class Server : ChatObject, IServer
                 if (user.GetDataRegulator().GetIncomingBytes() > 0)
                 {
                     hasWork = true;
-                    backoffMS = 0;
+                    backoffMs = 0;
 
                     ProcessNextCommand(user);
                 }
@@ -346,55 +341,60 @@ public class Server : ChatObject, IServer
 
             if (!hasWork)
             {
-                if (backoffMS < 1000) backoffMS += 10;
-                Thread.Sleep(backoffMS);
+                if (backoffMs < 1000) backoffMs += 10;
+                Thread.Sleep(backoffMs);
             }
         }
     }
 
     private void AddPendingUsers()
     {
-        if (PendingNewUserQueue.Count > 0)
+        if (_pendingNewUserQueue.Count > 0)
         {
             // add new pending users
-            foreach (var user in PendingNewUserQueue)
+            foreach (var user in _pendingNewUserQueue)
             {
                 user.GetDataStore().Set(Resources.UserPropOid, "0");
                 Users.Add(user);
             }
 
-            Log.Debug($"Added {PendingNewUserQueue.Count} users. Total Users = {Users.Count}");
-            PendingNewUserQueue.Clear();
+            Log.Debug($"Added {_pendingNewUserQueue.Count} users. Total Users = {Users.Count}");
+            _pendingNewUserQueue.Clear();
         }
     }
 
     private void RemovePendingUsers()
     {
-        if (PendingRemoveUserQueue.Count > 0)
+        if (_pendingRemoveUserQueue.Count > 0)
         {
             // remove pending to be removed users
 
-            foreach (var user in PendingRemoveUserQueue)
+            foreach (var user in _pendingRemoveUserQueue)
             {
                 if (!Users.Remove(user))
                 {
                     Log.Error($"Failed to remove {user}. Requeueing");
-                    PendingRemoveUserQueue.Enqueue(user);
+                    _pendingRemoveUserQueue.Enqueue(user);
                     continue;
                 }
 
                 Quit.QuitChannels(user, "Connection reset by peer");
             }
 
-            Log.Debug($"Removed {PendingRemoveUserQueue.Count} users. Total Users = {Users.Count}");
-            PendingRemoveUserQueue.Clear();
+            Log.Debug($"Removed {_pendingRemoveUserQueue.Count} users. Total Users = {Users.Count}");
+            _pendingRemoveUserQueue.Clear();
         }
     }
 
-    protected void AddCommand(ICommand command, EnumProtocolType fromProtocol = EnumProtocolType.IRC,
-        string name = null)
+    protected void AddCommand(ICommand command)
     {
-        foreach (var protocol in _protocols)
+        foreach (var protocol in Protocols)
+                protocol.Value.AddCommand(command, command.GetName());
+    }
+
+    protected void AddCommand(ICommand command, EnumProtocolType fromProtocol, string name)
+    {
+        foreach (var protocol in Protocols)
             if (protocol.Key >= fromProtocol)
                 protocol.Value.AddCommand(command, name);
     }
@@ -403,15 +403,15 @@ public class Server : ChatObject, IServer
     {
         if (inheritCommands)
             for (var protocolIndex = 0; protocolIndex < (int)protocolType; protocolIndex++)
-                if (_protocols.ContainsKey((EnumProtocolType)protocolIndex))
-                    foreach (var command in _protocols[(EnumProtocolType)protocolIndex].GetCommands())
+                if (Protocols.ContainsKey((EnumProtocolType)protocolIndex))
+                    foreach (var command in Protocols[(EnumProtocolType)protocolIndex].GetCommands())
                         protocol.AddCommand(command.Value, command.Key);
-        _protocols.Add(protocolType, protocol);
+        Protocols.Add(protocolType, protocol);
     }
 
     protected void FlushCommands()
     {
-        foreach (var protocol in _protocols) protocol.Value.FlushCommands();
+        foreach (var protocol in Protocols) protocol.Value.FlushCommands();
     }
 
     private void ProcessNextModeOperation(IUser user)
@@ -426,38 +426,37 @@ public class Server : ChatObject, IServer
         if (message == null) return;
 
         var command = message.GetCommand();
-        if (command != null)
-        {
-            var floodResult = _floodProtectionManager.Audit(user.GetFloodProtectionProfile(),
-                command.GetDataType(), user.GetLevel());
-            if (floodResult == EnumFloodResult.Ok)
-            {
-                if (command is not Ping && command is not Pong) user.LastIdle = DateTime.UtcNow;
-
-                Log.Trace($"Processing: {message.OriginalText}");
-
-                var chatFrame = user.GetNextFrame();
-                if (!command.RegistrationNeeded(chatFrame) && command.ParametersAreValid(chatFrame))
-                    try
-                    {
-                        command.Execute(chatFrame);
-                    }
-                    catch (Exception e)
-                    {
-                        chatFrame.User.Send(
-                            IrcRaws.IRC_RAW_999(chatFrame.Server, chatFrame.User, Resources.ServerError));
-                        Log.Error(e.ToString());
-                    }
-
-                // Check if user can register
-                if (!chatFrame.User.IsRegistered()) Register.TryRegister(chatFrame);
-            }
-        }
-        else
+        if (command == null)
         {
             user.GetDataRegulator().PopIncoming();
             user.Send(Raw.IRCX_ERR_UNKNOWNCOMMAND_421(this, user, message.GetCommandName()));
+            return;
             // command not found
+        }
+        
+        var floodResult = _floodProtectionManager.Audit(user.GetFloodProtectionProfile(),
+            command.GetDataType(), user.GetLevel());
+        if (floodResult == EnumFloodResult.Ok)
+        {
+            if (command is not Ping && command is not Pong) user.LastIdle = DateTime.UtcNow;
+
+            Log.Trace($"Processing: {message.OriginalText}");
+
+            var chatFrame = user.GetNextFrame();
+            if (!command.RegistrationNeeded(chatFrame) && command.ParametersAreValid(chatFrame))
+                try
+                {
+                    command.Execute(chatFrame);
+                }
+                catch (Exception e)
+                {
+                    chatFrame.User.Send(
+                        IrcRaws.IRC_RAW_999(chatFrame.Server, chatFrame.User, Resources.ServerError));
+                    Log.Error(e.ToString());
+                }
+
+            // Check if user can register
+            if (!chatFrame.User.IsRegistered()) Register.TryRegister(chatFrame);
         }
     }
 }

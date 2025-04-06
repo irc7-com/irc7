@@ -32,7 +32,8 @@ internal class Kick : Command, ICommand
         }
         else
         {
-            if (!channel.CanBeModifiedBy((ChatObject)source))
+            var sourceMember = channel.GetMember(source);
+            if (sourceMember == null || !channel.CanBeModifiedBy((ChatObject)source))
             {
                 chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
                 return;
@@ -44,8 +45,6 @@ internal class Kick : Command, ICommand
                 chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHNICK_401(chatFrame.Server, source, channelName));
                 return;
             }
-
-            var sourceMember = channel.GetMember(source);
 
             var result = ProcessKick(channel, sourceMember, targetMember, reason);
             channel.ProcessChannelError(result, chatFrame.Server, sourceMember.GetUser(),

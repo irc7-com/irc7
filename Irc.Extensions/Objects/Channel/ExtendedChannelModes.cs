@@ -9,75 +9,75 @@ public class ExtendedChannelModes : ChannelModes, IExtendedChannelModes
 {
     public ExtendedChannelModes()
     {
-        modes.Add(ExtendedResources.ChannelModeAuthOnly, new AuthOnly());
-        modes.Add(ExtendedResources.ChannelModeProfanity, new NoFormat());
-        modes.Add(ExtendedResources.ChannelModeRegistered, new Registered());
-        modes.Add(ExtendedResources.ChannelModeKnock, new Knock());
-        modes.Add(ExtendedResources.ChannelModeNoWhisper, new NoWhisper());
-        modes.Add(ExtendedResources.ChannelModeAuditorium, new Auditorium());
-        modes.Add(ExtendedResources.ChannelModeCloneable, new Cloneable());
-        modes.Add(ExtendedResources.ChannelModeClone, new Clone());
-        modes.Add(ExtendedResources.ChannelModeService, new Service());
-        modes.Add(ExtendedResources.MemberModeOwner, new Owner());
+        Modes.Add(ExtendedResources.ChannelModeAuthOnly, new AuthOnly());
+        Modes.Add(ExtendedResources.ChannelModeProfanity, new NoFormat());
+        Modes.Add(ExtendedResources.ChannelModeRegistered, new Registered());
+        Modes.Add(ExtendedResources.ChannelModeKnock, new Knock());
+        Modes.Add(ExtendedResources.ChannelModeNoWhisper, new NoWhisper());
+        Modes.Add(ExtendedResources.ChannelModeAuditorium, new Auditorium());
+        Modes.Add(ExtendedResources.ChannelModeCloneable, new Cloneable());
+        Modes.Add(ExtendedResources.ChannelModeClone, new Clone());
+        Modes.Add(ExtendedResources.ChannelModeService, new Service());
+        Modes.Add(ExtendedResources.MemberModeOwner, new Owner());
     }
 
     public bool Auditorium
     {
-        get => modes[ExtendedResources.ChannelModeAuditorium].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeAuditorium].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeAuditorium].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeAuditorium].Set(Convert.ToInt32(value));
     }
 
     public bool NoGuestWhisper
     {
-        get => modes[ExtendedResources.ChannelModeNoGuestWhisper].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeNoGuestWhisper].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeNoGuestWhisper].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeNoGuestWhisper].Set(Convert.ToInt32(value));
     }
 
     public bool AuthOnly
     {
-        get => modes[ExtendedResources.ChannelModeAuthOnly].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeAuthOnly].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeAuthOnly].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeAuthOnly].Set(Convert.ToInt32(value));
     }
 
     public bool Profanity
     {
-        get => modes[ExtendedResources.ChannelModeProfanity].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeProfanity].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeProfanity].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeProfanity].Set(Convert.ToInt32(value));
     }
 
     public bool Registered
     {
-        get => modes[ExtendedResources.ChannelModeRegistered].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeRegistered].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeRegistered].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeRegistered].Set(Convert.ToInt32(value));
     }
 
     public bool Knock
     {
-        get => modes[ExtendedResources.ChannelModeKnock].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeKnock].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeKnock].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeKnock].Set(Convert.ToInt32(value));
     }
 
     public bool NoWhisper
     {
-        get => modes[ExtendedResources.ChannelModeNoWhisper].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeNoWhisper].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeNoWhisper].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeNoWhisper].Set(Convert.ToInt32(value));
     }
 
     public bool Cloneable
     {
-        get => modes[ExtendedResources.ChannelModeCloneable].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeCloneable].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeCloneable].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeCloneable].Set(Convert.ToInt32(value));
     }
 
     public bool Clone
     {
-        get => modes[ExtendedResources.ChannelModeClone].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeClone].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeClone].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeClone].Set(Convert.ToInt32(value));
     }
 
     public bool Service
     {
-        get => modes[ExtendedResources.ChannelModeService].Get() == 1;
-        set => modes[ExtendedResources.ChannelModeService].Set(Convert.ToInt32(value));
+        get => Modes[ExtendedResources.ChannelModeService].Get() == 1;
+        set => Modes[ExtendedResources.ChannelModeService].Set(Convert.ToInt32(value));
     }
 }

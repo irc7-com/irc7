@@ -3,12 +3,12 @@ using Irc.Helpers;
 
 namespace Irc.Extensions.NTLM;
 
-public class NTLMShared
+public class NtlmShared
 {
-    public static string NTLMSignature = "NTLMSSP\0";
+    public static readonly string NtlmSignature = "NTLMSSP\0";
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    public struct NTLMSSPSecurityBuffer
+    public struct NtlmsspSecurityBuffer
     {
         [MarshalAs(UnmanagedType.I2)] public short Length;
         [MarshalAs(UnmanagedType.I2)] public short AllocatedSpace;
@@ -16,20 +16,14 @@ public class NTLMShared
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    public class NTLMSSPSubBlock
+    public class NtlmsspSubBlock(short type, short length)
     {
-        [MarshalAs(UnmanagedType.I2)] public short Length;
-        [MarshalAs(UnmanagedType.I2)] public short Type;
-
-        public NTLMSSPSubBlock(short type, short length)
-        {
-            Type = type;
-            Length = length;
-        }
+        [MarshalAs(UnmanagedType.I2)] public readonly short Length = length;
+        [MarshalAs(UnmanagedType.I2)] public short Type = type;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    public struct NTLMSSPOSVersion
+    public struct NtlmssposVersion
     {
         [MarshalAs(UnmanagedType.I1)] public byte Major;
         [MarshalAs(UnmanagedType.I1)] public byte Minor;
@@ -38,7 +32,7 @@ public class NTLMShared
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    public struct NTLMv2BlobStruct
+    public struct NtlMv2BlobStruct
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] BlobSignature;
@@ -52,31 +46,31 @@ public class NTLMShared
         [MarshalAs(UnmanagedType.I4)] public int Unknown;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 4)]
-        public NTLMSSPSubBlock TargetInformation;
+        public NtlmsspSubBlock TargetInformation;
     }
 
     public class TargetInformation
     {
-        public string DomainName { get; set; }
-        public string ServerName { get; set; }
-        public string DNSDomainName { get; set; }
-        public string DNSServerName { get; set; }
+        public string DomainName { get; set; } = string.Empty;
+        public string ServerName { get; set; } = string.Empty;
+        public string DnsDomainName { get; set; } = string.Empty;
+        public string DnsServerName { get; set; } = string.Empty;
     }
 
-    public class NTLMv2Blob
+    public class NtlMv2Blob
     {
-        public NTLMv2Blob(string ntlmBlobData)
+        public NtlMv2Blob(string ntlmBlobData)
         {
             Digest(ntlmBlobData);
         }
 
-        public NTLMv2BlobStruct DeserializedBlob { get; private set; }
-        public string ClientHashResult { get; private set; }
-        public byte[] ClientSignature { get; private set; }
-        public byte[] ClientNonce { get; private set; }
+        public NtlMv2BlobStruct DeserializedBlob { get; private set; }
+        public string ClientHashResult { get; private set; } = string.Empty;
+        public byte[] ClientSignature { get; private set; } = Array.Empty<byte>();
+        public byte[] ClientNonce { get; private set; } = Array.Empty<byte>();
         public long ClientTimestamp { get; private set; }
-        public string ClientTarget { get; private set; }
-        public string BlobData { get; private set; }
+        public string ClientTarget { get; private set; } = string.Empty;
+        public string BlobData { get; private set; } = string.Empty;
 
         private void Digest(string blobData)
         {
@@ -85,13 +79,13 @@ public class NTLMShared
                 ClientHashResult = blobData.Substring(0, 16);
                 BlobData = blobData.Substring(16);
 
-                var blobHeaderSize = Marshal.SizeOf<NTLMv2BlobStruct>();
+                var blobHeaderSize = Marshal.SizeOf<NtlMv2BlobStruct>();
                 if (BlobData.Length >= blobHeaderSize)
                 {
                     var blobHeaderData = BlobData.Substring(0, blobHeaderSize);
                     var blobPayload = BlobData.Substring(blobHeaderSize);
 
-                    DeserializedBlob = blobHeaderData.ToByteArray().Deserialize<NTLMv2BlobStruct>();
+                    DeserializedBlob = blobHeaderData.ToByteArray().Deserialize<NtlMv2BlobStruct>();
 
                     ClientSignature = DeserializedBlob.BlobSignature;
                     ClientNonce = DeserializedBlob.ClientNonce;
@@ -118,13 +112,13 @@ public class NTLMShared
         public uint Flags;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPSecurityBuffer SuppliedDomain;
+        public NtlmsspSecurityBuffer SuppliedDomain;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPSecurityBuffer SuppliedWorkstation;
+        public NtlmsspSecurityBuffer SuppliedWorkstation;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPOSVersion OSVersionInfo;
+        public NtlmssposVersion OSVersionInfo;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -137,7 +131,7 @@ public class NTLMShared
         public uint Type;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPSecurityBuffer TargetName;
+        public NtlmsspSecurityBuffer TargetName;
 
         [MarshalAs(UnmanagedType.U4, SizeConst = 4)]
         public uint Flags;
@@ -149,7 +143,7 @@ public class NTLMShared
         public byte[] Context;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPSecurityBuffer TargetInformation;
+        public NtlmsspSecurityBuffer TargetInformation;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -162,18 +156,18 @@ public class NTLMShared
         public uint Type;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPSecurityBuffer LMResponse;
+        public NtlmsspSecurityBuffer LMResponse;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPSecurityBuffer NTLMResponse;
+        public NtlmsspSecurityBuffer NTLMResponse;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPSecurityBuffer TargetName;
+        public NtlmsspSecurityBuffer TargetName;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPSecurityBuffer UserName;
+        public NtlmsspSecurityBuffer UserName;
 
         [MarshalAs(UnmanagedType.Struct, SizeConst = 8)]
-        public NTLMSSPSecurityBuffer WorkstationName;
+        public NtlmsspSecurityBuffer WorkstationName;
     }
 }

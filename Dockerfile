@@ -1,7 +1,7 @@
 ARG irc7d_port=6667
 ARG irc7d_fqdn=localhost
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 RUN \
     git clone https://github.com/IRC7/IRC7.git && \
@@ -13,7 +13,7 @@ RUN \
       -o ./output
 RUN mv ./output/Irc7d ./output/irc7
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:8.0
+FROM mcr.microsoft.com/dotnet/runtime-deps:9.0
 WORKDIR /app/output/
 COPY --from=build /app/output /app/output
 ARG irc7d_port

@@ -15,11 +15,6 @@ public class ApolloChannel : ExtendedChannel
     {
     }
 
-    public override EnumChannelAccessResult GetAccess(IUser user, string key, bool IsGoto = false)
-    {
-        return base.GetAccess(user, key, IsGoto);
-    }
-
     public override IChannel Join(IUser user, EnumChannelAccessResult accessResult = EnumChannelAccessResult.NONE)
     {
         var joinMember = AddMember(user, accessResult);
@@ -32,8 +27,13 @@ public class ApolloChannel : ExtendedChannel
 
                 if (!joinMember.IsNormal())
                 {
-                    var modeChar = joinMember.IsOwner() ? 'q' : joinMember.IsHost() ? 'o' : 'v';
-                    ((ModeRule)Modes.GetMode(modeChar)).DispatchModeChange((ChatObject)channelUser, modeChar,
+                    var modeChar = joinMember.IsOwner() ? 
+                        Resources.MemberModeOwner : 
+                        joinMember.IsHost() ? 
+                            Resources.MemberModeHost : 
+                            Resources.MemberModeVoice;
+                    
+                   ModeRule.DispatchModeChange((ChatObject)channelUser, modeChar,
                         (ChatObject)user, this, true, user.ToString());
                 }
             }

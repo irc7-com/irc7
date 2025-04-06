@@ -7,7 +7,7 @@ using IrcNotice = global::Irc.Commands.Privmsg;
 
 public class Notice : Privmsg, ICommand
 {
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
         SendMessage(chatFrame, true);
     }

@@ -16,9 +16,9 @@ public static class SerializationExtensions
 
             return serialBytes;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            return null;
+            return Array.Empty<byte>();
         }
         finally
         {
@@ -34,11 +34,11 @@ public static class SerializationExtensions
         {
             pBuf = Marshal.AllocHGlobal(size);
             Marshal.Copy(bytes, 0, pBuf, size);
-            return Marshal.PtrToStructure<T>(pBuf);
+            return (Marshal.PtrToStructure<T>(pBuf) ?? default)!;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            return default;
+            return default!;
         }
         finally
         {
