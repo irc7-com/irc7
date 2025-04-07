@@ -4,11 +4,11 @@ using Irc.Props.User;
 
 namespace Irc.Objects.User;
 
-public class UserPropCollection : PropCollection
+public class UserProps : PropCollection
 {
     private readonly IDataStore _dataStore;
 
-    public UserPropCollection(IServer server, IDataStore dataStore)
+    public UserProps(IServer server, IDataStore dataStore)
     {
         // IRC Props
         AddProp(new OID(dataStore));

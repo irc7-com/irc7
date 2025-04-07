@@ -22,7 +22,7 @@ internal class Mode : Command, ICommand
     {
         if (!chatFrame.User.IsRegistered())
         {
-            if (chatFrame.Message.Parameters.First().ToUpper() == Resources.ISIRCX)
+            if (chatFrame.ChatMessage.Parameters.First().ToUpper() == Resources.ISIRCX)
             {
                 var protocol = chatFrame.User.GetProtocol().GetProtocolType();
                 var isircx = protocol > EnumProtocolType.IRC;
@@ -32,7 +32,7 @@ internal class Mode : Command, ICommand
         }
         else
         {
-            var objectName = chatFrame.Message.Parameters.First();
+            var objectName = chatFrame.ChatMessage.Parameters.First();
 
             ChatObject? chatObject = null;
 
@@ -50,7 +50,7 @@ internal class Mode : Command, ICommand
                 return;
             }
 
-            if (chatFrame.Message.Parameters.Count > 1)
+            if (chatFrame.ChatMessage.Parameters.Count > 1)
                 ProcessModes(chatFrame, chatObject);
             else
                 ListModes(chatFrame, chatObject);
@@ -61,9 +61,9 @@ internal class Mode : Command, ICommand
     {
         // Perform mode operation
         Queue<string> modeParameters = new();
-        if (chatFrame.Message.Parameters.Count > 2)
-            modeParameters = new Queue<string>(chatFrame.Message.Parameters.Skip(2).ToArray());
-        ModeEngine.Breakdown(chatFrame.User, chatObject, chatFrame.Message.Parameters[1], modeParameters);
+        if (chatFrame.ChatMessage.Parameters.Count > 2)
+            modeParameters = new Queue<string>(chatFrame.ChatMessage.Parameters.Skip(2).ToArray());
+        ModeEngine.Breakdown(chatFrame.User, chatObject, chatFrame.ChatMessage.Parameters[1], modeParameters);
     }
 
     public void ListModes(IChatFrame chatFrame, ChatObject chatObject)

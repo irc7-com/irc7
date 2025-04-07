@@ -5,6 +5,7 @@ using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
+using Irc.Objects.User;
 
 namespace Irc.Objects.Channel;
 
@@ -12,7 +13,7 @@ public class Channel : ChatObject, IChannel
 {
     private readonly ChannelAccess _accessList = new();
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
-    private readonly ChannelPropCollection _properties = new();
+    private readonly ChannelProps _properties = new();
     public HashSet<string> BanList = new();
     public HashSet<string> InviteList = new();
 
@@ -356,15 +357,15 @@ public class Channel : ChatObject, IChannel
         return EnumChannelAccessResult.NONE;
     }
 
-    public virtual bool BanMask(Address address)
+    public virtual bool BanMask(UserAddress userAddress)
     {
-        var formattedAddress = address.GetAddress();
+        var formattedAddress = userAddress.GetAddress();
         return BanList.Add(formattedAddress);
     }
 
-    public virtual bool UnbanMask(Address address)
+    public virtual bool UnbanMask(UserAddress userAddress)
     {
-        var formattedAddress = address.GetAddress();
+        var formattedAddress = userAddress.GetAddress();
         return BanList.Remove(formattedAddress);
     }
 

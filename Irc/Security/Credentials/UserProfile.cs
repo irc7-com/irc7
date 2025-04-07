@@ -1,6 +1,6 @@
 ﻿namespace Irc.Security.Credentials;
 
-public class Profile
+public class UserProfile
 {
     public string Id = string.Empty;
 }

@@ -23,7 +23,7 @@ public class Who : Command, ICommand
         var server = chatFrame.Server;
         var user = chatFrame.User;
         var userIsOperator = user.GetLevel() >= EnumUserAccessLevel.Guide;
-        var criteria = chatFrame.Message.Parameters.First();
+        var criteria = chatFrame.ChatMessage.Parameters.First();
 
         if (Channel.ValidName(criteria))
         {

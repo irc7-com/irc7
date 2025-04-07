@@ -21,7 +21,7 @@ internal class Invite : Command, ICommand
         // Invite <nick> <channel>
 
         // Minimum parameters is 1 so this should work without fail
-        var targetNickname = chatFrame.Message.Parameters.First();
+        var targetNickname = chatFrame.ChatMessage.Parameters.First();
         var targetUser = chatFrame.Server.GetUserByNickname(targetNickname);
 
         if (targetUser == null)
@@ -30,9 +30,9 @@ internal class Invite : Command, ICommand
             return;
         }
 
-        if (chatFrame.Message.Parameters.Count() == 1) InviteNickToCurrentChannel(chatFrame, targetUser);
+        if (chatFrame.ChatMessage.Parameters.Count() == 1) InviteNickToCurrentChannel(chatFrame, targetUser);
 
-        if (chatFrame.Message.Parameters.Count() > 1) InviteNickToSpecificChannel(chatFrame, targetUser);
+        if (chatFrame.ChatMessage.Parameters.Count() > 1) InviteNickToSpecificChannel(chatFrame, targetUser);
     }
 
 
@@ -53,7 +53,7 @@ internal class Invite : Command, ICommand
 
     public static void InviteNickToSpecificChannel(IChatFrame chatFrame, IUser targetUser)
     {
-        var targetChannelName = chatFrame.Message.Parameters[1];
+        var targetChannelName = chatFrame.ChatMessage.Parameters[1];
         var targetChannel = chatFrame.Server.GetChannelByName(targetChannelName);
         if (targetChannel == null)
         {

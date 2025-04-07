@@ -19,7 +19,7 @@ internal class Ison : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var parameters = chatFrame.Message.Parameters;
+        var parameters = chatFrame.ChatMessage.Parameters;
 
         var nicknames = parameters.Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
         var foundNicknames = new List<string>();

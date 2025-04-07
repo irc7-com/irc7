@@ -19,8 +19,8 @@ internal class Kill : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var target = chatFrame.Message.Parameters.First();
-        var reason = chatFrame.Message.Parameters[1];
+        var target = chatFrame.ChatMessage.Parameters.First();
+        var reason = chatFrame.ChatMessage.Parameters[1];
 
         if (user.GetLevel() < EnumUserAccessLevel.Sysop)
         {

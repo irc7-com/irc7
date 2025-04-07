@@ -3,9 +3,9 @@ using Irc.Props.Channel;
 
 namespace Irc.Objects.Channel;
 
-internal class ChannelPropCollection : PropCollection
+internal class ChannelProps : PropCollection
 {
-    public ChannelPropCollection()
+    public ChannelProps()
     {
         AddProp(new OID());
         AddProp(new Name());

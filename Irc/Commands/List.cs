@@ -15,7 +15,7 @@ internal class List : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var parameters = chatFrame.Message.Parameters;
+        var parameters = chatFrame.ChatMessage.Parameters;
 
         var channels = server.GetChannels().Where(c => !c.Modes.Secret).ToList();
         if (parameters.Count > 0)

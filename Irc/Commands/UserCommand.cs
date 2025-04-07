@@ -29,7 +29,7 @@ public class UserCommand : Command, ICommand
         }
         else
         {
-            var parameters = chatFrame.Message.Parameters;
+            var parameters = chatFrame.ChatMessage.Parameters;
             // TODO: Check length
             if (string.IsNullOrWhiteSpace(address.RealName))
             {

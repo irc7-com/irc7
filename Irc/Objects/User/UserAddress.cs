@@ -2,9 +2,9 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Irc.Objects;
+namespace Irc.Objects.User;
 
-public class Address
+public class UserAddress
 {
     public UserHostPair UserHost = new();
 

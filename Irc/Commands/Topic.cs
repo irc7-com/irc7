@@ -19,16 +19,16 @@ internal class Topic : Command, ICommand
     public new void Execute(IChatFrame chatFrame)
     {
         var source = chatFrame.User;
-        var channelName = chatFrame.Message.Parameters.First();
-        var topic = chatFrame.Message.Parameters[1];
+        var channelName = chatFrame.ChatMessage.Parameters.First();
+        var topic = chatFrame.ChatMessage.Parameters[1];
 
-        if (chatFrame.Message.Parameters.Count > 2) topic = chatFrame.Message.Parameters[2];
+        if (chatFrame.ChatMessage.Parameters.Count > 2) topic = chatFrame.ChatMessage.Parameters[2];
 
         var channel = chatFrame.Server.GetChannelByName(channelName);
         if (channel == null)
         {
             chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User,
-                chatFrame.Message.Parameters.First()));
+                chatFrame.ChatMessage.Parameters.First()));
         }
         else
         {

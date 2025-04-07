@@ -27,7 +27,7 @@ public class Auth : Command, ICommand
         }
         else
         {
-            var parameters = chatFrame.Message.Parameters;
+            var parameters = chatFrame.ChatMessage.Parameters;
 
             var supportPackage = chatFrame.User.GetSupportPackage();
             var packageName = parameters[0];

@@ -20,8 +20,8 @@ public class Join : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var channels = chatFrame.Message.Parameters.First();
-        var key = chatFrame.Message.Parameters.Count > 1 ? chatFrame.Message.Parameters[1] : string.Empty;
+        var channels = chatFrame.ChatMessage.Parameters.First();
+        var key = chatFrame.ChatMessage.Parameters.Count > 1 ? chatFrame.ChatMessage.Parameters[1] : string.Empty;
 
         var channelNames = ValidateChannels(server, user, channels);
         if (channelNames.Count == 0) return;

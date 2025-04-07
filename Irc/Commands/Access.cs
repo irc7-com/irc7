@@ -20,9 +20,9 @@ internal class Access : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
-        var objectName = chatFrame.Message.Parameters.First();
+        var objectName = chatFrame.ChatMessage.Parameters.First();
         var accessCommandName = AccessCommand.LIST.ToString();
-        if (chatFrame.Message.Parameters.Count > 1) accessCommandName = chatFrame.Message.Parameters[1];
+        if (chatFrame.ChatMessage.Parameters.Count > 1) accessCommandName = chatFrame.ChatMessage.Parameters[1];
 
         if (!Enum.TryParse(accessCommandName, true, out AccessCommand accessCommand))
         {
@@ -95,7 +95,7 @@ internal class Access : Command, ICommand
 
     private void ClearAccess(IChatFrame chatFrame, IExtendedChatObject targetObject)
     {
-        var parameters = chatFrame.Message.Parameters.TakeLast(chatFrame.Message.Parameters.Count - 2).ToList();
+        var parameters = chatFrame.ChatMessage.Parameters.TakeLast(chatFrame.ChatMessage.Parameters.Count - 2).ToList();
 
         var accessLevel = EnumAccessLevel.All;
         if (parameters.Count > 0)
@@ -122,7 +122,7 @@ internal class Access : Command, ICommand
     {
         // ACCESS <object> ADD|DELETE <level> <mask>
 
-        var parameters = chatFrame.Message.Parameters.TakeLast(chatFrame.Message.Parameters.Count - 2).ToList();
+        var parameters = chatFrame.ChatMessage.Parameters.TakeLast(chatFrame.ChatMessage.Parameters.Count - 2).ToList();
 
         if (parameters.Count < 2)
             // Not enough parameters
@@ -153,7 +153,7 @@ internal class Access : Command, ICommand
     {
         // ACCESS <object> ADD|DELETE <level> <mask> [< timeout > [:< reason >]]
 
-        var parameters = chatFrame.Message.Parameters.TakeLast(chatFrame.Message.Parameters.Count - 2).ToList();
+        var parameters = chatFrame.ChatMessage.Parameters.TakeLast(chatFrame.ChatMessage.Parameters.Count - 2).ToList();
 
         if (parameters.Count < 2)
             // Not enough parameters

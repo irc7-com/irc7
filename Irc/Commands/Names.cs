@@ -18,7 +18,7 @@ internal class Names : Command, ICommand
     public new void Execute(IChatFrame chatFrame)
     {
         var user = chatFrame.User;
-        var channelNames = chatFrame.Message.Parameters.First()
+        var channelNames = chatFrame.ChatMessage.Parameters.First()
             .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var channelName in channelNames)

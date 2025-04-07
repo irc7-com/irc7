@@ -4,21 +4,23 @@ using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Interfaces;
 
+namespace Irc.Directory.Commands;
+
 public class Nick : Command, ICommand
 {
     public Nick() : base(1, false)
     {
     }
 
-    public EnumCommandDataType GetDataType()
+    public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.Standard;
     }
 
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
         var hopcount = string.Empty;
-        if (chatFrame.Message.Parameters.Count > 1) hopcount = chatFrame.Message.Parameters[1];
+        if (chatFrame.ChatMessage.Parameters.Count > 1) hopcount = chatFrame.ChatMessage.Parameters[1];
 
         // Is user not registered?
         // Set nickname according to regulations (should be available in user object and changes based on what they authenticated as)
@@ -35,7 +37,7 @@ public class Nick : Command, ICommand
 
     public static bool HandlePreauthNicknameChange(IChatFrame chatFrame)
     {
-        var nickname = chatFrame.Message.Parameters.First();
+        var nickname = chatFrame.ChatMessage.Parameters.First();
         // UTF8 / Guest / Normal / Admin/Sysop/Guide OK
         if (!ValidateNickname(nickname))
         {

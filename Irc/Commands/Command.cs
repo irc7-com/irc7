@@ -35,7 +35,7 @@ public class Command : ICommand
 
     public bool ParametersAreValid(IChatFrame chatFrame)
     {
-        var parameterCount = chatFrame.Message.Parameters.Count;
+        var parameterCount = chatFrame.ChatMessage.Parameters.Count;
 
         if (parameterCount < _requiredMinimumParameters)
         {

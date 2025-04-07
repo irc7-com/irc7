@@ -26,7 +26,7 @@ public class User : ChatObject, IUser
     private long _commandSequence;
     private bool _guest;
     private EnumUserAccessLevel _level;
-    protected UserPropCollection _properties;
+    protected UserProps _properties;
     private IProtocol _protocol;
     private bool _registered;
     private ISupportPackage _supportPackage;
@@ -46,21 +46,21 @@ public class User : ChatObject, IUser
         _floodProtectionProfile = floodProtectionProfile;
         _dataStore = dataStore;
         _supportPackage = new ANON();
-        _properties = new UserPropCollection((Server.Server)server, dataStore);
+        _properties = new UserProps((Server.Server)server, dataStore);
         Channels = new ConcurrentDictionary<IChannel, IChannelMember>();
 
         _connection.OnReceive += (sender, s) =>
         {
             LastPing = DateTime.UtcNow;
             PingCount = 0;
-            var message = new Message(_protocol, s);
+            var message = new ChatMessage(_protocol, s);
             if (message.HasCommand) _dataRegulator.PushIncoming(message);
         };
 
-        Address.SetIp(connection.GetIp());
+        UserAddress.SetIp(connection.GetIp());
     }
 
-    private Profile Profile { get; } = new();
+    private UserProfile UserProfile { get; } = new();
 
     public override EnumUserAccessLevel Level => GetLevel();
 
@@ -68,7 +68,7 @@ public class User : ChatObject, IUser
 
     public IAccessList AccessList => _accessList;
 
-    public Address Address { get; set; } = new();
+    public UserAddress UserAddress { get; set; } = new();
     public bool Utf8 { get; set; }
     public DateTime LastIdle { get; set; } = DateTime.UtcNow;
     public DateTime LoggedOn { get; private set; } = DateTime.UtcNow;
@@ -192,7 +192,7 @@ public class User : ChatObject, IUser
         set
         {
             Name = value;
-            Address.SetNickname(value);
+            UserAddress.SetNickname(value);
         }
     }
 
@@ -208,9 +208,9 @@ public class User : ChatObject, IUser
 
     public bool Away { get; set; }
 
-    public Address GetAddress()
+    public UserAddress GetAddress()
     {
-        return Address;
+        return UserAddress;
     }
 
     public bool IsGuest()
@@ -221,7 +221,7 @@ public class User : ChatObject, IUser
     public virtual void SetGuest(bool guest)
     {
         if (Server.DisableGuestMode) return;
-        Profile.Guest = guest;
+        UserProfile.Guest = guest;
         _guest = guest;
     }
 
@@ -263,7 +263,7 @@ public class User : ChatObject, IUser
     public virtual void SetAway(IServer server, IUser user, string message)
     {
         user.Away = true;
-        Profile.Away = true;
+        UserProfile.Away = true;
         foreach (var channelPair in user.GetChannels())
         {
             var channel = channelPair.Key;
@@ -276,7 +276,7 @@ public class User : ChatObject, IUser
     public virtual void SetBack(IServer server, IUser user)
     {
         user.Away = false;
-        Profile.Away = false;
+        UserProfile.Away = false;
         foreach (var channelPair in user.GetChannels())
         {
             var channel = channelPair.Key;
@@ -292,7 +292,7 @@ public class User : ChatObject, IUser
         mode.Set(true);
         mode.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Administrator;
-        Profile.Level = EnumUserAccessLevel.Administrator;
+        UserProfile.Level = EnumUserAccessLevel.Administrator;
         Send(Raws.IRCX_RPL_YOUREADMIN_386(Server, this));
     }
 
@@ -301,7 +301,7 @@ public class User : ChatObject, IUser
         ((UserModes)Modes).Oper = true;
         ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Sysop;
-        Profile.Level = EnumUserAccessLevel.Sysop;
+        UserProfile.Level = EnumUserAccessLevel.Sysop;
         Send(Raws.IRCX_RPL_YOUREOPER_381(Server, this));
     }
 
@@ -310,7 +310,7 @@ public class User : ChatObject, IUser
         ((UserModes)Modes).Oper = true;
         ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Guide;
-        Profile.Level = EnumUserAccessLevel.Guide;
+        UserProfile.Level = EnumUserAccessLevel.Guide;
         Send(Raws.IRCX_RPL_YOUREGUIDE_629(Server, this));
     }
 
@@ -398,13 +398,13 @@ public class User : ChatObject, IUser
             SequenceId = _commandSequence,
             Server = Server,
             User = this,
-            Message = message
+            ChatMessage = message
         };
     }
 
-    public Profile GetProfile()
+    public UserProfile GetProfile()
     {
-        return Profile;
+        return UserProfile;
     }
 
     public new virtual bool CanBeModifiedBy(ChatObject source)

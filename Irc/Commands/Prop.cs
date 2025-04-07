@@ -31,52 +31,52 @@ public class Prop : Command, ICommand
 
         // TODO: Resolve object first, e.g. IChatServer.GetObject(string)
 
-        var objectName = chatFrame.Message.Parameters.First();
+        var objectName = chatFrame.ChatMessage.Parameters.First();
         if (!chatFrame.User.IsRegistered())
         {
             if (chatFrame.User.IsAuthenticated())
                 // Prop $ NICK
                 if (objectName == "$")
-                    if (chatFrame.Message.Parameters.Count >= 2)
+                    if (chatFrame.ChatMessage.Parameters.Count >= 2)
                     {
                         // TODO: This needs rewriting
-                        if (string.Compare("NICK", chatFrame.Message.Parameters[1], true) == 0)
+                        if (string.Compare("NICK", chatFrame.ChatMessage.Parameters[1], true) == 0)
                         {
                             chatFrame.User.Nickname = chatFrame.User.Name;
                             SendProp(chatFrame.Server, chatFrame.User, (IExtendedChatObject)chatFrame.User, "NICK",
                                 chatFrame.User.Name);
                         }
-                        else if (string.Compare("MSNREGCOOKIE", chatFrame.Message.Parameters[1], true) == 0)
+                        else if (string.Compare("MSNREGCOOKIE", chatFrame.ChatMessage.Parameters[1], true) == 0)
                         {
-                            if (chatFrame.Message.Parameters.Count >= 3)
+                            if (chatFrame.ChatMessage.Parameters.Count >= 3)
                             {
-                                var regcookie = chatFrame.Message.Parameters[2];
+                                var regcookie = chatFrame.ChatMessage.Parameters[2];
                                 chatFrame.Server.ProcessCookie(chatFrame.User, "MSNREGCOOKIE",
                                     regcookie);
                             }
                         }
-                        else if (string.Compare("SUBSCRIBERINFO", chatFrame.Message.Parameters[1], true) == 0)
+                        else if (string.Compare("SUBSCRIBERINFO", chatFrame.ChatMessage.Parameters[1], true) == 0)
                         {
-                            var subscriberinfo = chatFrame.Message.Parameters[2];
-                            ((IServer)chatFrame.Server).ProcessCookie(chatFrame.User, "SUBSCRIBERINFO",
+                            var subscriberinfo = chatFrame.ChatMessage.Parameters[2];
+                            chatFrame.Server.ProcessCookie(chatFrame.User, "SUBSCRIBERINFO",
                                 subscriberinfo);
                         }
-                        else if (string.Compare("MSNPROFILE", chatFrame.Message.Parameters[1], true) == 0)
+                        else if (string.Compare("MSNPROFILE", chatFrame.ChatMessage.Parameters[1], true) == 0)
                         {
                             // TODO: Hook up to actual prop
-                            var msnprofile = chatFrame.Message.Parameters[2];
+                            var msnprofile = chatFrame.ChatMessage.Parameters[2];
                             ((IServer)chatFrame.Server).ProcessCookie(chatFrame.User, "MSNPROFILE",
                                 msnprofile);
                         }
-                        else if (string.Compare("ROLE", chatFrame.Message.Parameters[1], true) == 0)
+                        else if (string.Compare("ROLE", chatFrame.ChatMessage.Parameters[1], true) == 0)
                         {
-                            var role = chatFrame.Message.Parameters[2];
+                            var role = chatFrame.ChatMessage.Parameters[2];
                             ((IServer)chatFrame.Server).ProcessCookie(chatFrame.User, "ROLE", role);
                         }
                         else
                         {
                             chatFrame.User.Send(Raws.IRCX_ERR_BADPROPERTY_905(chatFrame.Server, chatFrame.User,
-                                chatFrame.Message.Parameters[1]));
+                                chatFrame.ChatMessage.Parameters[1]));
                         }
                     }
             // PROP $ MSNREGCOOKIE
@@ -102,13 +102,13 @@ public class Prop : Command, ICommand
             else
             {
                 var props = new List<IPropRule>();
-                if (chatFrame.Message.Parameters.Count >= 3)
+                if (chatFrame.ChatMessage.Parameters.Count >= 3)
                 {
-                    var propValue = chatFrame.Message.Parameters[2];
+                    var propValue = chatFrame.ChatMessage.Parameters[2];
 
                     // Setter
                     // TODO: Needs refactoring
-                    var prop = chatObject.PropCollection.GetProp(chatFrame.Message.Parameters[1]);
+                    var prop = chatObject.PropCollection.GetProp(chatFrame.ChatMessage.Parameters[1]);
                     if (prop != null)
                     {
                         if (chatObject.CanBeModifiedBy((ChatObject)chatFrame.User))
@@ -153,13 +153,13 @@ public class Prop : Command, ICommand
                 {
                     // Getter
 
-                    if (chatFrame.Message.Parameters[1] == "*")
+                    if (chatFrame.ChatMessage.Parameters[1] == "*")
                     {
                         props.AddRange(chatObject.PropCollection.GetProps());
                     }
                     else
                     {
-                        var prop = chatObject.PropCollection.GetProp(chatFrame.Message.Parameters[1]);
+                        var prop = chatObject.PropCollection.GetProp(chatFrame.ChatMessage.Parameters[1]);
                         if (prop != null)
                             props.Add(prop);
                         else

@@ -1,6 +1,6 @@
 ﻿namespace Irc;
 
-public static class IrcHelper
+public static class IrcObjectIdentifiers
 {
     public enum ObjIdentifier
     {

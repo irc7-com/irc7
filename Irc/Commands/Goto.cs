@@ -10,17 +10,17 @@ public class Goto : Command, ICommand
     {
     }
 
-    public EnumCommandDataType GetDataType()
+    public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;
     }
 
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var channelName = chatFrame.Message.Parameters.First();
-        var targetNickname = chatFrame.Message.Parameters[1];
+        var channelName = chatFrame.ChatMessage.Parameters.First();
+        var targetNickname = chatFrame.ChatMessage.Parameters[1];
 
         var channel = server.GetChannelByName(channelName);
         if (channel == null)

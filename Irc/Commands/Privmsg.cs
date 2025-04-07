@@ -8,7 +8,7 @@ namespace Irc.Commands;
 
 public class Privmsg : Command, ICommand
 {
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
         SendMessage(chatFrame, false);
     }
@@ -16,8 +16,8 @@ public class Privmsg : Command, ICommand
     // TODO: Refactor this as it duplicates Privmsg
     public static void SendMessage(IChatFrame chatFrame, bool notice)
     {
-        var targetName = chatFrame.Message.Parameters.First();
-        var message = chatFrame.Message.Parameters[1];
+        var targetName = chatFrame.ChatMessage.Parameters.First();
+        var message = chatFrame.ChatMessage.Parameters[1];
 
         var targets = targetName.Split(',', StringSplitOptions.RemoveEmptyEntries);
         foreach (var target in targets)
@@ -39,7 +39,7 @@ public class Privmsg : Command, ICommand
             {
                 var user = (User)chatFrame.User;
                 var channel = (Channel)chatObject;
-                var channelModes = (IApolloChannelModes)channel.GetModes();
+                var channelModes = channel.GetModes();
                 var channelMember = channel.GetMember(chatFrame.User);
                 var isOnChannel = channelMember != null;
                 var noExtern = channelModes.NoExtern;

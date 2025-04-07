@@ -19,7 +19,7 @@ public class Nick : Command, ICommand
     public new void Execute(IChatFrame chatFrame)
     {
         var hopcount = string.Empty;
-        if (chatFrame.Message.Parameters.Count > 1) hopcount = chatFrame.Message.Parameters[1];
+        if (chatFrame.ChatMessage.Parameters.Count > 1) hopcount = chatFrame.ChatMessage.Parameters[1];
 
         // Is user not registered?
         // Set nickname according to regulations (should be available in user object and changes based on what they authenticated as)
@@ -43,7 +43,7 @@ public class Nick : Command, ICommand
 
     public static bool HandlePreauthNicknameChange(IChatFrame chatFrame)
     {
-        var nickname = chatFrame.Message.Parameters.First();
+        var nickname = chatFrame.ChatMessage.Parameters.First();
         // UTF8 / Guest / Normal / Admin/Sysop/Guide OK
         if (!ValidateNickname(nickname, preAuth: true))
         {
@@ -57,7 +57,7 @@ public class Nick : Command, ICommand
 
     public static bool HandlePreregNicknameChange(IChatFrame chatFrame)
     {
-        var nickname = chatFrame.Message.Parameters.First();
+        var nickname = chatFrame.ChatMessage.Parameters.First();
         var guest = chatFrame.User.IsGuest();
         var oper = chatFrame.User.GetLevel() >= EnumUserAccessLevel.Guide;
 
@@ -73,7 +73,7 @@ public class Nick : Command, ICommand
 
     public static bool HandleRegNicknameChange(IChatFrame chatFrame)
     {
-        var nickname = chatFrame.Message.Parameters.First();
+        var nickname = chatFrame.ChatMessage.Parameters.First();
         var guest = chatFrame.User.IsGuest();
         var oper = chatFrame.User.GetLevel() >= EnumUserAccessLevel.Guide;
 

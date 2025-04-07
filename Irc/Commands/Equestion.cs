@@ -1,8 +1,9 @@
-using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects.Channel;
+
+namespace Irc.Commands;
 
 public class Equestion : Command, ICommand
 {
@@ -10,17 +11,17 @@ public class Equestion : Command, ICommand
     {
     }
 
-    public EnumCommandDataType GetDataType()
+    public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;
     }
 
     // EQUESTION %#OnStage Nickname :Why am I here?
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
-        var targetName = chatFrame.Message.Parameters.First();
-        var nickname = chatFrame.Message.Parameters[1];
-        var message = chatFrame.Message.Parameters[2];
+        var targetName = chatFrame.ChatMessage.Parameters.First();
+        var nickname = chatFrame.ChatMessage.Parameters[1];
+        var message = chatFrame.ChatMessage.Parameters[2];
 
         var targets = targetName.Split(',', StringSplitOptions.RemoveEmptyEntries);
         foreach (var target in targets)
@@ -51,7 +52,7 @@ public class Equestion : Command, ICommand
                 return;
             }
 
-            if (!((IApolloChannelModes)channel!.Modes).OnStage)
+            if (!channel!.Modes.OnStage)
             {
                 chatFrame.User.Send(
                     Raws.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));

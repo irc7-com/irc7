@@ -1,7 +1,9 @@
 ﻿using Irc.Commands;
+using Irc.Directory.Commands;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects.Server;
+using Nick = Irc.Directory.Commands.Nick;
 using Version = Irc.Commands.Version;
 
 namespace Irc.Directory;
@@ -35,7 +37,7 @@ public class DirectoryServer : Server
         AddCommand(new Auth());
         AddCommand(new AuthX());
         AddCommand(new Pass());
-        AddCommand(new Commands.Nick());
+        AddCommand(new Nick());
         AddCommand(new UserCommand(), EnumProtocolType.IRC, "User");
         AddCommand(new Finds());
         AddCommand(new Prop());

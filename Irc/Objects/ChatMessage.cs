@@ -2,7 +2,7 @@
 
 namespace Irc;
 
-public class Message
+public class ChatMessage
 {
     private readonly IProtocol _protocol;
     private ICommand? _command;
@@ -27,7 +27,7 @@ public class Message
     // TODO: To get rid of below
     public int ParamOffset;
 
-    public Message(IProtocol protocol, string message)
+    public ChatMessage(IProtocol protocol, string message)
     {
         _protocol = protocol;
         OriginalText = message;

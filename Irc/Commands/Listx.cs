@@ -20,7 +20,7 @@ internal class Listx : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var parameters = chatFrame.Message.Parameters;
+        var parameters = chatFrame.ChatMessage.Parameters;
 
 
         var channels = server.GetChannels();

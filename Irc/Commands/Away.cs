@@ -13,13 +13,13 @@ internal class Away : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        if (chatFrame.Message.Parameters.Count == 0)
+        if (chatFrame.ChatMessage.Parameters.Count == 0)
         {
             user.SetBack(server, chatFrame.User);
             return;
         }
 
-        var reason = chatFrame.Message.Parameters.First();
+        var reason = chatFrame.ChatMessage.Parameters.First();
         user.SetAway(server, chatFrame.User, reason);
     }
 }

@@ -19,7 +19,7 @@ internal class Part : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var parameters = chatFrame.Message.Parameters.First();
+        var parameters = chatFrame.ChatMessage.Parameters.First();
 
         var channelNames = Join.ValidateChannels(server, user, parameters);
         if (channelNames.Count == 0) return;

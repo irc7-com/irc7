@@ -17,7 +17,7 @@ public class AuthX : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
-        var parameters = chatFrame.Message.Parameters;
+        var parameters = chatFrame.ChatMessage.Parameters;
 
         var packageName = parameters[0].ToUpperInvariant();
         var nonceString = parameters[1];

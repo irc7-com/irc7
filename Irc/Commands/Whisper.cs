@@ -23,19 +23,19 @@ internal class Whisper : Command, ICommand
         var server = chatFrame.Server;
         var user = chatFrame.User;
 
-        if (chatFrame.Message.Parameters.Count == 1)
+        if (chatFrame.ChatMessage.Parameters.Count == 1)
         {
             user.Send(Raws.IRC_ERR_NORECIPIENT_411(server, user, nameof(Whisper)));
             return;
         }
 
-        if (chatFrame.Message.Parameters.Count == 2)
+        if (chatFrame.ChatMessage.Parameters.Count == 2)
         {
             user.Send(Raws.IRC_ERR_NOTEXT_412(server, user, nameof(Whisper)));
             return;
         }
 
-        var channelName = chatFrame.Message.Parameters.First();
+        var channelName = chatFrame.ChatMessage.Parameters.First();
         var channel = chatFrame.Server.GetChannelByName(channelName);
         if (channel == null)
         {
@@ -43,7 +43,7 @@ internal class Whisper : Command, ICommand
             return;
         }
 
-        var channelModes = (IExtendedChannelModes)channel.Modes;
+        var channelModes = channel.Modes;
 
         if (!user.IsOn(channel))
         {
@@ -64,7 +64,7 @@ internal class Whisper : Command, ICommand
             return;
         }
 
-        var targetNickname = chatFrame.Message.Parameters[1];
+        var targetNickname = chatFrame.ChatMessage.Parameters[1];
         var target = channel.GetMemberByNickname(targetNickname);
         if (target == null)
         {
@@ -72,7 +72,7 @@ internal class Whisper : Command, ICommand
             return;
         }
 
-        var message = chatFrame.Message.Parameters[2];
+        var message = chatFrame.ChatMessage.Parameters[2];
 
         if (target.GetUser().GetProtocol().GetProtocolType() < EnumProtocolType.IRCX)
             // PRIVMSG

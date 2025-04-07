@@ -109,7 +109,7 @@ public class GateKeeper : SupportPackage, ISupportPackage
         return EnumSupportPackageSequence.SSP_FAILED;
     }
 
-    public void SetChallenge(byte[] newChallenge)
+    public new void SetChallenge(byte[] newChallenge)
     {
         if (_challengeBytes.Length == 0 || _challenge.Length == 0)
         {
@@ -138,7 +138,7 @@ public class GateKeeper : SupportPackage, ISupportPackage
 
     private bool VerifySecurityContext(string challenge, byte[] context, string ip, uint version)
     {
-        ip = version == 3 && ip != null ? ip : "";
+        ip = version == 3 ? ip : "";
 
         var md5 = new HMACMD5(Key.ToByteArray());
         var ctx = $"{challenge}{ip}";

@@ -6,7 +6,7 @@ public class DataRegulator : IDataRegulator
 {
     private readonly int _incomingByteThreshold;
 
-    private readonly Queue<Message> _incomingQueue = new();
+    private readonly Queue<ChatMessage> _incomingQueue = new();
     private readonly int _outgoingByteThreshold;
     private readonly Queue<string> _outgoingQueue = new();
     private int _incomingBytes;
@@ -50,10 +50,10 @@ public class DataRegulator : IDataRegulator
         return _outgoingQueue.Count;
     }
 
-    public int PushIncoming(Message message)
+    public int PushIncoming(ChatMessage chatMessage)
     {
-        _incomingQueue.Enqueue(message);
-        _incomingBytes += message.OriginalText.Length;
+        _incomingQueue.Enqueue(chatMessage);
+        _incomingBytes += chatMessage.OriginalText.Length;
         if (_incomingBytes > _incomingByteThreshold) _incomingThresholdExceeded = true;
         return _incomingBytes;
     }
@@ -66,13 +66,13 @@ public class DataRegulator : IDataRegulator
         return _outgoingBytes;
     }
 
-    public Message? PeekIncoming()
+    public ChatMessage? PeekIncoming()
     {
         if (_incomingQueue.Count <= 0) return null;
         return _incomingQueue.Peek();
     }
 
-    public Message PopIncoming()
+    public ChatMessage PopIncoming()
     {
         var message = _incomingQueue.Dequeue();
         _incomingBytes -= message.OriginalText.Length;

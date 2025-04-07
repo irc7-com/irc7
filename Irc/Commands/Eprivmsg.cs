@@ -1,8 +1,9 @@
-using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects.Channel;
+
+namespace Irc.Commands;
 
 public class Eprivmsg : Command, ICommand
 {
@@ -10,16 +11,16 @@ public class Eprivmsg : Command, ICommand
     {
     }
 
-    public EnumCommandDataType GetDataType()
+    public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;
     }
 
     // EPRIVMSG %#OnStage :Why am I here?
-    public void Execute(IChatFrame chatFrame)
+    public new void Execute(IChatFrame chatFrame)
     {
-        var targetName = chatFrame.Message.Parameters.First();
-        var message = chatFrame.Message.Parameters[1];
+        var targetName = chatFrame.ChatMessage.Parameters.First();
+        var message = chatFrame.ChatMessage.Parameters[1];
 
         var targets = targetName.Split(',', StringSplitOptions.RemoveEmptyEntries);
         foreach (var target in targets)
@@ -50,7 +51,7 @@ public class Eprivmsg : Command, ICommand
                     return;
                 }
 
-                if (!((IApolloChannelModes)channel.Modes).OnStage)
+                if (!channel.Modes.OnStage)
                 {
                     chatFrame.User.Send(
                         Raws.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));

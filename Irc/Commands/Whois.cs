@@ -26,7 +26,7 @@ public class Whois : Command, ICommand
         */
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var nicknameString = chatFrame.Message.Parameters.First();
+        var nicknameString = chatFrame.ChatMessage.Parameters.First();
         var nicknames = nicknameString.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
         foreach (var nickname in nicknames) ProcessWhoisReply(chatFrame.Server, chatFrame.User, nickname);

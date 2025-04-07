@@ -10,7 +10,7 @@ public class OnStage : ModeRuleChannel, IModeRule
     {
     }
 
-    public EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
+    public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
         return EvaluateAndSet(source, target, flag, parameter);
     }

@@ -21,7 +21,7 @@ internal class Quit : Command, ICommand
         var user = chatFrame.User;
 
         var quitMessage = Resources.CONNRESETBYPEER;
-        if (chatFrame.Message.Parameters.Count > 0) quitMessage = chatFrame.Message.Parameters.First();
+        if (chatFrame.ChatMessage.Parameters.Count > 0) quitMessage = chatFrame.ChatMessage.Parameters.First();
 
         QuitChannels(user, quitMessage);
     }
