@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
-using Irc;
 using Irc.Commands;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 
@@ -24,7 +24,7 @@ public class AuthX : Command, ICommand
 
         if (packageName != "GATEKEEPER" && packageName != "GATEKEEPERPASSPORT")
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_BADVALUE_906(chatFrame.Server, chatFrame.User,
+            chatFrame.User.Send(Raws.IRCX_ERR_BADVALUE_906(chatFrame.Server, chatFrame.User,
                 "Only supported on GateKeeper or GateKeeperPassport"));
             return;
         }
@@ -40,7 +40,7 @@ public class AuthX : Command, ICommand
         }
         catch (Exception)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_BADVALUE_906(chatFrame.Server, chatFrame.User,
+            chatFrame.User.Send(Raws.IRCX_ERR_BADVALUE_906(chatFrame.Server, chatFrame.User,
                 "Could not deserialize nonce string"));
             return;
         }
@@ -57,7 +57,7 @@ public class AuthX : Command, ICommand
 
         var jsonReadable = challengeBytes.Select(b => (int)b).ToArray();
 
-        chatFrame.User.Send(Raw.IRCX_INFO(chatFrame.Server, chatFrame.User,
+        chatFrame.User.Send(Raws.IRCX_INFO(chatFrame.Server, chatFrame.User,
             $"Set {supportPackage.GetPackageName()} Challenge to: {JsonSerializer.Serialize(jsonReadable)}"));
     }
 }

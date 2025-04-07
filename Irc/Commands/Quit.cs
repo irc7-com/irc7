@@ -40,7 +40,7 @@ internal class Quit : Command, ICommand
 
         user.GetChannels().Clear();
 
-        var quitRaw = IrcRaws.RPL_QUIT(user, message);
+        var quitRaw = Raws.RPL_QUIT(user, message);
 
         foreach (var targetUser in users) targetUser.Send(quitRaw);
         user.Disconnect(quitRaw);

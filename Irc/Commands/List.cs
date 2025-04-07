@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Commands;
@@ -32,8 +33,8 @@ internal class List : Command, ICommand
 
     public void ListChannels(IServer server, IUser user, IList<IChannel> channels)
     {
-        user.Send(Raw.IRCX_RPL_MODE_321(server, user));
-        foreach (var channel in channels) user.Send(Raw.IRCX_RPL_MODE_322(server, user, channel));
-        user.Send(Raw.IRCX_RPL_MODE_323(server, user));
+        user.Send(Raws.IRCX_RPL_MODE_321(server, user));
+        foreach (var channel in channels) user.Send(Raws.IRCX_RPL_MODE_322(server, user, channel));
+        user.Send(Raws.IRCX_RPL_MODE_323(server, user));
     }
 }

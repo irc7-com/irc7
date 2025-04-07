@@ -11,7 +11,7 @@ internal class Irc7 : Irc6
         var modeChar = string.Empty;
         if (!member.IsNormal()) modeChar += member.IsOwner() ? '.' : member.IsHost() ? '@' : '+';
 
-        var profile = ((ApolloUser)member.GetUser()).GetProfile().Irc7_ToString();
+        var profile = ((User)member.GetUser()).GetProfile().Irc7_ToString();
         return $"{profile},{modeChar}{member.GetUser().GetAddress().Nickname}";
     }
 
@@ -22,6 +22,6 @@ internal class Irc7 : Irc6
 
     public override string GetFormat(IUser user)
     {
-        return ((ApolloUser)user).GetProfile().Irc7_ToString();
+        return ((User)user).GetProfile().Irc7_ToString();
     }
 }

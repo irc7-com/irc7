@@ -1,14 +1,19 @@
 ﻿using System.Collections.Concurrent;
+using System.Text;
+using Irc.Access.Server;
 using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
-using Irc.Factories;
 using Irc.Interfaces;
 using Irc.IO;
+using Irc.Modes;
 using Irc.Objects.Channel;
 using Irc.Objects.Collections;
 using Irc.Objects.User;
+using Irc.Protocols;
+using Irc.Security.Credentials;
 using Irc.Security.Packages;
+using Irc.Security.Passport;
 using NLog;
 using Version = System.Version;
 
@@ -19,8 +24,10 @@ public class Server : ChatObject, IServer
     public static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
     private readonly CancellationTokenSource _cancellationTokenSource = new();
+    private readonly ICredentialProvider? _credentialProvider;
     protected readonly IDataStore _DataStore;
     private readonly IFloodProtectionManager _floodProtectionManager;
+    private readonly PassportV4 _passport = new(string.Empty, string.Empty);
     private readonly ConcurrentQueue<IUser> _pendingNewUserQueue = new();
     private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
     private readonly Task _processingTask;
@@ -29,7 +36,6 @@ public class Server : ChatObject, IServer
 
     public IList<IChannel> Channels;
     public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
-    protected IUserFactory UserFactory;
 
     public IList<IUser> Users = new List<IUser>();
 
@@ -37,7 +43,8 @@ public class Server : ChatObject, IServer
         ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
-        IList<IChannel> channels) : base(new ModeCollection(), dataStore)
+        IList<IChannel> channels,
+        ICredentialProvider? credentialProvider = null) : base(new ModeCollection(), dataStore)
     {
         Title = Name;
         _socketServer = socketServer;
@@ -45,7 +52,6 @@ public class Server : ChatObject, IServer
         _floodProtectionManager = floodProtectionManager;
         _DataStore = dataStore;
         Channels = channels;
-        UserFactory = new UserFactory();
         _processingTask = new Task(Process);
         _processingTask.Start();
 
@@ -78,7 +84,45 @@ public class Server : ChatObject, IServer
             connection.Accept();
         };
         socketServer.Listen();
+
+        //IRCX Initialization
+        _credentialProvider = credentialProvider;
+        PropCollection = new PropCollection();
+
+        if (SupportPackages.Contains("NTLM"))
+            GetSecurityManager()
+                .AddSupportPackage(new NTLM(credentialProvider ?? new NtlmProvider()));
+
+        AddProtocol(EnumProtocolType.IRCX, new IrcX());
+        AddProtocol(EnumProtocolType.IRC3, new Irc3());
+        AddProtocol(EnumProtocolType.IRC4, new Irc4());
+        AddProtocol(EnumProtocolType.IRC5, new Irc5());
+        AddProtocol(EnumProtocolType.IRC6, new Irc6());
+        AddProtocol(EnumProtocolType.IRC7, new Irc7());
+        AddProtocol(EnumProtocolType.IRC8, new Irc8());
+
+        if (SupportPackages.Contains("GateKeeper"))
+        {
+            _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
+            securityManager.AddSupportPackage(new GateKeeper(new DefaultProvider()));
+            securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(_passport)));
+        }
+
+        AddCommand(new Auth());
+        AddCommand(new AuthX());
+        AddCommand(new Ircvers());
+        AddCommand(new Ircx());
+        AddCommand(new Prop());
+        AddCommand(new Listx());
+
+        var modes = new ChannelModes().GetSupportedModes();
+        modes = new string(modes.OrderBy(c => c).ToArray());
+        _DataStore.Set("supported.channel.modes", modes);
+        _DataStore.Set("supported.user.modes", new UserModes().GetSupportedModes());
     }
+
+    public IPropCollection PropCollection { get; }
+    public IAccessList AccessList { get; } = new ServerAccess();
 
     public string[] SupportPackages { get; }
 
@@ -150,7 +194,15 @@ public class Server : ChatObject, IServer
 
     public IUser CreateUser(IConnection connection)
     {
-        return UserFactory.Create(this, connection);
+        return new User.User(
+            connection,
+            Protocols[EnumProtocolType.IRC],
+            new DataRegulator(MaxInputBytes, MaxOutputBytes),
+            new FloodProtectionProfile(),
+            new DataStore(connection.GetId().ToString(), "store"),
+            new UserModes(),
+            this
+        );
     }
 
     public IList<IUser> GetUsers()
@@ -215,12 +267,8 @@ public class Server : ChatObject, IServer
     {
         var channel = CreateChannel(name);
         channel.ChannelStore.Set("topic", name);
-        if (!string.IsNullOrEmpty(key))
-        {
-            channel.Modes.Key = key;
-            channel.ChannelStore.Set("key", key);
-        }
-
+        var ownerkeyProp = channel.PropCollection.GetProp(Resources.ChannelPropOwnerkey);
+        ownerkeyProp?.SetValue(key);
         channel.Modes.NoExtern = true;
         channel.Modes.TopicOp = true;
         channel.Modes.UserLimit = 50;
@@ -267,7 +315,7 @@ public class Server : ChatObject, IServer
 
     public ICredentialProvider? GetCredentialManager()
     {
-        return null;
+        return _credentialProvider;
     }
 
     public void Shutdown()
@@ -279,6 +327,81 @@ public class Server : ChatObject, IServer
     public override string ToString()
     {
         return Name;
+    }
+
+    // Apollo
+    public void ProcessCookie(IUser user, string name, string value)
+    {
+        if (name == Resources.UserPropMsnRegCookie && user.IsAuthenticated() && !user.IsRegistered())
+        {
+            var nickname = _passport.ValidateRegCookie(value);
+            if (nickname != null)
+            {
+                var encodedNickname = Encoding.Latin1.GetString(Encoding.UTF8.GetBytes(nickname));
+                user.Nickname = encodedNickname;
+
+                // Set the RealName to empty string to allow it to pass register
+                user.GetAddress().RealName = string.Empty;
+            }
+        }
+        else if (name == Resources.UserPropSubscriberInfo && user.IsAuthenticated() && user.IsRegistered())
+        {
+            var issuedAt = user.GetSupportPackage()?.GetCredentials()?.GetIssuedAt();
+            if (!issuedAt.HasValue) return;
+
+            var subscribedString =
+                _passport.ValidateSubscriberInfo(value, issuedAt.Value);
+            int.TryParse(subscribedString, out var subscribed);
+            if ((subscribed & 1) == 1) ((User.User)user).GetProfile().Registered = true;
+        }
+        else if (name == Resources.UserPropMsnProfile && user.IsAuthenticated() && !user.IsRegistered())
+        {
+            int.TryParse(value, out var profileCode);
+            ((User.User)user).GetProfile().SetProfileCode(profileCode);
+        }
+        else if (name == Resources.UserPropRole && user.IsAuthenticated())
+        {
+            var dict = _passport.ValidateRole(value);
+            if (dict == null) return;
+
+            if (dict.ContainsKey("umode"))
+            {
+                var modes = dict["umode"];
+                foreach (var mode in modes)
+                {
+                    var userModes = (UserModes)user.GetModes();
+                    if (userModes.HasMode(mode)) userModes[mode].Set(true);
+                    ModeRule.DispatchModeChange(mode, (IChatObject)user, (IChatObject)user, true, string.Empty);
+                }
+            }
+
+            if (dict.ContainsKey("utype"))
+            {
+                var levelType = dict["utype"];
+
+                switch (levelType)
+                {
+                    case "A":
+                    {
+                        user.ChangeNickname(user.Nickname, true);
+                        user.PromoteToAdministrator();
+                        break;
+                    }
+                    case "S":
+                    {
+                        user.ChangeNickname(user.Nickname, true);
+                        user.PromoteToSysop();
+                        break;
+                    }
+                    case "G":
+                    {
+                        user.ChangeNickname(user.Nickname, true);
+                        user.PromoteToGuide();
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     public void LoadSettingsFromDataStore()
@@ -427,7 +550,7 @@ public class Server : ChatObject, IServer
         if (command == null)
         {
             user.GetDataRegulator().PopIncoming();
-            user.Send(Raw.IRCX_ERR_UNKNOWNCOMMAND_421(this, user, message.GetCommandName()));
+            user.Send(Raws.IRCX_ERR_UNKNOWNCOMMAND_421(this, user, message.GetCommandName()));
             return;
             // command not found
         }
@@ -449,12 +572,26 @@ public class Server : ChatObject, IServer
                 catch (Exception e)
                 {
                     chatFrame.User.Send(
-                        IrcRaws.IRC_RAW_999(chatFrame.Server, chatFrame.User, Resources.ServerError));
+                        Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, Resources.ServerError));
                     Log.Error(e.ToString());
                 }
 
             // Check if user can register
             if (!chatFrame.User.IsRegistered()) Register.TryRegister(chatFrame);
         }
+    }
+
+    // IRCX 
+    protected EnumChannelAccessResult CheckAuthOnly()
+    {
+        if (Modes.GetModeChar(Resources.ChannelModeAuthOnly) == 1)
+            return EnumChannelAccessResult.ERR_AUTHONLYCHAN;
+        return EnumChannelAccessResult.NONE;
+    }
+
+    protected EnumChannelAccessResult CheckSecureOnly()
+    {
+        // TODO: Whatever this is...
+        return EnumChannelAccessResult.ERR_SECUREONLYCHAN;
     }
 }

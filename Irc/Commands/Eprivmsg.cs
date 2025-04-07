@@ -1,5 +1,5 @@
-using Irc;
 using Irc.Commands;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects.Channel;
@@ -27,14 +27,14 @@ public class Eprivmsg : Command, ICommand
             // TODO: Below two blocks need combining
             if (!Channel.ValidName(target))
             {
-                chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, target));
+                chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, target));
                 return;
             }
 
             var chatObject = (IChatObject?)chatFrame.Server.GetChannelByName(target);
             if (chatObject == null)
             {
-                chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, target));
+                chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, target));
                 return;
             }
 
@@ -46,14 +46,14 @@ public class Eprivmsg : Command, ICommand
                 if (!isOnChannel)
                 {
                     chatFrame.User.Send(
-                        Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, chatFrame.User, channel));
+                        Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, chatFrame.User, channel));
                     return;
                 }
 
                 if (!((IApolloChannelModes)channel.Modes).OnStage)
                 {
                     chatFrame.User.Send(
-                        Raw.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));
+                        Raws.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));
                     return;
                 }
 
@@ -64,6 +64,6 @@ public class Eprivmsg : Command, ICommand
 
     public static void SendEprivmsg(IUser user, IChannel channel, string message)
     {
-        channel.Send(ApolloRaws.RPL_EPRIVMSG(user, channel, message));
+        channel.Send(Raws.RPL_EPRIVMSG(user, channel, message));
     }
 }

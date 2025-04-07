@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
+using Irc.Access.User;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
@@ -12,6 +13,7 @@ namespace Irc.Objects.User;
 public class User : ChatObject, IUser
 {
     public static readonly Logger Log = LogManager.GetCurrentClassLogger();
+    private readonly UserAccess _accessList = new();
 
     //public Access Access;
     private readonly IConnection _connection;
@@ -24,6 +26,7 @@ public class User : ChatObject, IUser
     private long _commandSequence;
     private bool _guest;
     private EnumUserAccessLevel _level;
+    protected UserPropCollection _properties;
     private IProtocol _protocol;
     private bool _registered;
     private ISupportPackage _supportPackage;
@@ -43,6 +46,7 @@ public class User : ChatObject, IUser
         _floodProtectionProfile = floodProtectionProfile;
         _dataStore = dataStore;
         _supportPackage = new ANON();
+        _properties = new UserPropCollection((Server.Server)server, dataStore);
         Channels = new ConcurrentDictionary<IChannel, IChannelMember>();
 
         _connection.OnReceive += (sender, s) =>
@@ -56,7 +60,13 @@ public class User : ChatObject, IUser
         Address.SetIp(connection.GetIp());
     }
 
+    private Profile Profile { get; } = new();
+
     public override EnumUserAccessLevel Level => GetLevel();
+
+    public IPropCollection PropCollection => _properties;
+
+    public IAccessList AccessList => _accessList;
 
     public Address Address { get; set; } = new();
     public bool Utf8 { get; set; }
@@ -189,7 +199,7 @@ public class User : ChatObject, IUser
     public void ChangeNickname(string newNick, bool utf8Prefix)
     {
         var nickname = utf8Prefix ? $"'{newNick}" : newNick;
-        var rawNicknameChange = Raw.RPL_NICK(Server, this, nickname);
+        var rawNicknameChange = Raws.RPL_NICK(Server, this, nickname);
         Send(rawNicknameChange);
         Nickname = nickname;
 
@@ -211,6 +221,7 @@ public class User : ChatObject, IUser
     public virtual void SetGuest(bool guest)
     {
         if (Server.DisableGuestMode) return;
+        Profile.Guest = guest;
         _guest = guest;
     }
 
@@ -252,25 +263,27 @@ public class User : ChatObject, IUser
     public virtual void SetAway(IServer server, IUser user, string message)
     {
         user.Away = true;
+        Profile.Away = true;
         foreach (var channelPair in user.GetChannels())
         {
             var channel = channelPair.Key;
-            channel.Send(Raw.IRCX_RPL_USERNOWAWAY_822(server, user, message), (ChatObject)user);
+            channel.Send(Raws.IRCX_RPL_USERNOWAWAY_822(server, user, message), (ChatObject)user);
         }
 
-        user.Send(Raw.IRCX_RPL_NOWAWAY_306(server, user));
+        user.Send(Raws.IRCX_RPL_NOWAWAY_306(server, user));
     }
 
     public virtual void SetBack(IServer server, IUser user)
     {
         user.Away = false;
+        Profile.Away = false;
         foreach (var channelPair in user.GetChannels())
         {
             var channel = channelPair.Key;
-            channel.Send(Raw.IRCX_RPL_USERUNAWAY_821(server, user), (ChatObject)user);
+            channel.Send(Raws.IRCX_RPL_USERUNAWAY_821(server, user), (ChatObject)user);
         }
 
-        user.Send(Raw.IRCX_RPL_UNAWAY_305(server, user));
+        user.Send(Raws.IRCX_RPL_UNAWAY_305(server, user));
     }
 
     public virtual void PromoteToAdministrator()
@@ -279,7 +292,8 @@ public class User : ChatObject, IUser
         mode.Set(true);
         mode.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Administrator;
-        Send(Raw.IRCX_RPL_YOUREADMIN_386(Server, this));
+        Profile.Level = EnumUserAccessLevel.Administrator;
+        Send(Raws.IRCX_RPL_YOUREADMIN_386(Server, this));
     }
 
     public virtual void PromoteToSysop()
@@ -287,7 +301,8 @@ public class User : ChatObject, IUser
         ((UserModes)Modes).Oper = true;
         ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Sysop;
-        Send(Raw.IRCX_RPL_YOUREOPER_381(Server, this));
+        Profile.Level = EnumUserAccessLevel.Sysop;
+        Send(Raws.IRCX_RPL_YOUREOPER_381(Server, this));
     }
 
     public virtual void PromoteToGuide()
@@ -295,7 +310,8 @@ public class User : ChatObject, IUser
         ((UserModes)Modes).Oper = true;
         ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Guide;
-        Send(Raw.IRCX_RPL_YOUREGUIDE_629(Server, this));
+        Profile.Level = EnumUserAccessLevel.Guide;
+        Send(Raws.IRCX_RPL_YOUREGUIDE_629(Server, this));
     }
 
     public bool DisconnectIfOutgoingThresholdExceeded()
@@ -332,12 +348,12 @@ public class User : ChatObject, IUser
             {
                 Log.Debug($"Ping Count for {this} hit stage {PingCount + 1}");
                 PingCount++;
-                Send(Raw.RPL_PING(Server, this));
+                Send(Raws.RPL_PING(Server, this));
             }
             else
             {
                 GetDataRegulator().Purge();
-                Disconnect(Raw.IRCX_CLOSINGLINK_011_PINGTIMEOUT(Server, this, _connection.GetIp()));
+                Disconnect(Raws.IRCX_CLOSINGLINK_011_PINGTIMEOUT(Server, this, _connection.GetIp()));
             }
         }
     }
@@ -384,6 +400,11 @@ public class User : ChatObject, IUser
             User = this,
             Message = message
         };
+    }
+
+    public Profile GetProfile()
+    {
+        return Profile;
     }
 
     public new virtual bool CanBeModifiedBy(ChatObject source)

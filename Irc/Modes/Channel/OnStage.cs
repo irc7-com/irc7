@@ -1,3 +1,4 @@
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 
@@ -5,7 +6,7 @@ namespace Irc.Modes.Channel;
 
 public class OnStage : ModeRuleChannel, IModeRule
 {
-    public OnStage() : base(ApolloResources.ChannelModeOnStage)
+    public OnStage() : base(Resources.ChannelModeOnStage)
     {
     }
 

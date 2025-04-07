@@ -1,5 +1,5 @@
-﻿using Irc;
-using Irc.Commands;
+﻿using Irc.Commands;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 
@@ -16,6 +16,6 @@ internal class Isircx : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
-        chatFrame.User.Send(Raw.IRCX_ERR_NOTIMPLEMENTED(chatFrame.Server, chatFrame.User, nameof(Access)));
+        chatFrame.User.Send(Raws.IRCX_ERR_NOTIMPLEMENTED(chatFrame.Server, chatFrame.User, nameof(Access)));
     }
 }

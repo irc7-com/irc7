@@ -1,11 +1,11 @@
-using Irc;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
 public class NoGuestWhisper : ModeRuleChannel, IModeRule
 {
-    public NoGuestWhisper() : base(ExtendedResources.ChannelModeNoGuestWhisper)
+    public NoGuestWhisper() : base(Resources.ChannelModeNoGuestWhisper)
     {
     }
 

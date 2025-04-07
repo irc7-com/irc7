@@ -9,7 +9,7 @@ internal class Account : PropRule
     // The ACCOUNT property is limited to 31 characters.
     // It can only be read by sysop managers, sysops and owners of the channel.
 
-    public Account() : base(ExtendedResources.ChannelPropAccount, EnumChannelAccessLevel.ChatHost,
+    public Account() : base(Resources.ChannelPropAccount, EnumChannelAccessLevel.ChatHost,
         EnumChannelAccessLevel.ChatHost, Resources.GenericProps, string.Empty, true)
     {
     }

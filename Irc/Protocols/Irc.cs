@@ -30,7 +30,7 @@ public class Irc : Protocol, IProtocol
         AddCommand(new Trace());
         AddCommand(new Ison());
         AddCommand(new Time());
-        AddCommand(new global::Irc.Commands.Admin());
+        AddCommand(new Commands.Admin());
         AddCommand(new Links());
         AddCommand(new Who());
         AddCommand(new Whois());

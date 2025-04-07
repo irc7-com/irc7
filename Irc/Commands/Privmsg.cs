@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects.Channel;
 using Irc.Objects.User;
@@ -30,14 +31,14 @@ public class Privmsg : Command, ICommand
             if (chatObject == null)
             {
                 // TODO: To make common function for this
-                chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, target));
+                chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, target));
                 return;
             }
 
             if (chatObject is Channel)
             {
-                var user = (ApolloUser)chatFrame.User;
-                var channel = (ApolloChannel)chatObject;
+                var user = (User)chatFrame.User;
+                var channel = (Channel)chatObject;
                 var channelModes = (IApolloChannelModes)channel.GetModes();
                 var channelMember = channel.GetMember(chatFrame.User);
                 var isOnChannel = channelMember != null;
@@ -52,7 +53,7 @@ public class Privmsg : Command, ICommand
                    )
                 {
                     chatFrame.User.Send(
-                        Raw.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));
+                        Raws.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));
                     return;
                 }
 
@@ -64,7 +65,7 @@ public class Privmsg : Command, ICommand
                 )
                 {
                     chatFrame.User.Send(
-                        Raw.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));
+                        Raws.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));
                     return;
                 }
 
@@ -75,11 +76,11 @@ public class Privmsg : Command, ICommand
             {
                 if (notice)
                     ((User)chatObject).Send(
-                        Raw.RPL_NOTICE_USER(chatFrame.Server, chatFrame.User, chatObject, message)
+                        Raws.RPL_NOTICE_USER(chatFrame.Server, chatFrame.User, chatObject, message)
                     );
                 else
                     ((User)chatObject).Send(
-                        Raw.RPL_PRIVMSG_USER(chatFrame.Server, chatFrame.User, chatObject, message)
+                        Raws.RPL_PRIVMSG_USER(chatFrame.Server, chatFrame.User, chatObject, message)
                     );
             }
         }

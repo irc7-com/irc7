@@ -1,11 +1,12 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Modes.Channel;
 
 public class Auditorium : ModeRuleChannel, IModeRule
 {
-    public Auditorium() : base(ExtendedResources.ChannelModeAuditorium)
+    public Auditorium() : base(Resources.ChannelModeAuditorium)
     {
     }
 

@@ -19,8 +19,8 @@ public class Links : Command, ICommand
          <- :sky-8a15b323126 365 Sky * :End of /LINKS list.
          */
         var linkCount = 0;
-        chatFrame.User.Send(IrcRaws.IRC_RAW_364(chatFrame.Server, chatFrame.User, chatFrame.Server.ToString(),
+        chatFrame.User.Send(Raws.IRC_RAW_364(chatFrame.Server, chatFrame.User, chatFrame.Server.ToString(),
             linkCount));
-        chatFrame.User.Send(IrcRaws.IRC_RAW_365(chatFrame.Server, chatFrame.User, Resources.Wildcard));
+        chatFrame.User.Send(Raws.IRC_RAW_365(chatFrame.Server, chatFrame.User, Resources.Wildcard));
     }
 }

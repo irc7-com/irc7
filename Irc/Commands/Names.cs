@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Commands;
@@ -31,7 +32,7 @@ internal class Names : Command, ICommand
             }
             else
             {
-                chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, channelName));
+                chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, channelName));
             }
         }
     }
@@ -49,7 +50,7 @@ internal class Names : Command, ICommand
             channelType = '*';
 
         user.Send(
-            Raw.IRCX_RPL_NAMEREPLY_353(user.Server, user, channel, channelType,
+            Raws.IRCX_RPL_NAMEREPLY_353(user.Server, user, channel, channelType,
                 string.Join(' ',
                     channel.GetMembers().Select(m =>
                         $"{user.GetProtocol().FormattedUser(m)}"
@@ -57,6 +58,6 @@ internal class Names : Command, ICommand
                 )
             )
         );
-        user.Send(Raw.IRCX_RPL_ENDOFNAMES_366(user.Server, user, channel));
+        user.Send(Raws.IRCX_RPL_ENDOFNAMES_366(user.Server, user, channel));
     }
 }

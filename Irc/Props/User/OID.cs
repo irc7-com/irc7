@@ -7,7 +7,7 @@ internal class OID : PropRule
 {
     private readonly IDataStore dataStore;
 
-    public OID(IDataStore dataStore) : base(ExtendedResources.UserPropOid, EnumChannelAccessLevel.ChatMember,
+    public OID(IDataStore dataStore) : base(Resources.UserPropOid, EnumChannelAccessLevel.ChatMember,
         EnumChannelAccessLevel.None, Resources.GenericProps, "0", true)
     {
         this.dataStore = dataStore;

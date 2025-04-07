@@ -47,7 +47,7 @@ public class Nick : Command, ICommand
         // UTF8 / Guest / Normal / Admin/Sysop/Guide OK
         if (!ValidateNickname(nickname, preAuth: true))
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
+            chatFrame.User.Send(Raws.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
             return false;
         }
 
@@ -63,7 +63,7 @@ public class Nick : Command, ICommand
 
         if (!ValidateNickname(nickname, guest, oper, false, true))
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
+            chatFrame.User.Send(Raws.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
             return false;
         }
 
@@ -79,7 +79,7 @@ public class Nick : Command, ICommand
 
         if (!guest && !oper)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NONICKCHANGES_439(chatFrame.Server, chatFrame.User, nickname));
+            chatFrame.User.Send(Raws.IRCX_ERR_NONICKCHANGES_439(chatFrame.Server, chatFrame.User, nickname));
             return false;
         }
 
@@ -88,13 +88,13 @@ public class Nick : Command, ICommand
         foreach (var member in channel.Key.GetMembers())
             if (member.GetUser().Nickname == nickname)
             {
-                chatFrame.User.Send(Raw.IRCX_ERR_NICKINUSE_433(chatFrame.Server, chatFrame.User));
+                chatFrame.User.Send(Raws.IRCX_ERR_NICKINUSE_433(chatFrame.Server, chatFrame.User));
                 return false;
             }
 
         if (!ValidateNickname(nickname, guest, oper))
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
+            chatFrame.User.Send(Raws.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
             return false;
         }
 

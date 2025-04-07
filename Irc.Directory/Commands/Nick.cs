@@ -1,4 +1,3 @@
-using Irc;
 using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
@@ -40,7 +39,7 @@ public class Nick : Command, ICommand
         // UTF8 / Guest / Normal / Admin/Sysop/Guide OK
         if (!ValidateNickname(nickname))
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
+            chatFrame.User.Send(Raws.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
             return false;
         }
 

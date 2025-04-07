@@ -3,12 +3,13 @@ using Irc.Interfaces;
 using Irc.Modes.Channel.Member;
 using Irc.Objects.Collections;
 
-namespace Irc.Objects;
+namespace Irc.Objects.Member;
 
 public class MemberModes : ModeCollection, IMemberModes
 {
     public MemberModes()
     {
+        Modes.Add(Resources.MemberModeOwner, new Owner());
         Modes.Add(Resources.MemberModeHost, new Operator());
         Modes.Add(Resources.MemberModeVoice, new Voice());
     }
@@ -33,8 +34,7 @@ public class MemberModes : ModeCollection, IMemberModes
 
     public bool IsOwner()
     {
-        // TODO: Need to think about a better way of handling the below
-        return Modes.ContainsKey(Resources.MemberModeOwner) && GetModeChar(Resources.MemberModeOwner) > 0;
+        return GetModeChar(Resources.MemberModeOwner) > 0;
     }
 
     public bool IsHost()
@@ -49,7 +49,7 @@ public class MemberModes : ModeCollection, IMemberModes
 
     public bool IsNormal()
     {
-        return !IsHost() && !IsVoice();
+        return !IsOwner() && !IsHost() && !IsVoice();
     }
 
     public void SetHost(bool flag)
@@ -64,12 +64,13 @@ public class MemberModes : ModeCollection, IMemberModes
 
     public void SetNormal()
     {
+        SetOwner(false);
         SetHost(false);
         SetVoice(false);
     }
 
     public void SetOwner(bool flag)
     {
-        throw new NotImplementedException();
+        Modes[Resources.MemberModeOwner].Set(flag ? 1 : 0);
     }
 }

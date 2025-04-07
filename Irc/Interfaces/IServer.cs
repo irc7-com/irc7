@@ -62,4 +62,5 @@ public interface IServer
     string ToString();
     string[] GetMotd();
     void SetMotd(string motd);
+    void ProcessCookie(IUser user, string name, string value);
 }

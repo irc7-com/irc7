@@ -1,11 +1,11 @@
-﻿using Irc;
+﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
 public class Registered : ModeRuleChannel, IModeRule
 {
-    public Registered() : base(ExtendedResources.ChannelModeRegistered)
+    public Registered() : base(Resources.ChannelModeRegistered)
     {
     }
 

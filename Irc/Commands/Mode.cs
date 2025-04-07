@@ -26,7 +26,7 @@ internal class Mode : Command, ICommand
             {
                 var protocol = chatFrame.User.GetProtocol().GetProtocolType();
                 var isircx = protocol > EnumProtocolType.IRC;
-                chatFrame.User.Send(Raw.IRCX_RPL_IRCX_800(chatFrame.Server, chatFrame.User, isircx ? 1 : 0, 0,
+                chatFrame.User.Send(Raws.IRCX_RPL_IRCX_800(chatFrame.Server, chatFrame.User, isircx ? 1 : 0, 0,
                     chatFrame.Server.MaxInputBytes, Resources.IRCXOptions));
             }
         }
@@ -46,7 +46,7 @@ internal class Mode : Command, ICommand
             if (chatObject == null)
             {
                 // :sky-8a15b323126 403 Sky aaa :No such channel
-                chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, objectName));
+                chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, objectName));
                 return;
             }
 
@@ -73,10 +73,10 @@ internal class Mode : Command, ICommand
         -> sky-8a15b323126 MODE #test
         <- :sky-8a15b323126 324 Sky #test +tnl 50*/
         if (chatObject is IChannel)
-            chatFrame.User.Send(Raw.IRCX_RPL_MODE_324(chatFrame.Server, chatFrame.User, (IChannel)chatObject,
+            chatFrame.User.Send(Raws.IRCX_RPL_MODE_324(chatFrame.Server, chatFrame.User, (IChannel)chatObject,
                 ((IChannel)chatObject).Modes.ToString()));
         else if (chatObject is IUser)
-            chatFrame.User.Send(Raw.IRCX_RPL_UMODEIS_221(chatFrame.Server, chatFrame.User,
+            chatFrame.User.Send(Raws.IRCX_RPL_UMODEIS_221(chatFrame.Server, chatFrame.User,
                 chatObject.Modes.ToString()));
     }
 }

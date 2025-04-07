@@ -1,4 +1,4 @@
-﻿using Irc;
+﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
@@ -18,7 +18,7 @@ public class Gag : ModeRule, IModeRule
          MODE <nick> { + | - }z
     */
 
-    public Gag() : base(ExtendedResources.UserModeGag)
+    public Gag() : base(Resources.UserModeGag)
     {
     }
 
@@ -28,7 +28,7 @@ public class Gag : ModeRule, IModeRule
         {
             if (source.Level < target.Level) return EnumIrcError.ERR_NOPERMS;
 
-            target.Modes[ExtendedResources.UserModeGag].Set(flag);
+            target.Modes[Resources.UserModeGag].Set(flag);
             DispatchModeChange(source, target, flag, parameter);
             return EnumIrcError.OK;
         }

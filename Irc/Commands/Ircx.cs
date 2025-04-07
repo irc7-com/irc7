@@ -27,9 +27,9 @@ internal class Ircx : Command, ICommand
             chatFrame.User.SetProtocol(nominatedProtocol);
         }
 
-        chatFrame.User.Modes.ToggleModeChar(ExtendedResources.UserModeIrcx, true);
+        chatFrame.User.Modes.ToggleModeChar(Resources.UserModeIrcx, true);
 
-        chatFrame.User.Send(Raw.IRCX_RPL_IRCX_800(chatFrame.Server, chatFrame.User, 1, 0,
+        chatFrame.User.Send(Raws.IRCX_RPL_IRCX_800(chatFrame.Server, chatFrame.User, 1, 0,
             chatFrame.Server.MaxInputBytes, Resources.IRCXOptions));
     }
 }

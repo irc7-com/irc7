@@ -1,13 +1,12 @@
 ﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects.User;
 
 namespace Irc.Props.User;
 
 public class Msnprofile : PropRule
 {
-    public Msnprofile() : base(ExtendedResources.UserPropMsnProfile, EnumChannelAccessLevel.ChatMember,
+    public Msnprofile() : base(Resources.UserPropMsnProfile, EnumChannelAccessLevel.ChatMember,
         EnumChannelAccessLevel.ChatMember, Resources.GenericProps, "0", true)
     {
     }
@@ -16,13 +15,13 @@ public class Msnprofile : PropRule
     {
         if (source != target) return EnumIrcError.ERR_NOPERMS;
 
-        var user = (ApolloUser)source;
+        var user = (Objects.User.User)source;
         if (int.TryParse(propValue, out var result))
         {
             var profile = user.GetProfile();
             if (profile.HasProfile)
             {
-                user.Send(Raw.IRCX_ERR_ALREADYREGISTERED_462(user.Server, user));
+                user.Send(Raws.IRCX_ERR_ALREADYREGISTERED_462(user.Server, user));
                 return EnumIrcError.OK;
             }
 

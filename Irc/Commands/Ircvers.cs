@@ -20,7 +20,7 @@ internal class Ircvers : Command, ICommand
         //return;
         if (chatFrame.User.IsRegistered())
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_ALREADYREGISTERED_462(chatFrame.Server, chatFrame.User));
+            chatFrame.User.Send(Raws.IRCX_ERR_ALREADYREGISTERED_462(chatFrame.Server, chatFrame.User));
         }
         else
         {
@@ -36,19 +36,19 @@ internal class Ircvers : Command, ICommand
                         chatFrame.User.GetDataStore().Set("client", chatFrame.Message.Parameters[1]);
 
                         var isircx = protocol.GetProtocolType() > EnumProtocolType.IRC;
-                        chatFrame.User.Send(Raw.IRCX_RPL_IRCX_800(chatFrame.Server, chatFrame.User, isircx ? 1 : 0, 0,
+                        chatFrame.User.Send(Raws.IRCX_RPL_IRCX_800(chatFrame.Server, chatFrame.User, isircx ? 1 : 0, 0,
                             chatFrame.Server.MaxInputBytes, Resources.IRCXOptions));
                     }
                     else
                     {
-                        chatFrame.User.Send(Raw.IRCX_ERR_BADVALUE_906(chatFrame.Server, chatFrame.User, ircvers));
+                        chatFrame.User.Send(Raws.IRCX_ERR_BADVALUE_906(chatFrame.Server, chatFrame.User, ircvers));
                     }
                 }
 
                 return;
             }
 
-            chatFrame.User.Send(Raw.IRCX_ERR_BADVALUE_906(chatFrame.Server, chatFrame.User, ircvers));
+            chatFrame.User.Send(Raws.IRCX_ERR_BADVALUE_906(chatFrame.Server, chatFrame.User, ircvers));
         }
     }
 }

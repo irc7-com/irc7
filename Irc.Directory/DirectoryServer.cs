@@ -1,12 +1,12 @@
 ﻿using Irc.Commands;
 using Irc.Enumerations;
-using Irc.Factories;
 using Irc.Interfaces;
 using Irc.Objects.Server;
-using Nick = Irc.Commands.Nick;
 using Version = Irc.Commands.Version;
 
-public class DirectoryServer : ApolloServer
+namespace Irc.Directory;
+
+public class DirectoryServer : Server
 {
     public readonly string ChatServerIp = string.Empty;
     public readonly string ChatServerPort = string.Empty;
@@ -18,8 +18,6 @@ public class DirectoryServer : ApolloServer
             floodProtectionManager, dataStore, channels,
             ntlmCredentialProvider)
     {
-        UserFactory = new ApolloUserFactory();
-
         DisableGuestMode = true;
         DisableUserRegistration = true;
 
@@ -37,7 +35,7 @@ public class DirectoryServer : ApolloServer
         AddCommand(new Auth());
         AddCommand(new AuthX());
         AddCommand(new Pass());
-        AddCommand(new Irc.Commands.Nick());
+        AddCommand(new Commands.Nick());
         AddCommand(new UserCommand(), EnumProtocolType.IRC, "User");
         AddCommand(new Finds());
         AddCommand(new Prop());

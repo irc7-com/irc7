@@ -1,11 +1,11 @@
-﻿using Irc;
+﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
 public class Admin : ModeRule, IModeRule
 {
-    public Admin() : base(ExtendedResources.UserModeAdmin)
+    public Admin() : base(Resources.UserModeAdmin)
     {
     }
 
@@ -14,7 +14,7 @@ public class Admin : ModeRule, IModeRule
         // :sky-8a15b323126 908 Sky :No permissions to perform command
         if (source is IUser && ((IUser)source).IsAdministrator() && flag == false)
         {
-            target.Modes[ExtendedResources.UserModeAdmin].Set(flag);
+            target.Modes[Resources.UserModeAdmin].Set(flag);
             DispatchModeChange(source, target, flag, parameter);
             return EnumIrcError.OK;
         }

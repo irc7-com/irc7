@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Commands;
@@ -37,7 +38,7 @@ internal class Part : Command, ICommand
                 {
                     if (!user.IsOn(channel))
                     {
-                        user.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(server, user, channel));
+                        user.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(server, user, channel));
 
                         return;
                     }

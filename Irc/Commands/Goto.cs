@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Commands;
@@ -25,14 +26,14 @@ public class Goto : Command, ICommand
         if (channel == null)
         {
             // No such channel
-            user.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
+            user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
             return;
         }
 
         var member = channel.GetMemberByNickname(targetNickname);
         if (member == null)
         {
-            user.Send(Raw.IRCX_ERR_NOSUCHNICK_401(server, user, targetNickname));
+            user.Send(Raws.IRCX_ERR_NOSUCHNICK_401(server, user, targetNickname));
             return;
         }
 

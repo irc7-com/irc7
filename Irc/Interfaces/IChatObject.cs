@@ -3,6 +3,12 @@ using Irc.Objects;
 
 namespace Irc.Interfaces;
 
+public interface IExtendedChatObject : IChatObject
+{
+    IPropCollection PropCollection { get; }
+    IAccessList AccessList { get; }
+}
+
 public interface IChatObject
 {
     Guid Id { get; }

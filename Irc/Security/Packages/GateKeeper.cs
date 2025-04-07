@@ -5,7 +5,6 @@ using System.Text.Json;
 using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Interfaces;
-using Irc.Security;
 using NLog;
 
 namespace Irc.Security.Packages;

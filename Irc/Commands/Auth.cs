@@ -1,5 +1,5 @@
-﻿using Irc;
-using Irc.Commands;
+﻿using Irc.Commands;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Interfaces;
@@ -19,11 +19,11 @@ public class Auth : Command, ICommand
     {
         if (chatFrame.User.IsRegistered())
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_ALREADYREGISTERED_462(chatFrame.Server, chatFrame.User));
+            chatFrame.User.Send(Raws.IRCX_ERR_ALREADYREGISTERED_462(chatFrame.Server, chatFrame.User));
         }
         else if (chatFrame.User.IsAuthenticated())
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_ALREADYAUTHENTICATED_909(chatFrame.Server, chatFrame.User));
+            chatFrame.User.Send(Raws.IRCX_ERR_ALREADYAUTHENTICATED_909(chatFrame.Server, chatFrame.User));
         }
         else
         {
@@ -48,7 +48,8 @@ public class Auth : Command, ICommand
                 }
                 catch (ArgumentException)
                 {
-                    chatFrame.User.Send(Raw.IRCX_ERR_UNKNOWNPACKAGE_912(chatFrame.Server, chatFrame.User, packageName));
+                    chatFrame.User.Send(Raws.IRCX_ERR_UNKNOWNPACKAGE_912(chatFrame.Server, chatFrame.User,
+                        packageName));
                     return;
                 }
 
@@ -62,12 +63,12 @@ public class Auth : Command, ICommand
                     // If the security token could not be created, disconnect the user
                     if (securityToken == string.Empty)
                     {
-                        chatFrame.User.Disconnect(Raw.IRCX_ERR_RESOURCE_907(chatFrame.Server, chatFrame.User));
+                        chatFrame.User.Disconnect(Raws.IRCX_ERR_RESOURCE_907(chatFrame.Server, chatFrame.User));
                         return;
                     }
 
                     var securityTokenEscaped = securityToken.ToEscape();
-                    chatFrame.User.Send(Raw.RPL_AUTH_SEC_REPLY(packageName, securityTokenEscaped));
+                    chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(packageName, securityTokenEscaped));
                     // Send reply
                     return;
                 }
@@ -106,21 +107,21 @@ public class Auth : Command, ICommand
                     if (chatFrame.User.GetLevel() >= EnumUserAccessLevel.Guide) chatFrame.User.Utf8 = true;
 
                     // Send reply
-                    chatFrame.User.Send(Raw.RPL_AUTH_SUCCESS(packageName, $"{user}@{domain}", 0));
+                    chatFrame.User.Send(Raws.RPL_AUTH_SUCCESS(packageName, $"{user}@{domain}", 0));
 
                     return;
                 }
 
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_CREDENTIALS)
                 {
-                    chatFrame.User.Send(Raw.RPL_AUTH_SEC_REPLY(packageName, "OK"));
+                    chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(packageName, "OK"));
                     return;
                 }
             }
 
             // auth failed
             chatFrame.User.Disconnect(
-                Raw.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
+                Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
         }
     }
 }

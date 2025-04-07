@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
 
@@ -27,7 +28,7 @@ internal class Kick : Command, ICommand
         var channel = chatFrame.Server.GetChannelByName(channelName);
         if (channel == null)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User,
+            chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User,
                 chatFrame.Message.Parameters.First()));
         }
         else
@@ -35,14 +36,14 @@ internal class Kick : Command, ICommand
             var sourceMember = channel.GetMember(source);
             if (sourceMember == null || !channel.CanBeModifiedBy((ChatObject)source))
             {
-                chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
+                chatFrame.User.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
                 return;
             }
 
             var targetMember = channel.GetMemberByNickname(target);
             if (targetMember == null)
             {
-                chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHNICK_401(chatFrame.Server, source, channelName));
+                chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHNICK_401(chatFrame.Server, source, channelName));
                 return;
             }
 

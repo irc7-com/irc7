@@ -31,6 +31,6 @@ internal class Ison : Command, ICommand
             if (found) foundNicknames.Add(nickname);
         }
 
-        user.Send(IrcRaws.IRC_RAW_303(server, user, string.Join(' ', foundNicknames)));
+        user.Send(Raws.IRC_RAW_303(server, user, string.Join(' ', foundNicknames)));
     }
 }

@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace SSPI.GateKeeper.Tests;
 
-public class ApolloProfileTests
+public class ProfileTests
 {
     [SetUp]
     public void Setup()
@@ -14,7 +14,7 @@ public class ApolloProfileTests
     [Test]
     public void ApolloProfileTests_GetProfileStringTests()
     {
-        var fy = new ApolloProfile
+        var fy = new Profile
         {
             HasProfile = true,
             HasPicture = true,
@@ -25,7 +25,7 @@ public class ApolloProfileTests
         Assert.That(13, Is.EqualTo(fy.GetProfileCode()));
         Assert.That("FY", Is.EqualTo(fy.GetProfileString()));
 
-        var my = new ApolloProfile
+        var my = new Profile
         {
             HasProfile = true,
             HasPicture = true,
@@ -36,7 +36,7 @@ public class ApolloProfileTests
         Assert.That(11, Is.EqualTo(my.GetProfileCode()));
         Assert.That("MY", Is.EqualTo(my.GetProfileString()));
 
-        var py = new ApolloProfile
+        var py = new Profile
         {
             HasProfile = true,
             HasPicture = true,
@@ -47,7 +47,7 @@ public class ApolloProfileTests
         Assert.That(9, Is.EqualTo(py.GetProfileCode()));
         Assert.That("PY", Is.EqualTo(py.GetProfileString()));
 
-        var fx = new ApolloProfile
+        var fx = new Profile
         {
             HasProfile = true,
             HasPicture = false,
@@ -58,7 +58,7 @@ public class ApolloProfileTests
         Assert.That(5, Is.EqualTo(fx.GetProfileCode()));
         Assert.That("FX", Is.EqualTo(fx.GetProfileString()));
 
-        var mx = new ApolloProfile
+        var mx = new Profile
         {
             HasProfile = true,
             HasPicture = false,
@@ -69,7 +69,7 @@ public class ApolloProfileTests
         Assert.That(3, Is.EqualTo(mx.GetProfileCode()));
         Assert.That("MX", Is.EqualTo(mx.GetProfileString()));
 
-        var px = new ApolloProfile
+        var px = new Profile
         {
             HasProfile = true,
             HasPicture = false,
@@ -80,7 +80,7 @@ public class ApolloProfileTests
         Assert.That(1, Is.EqualTo(px.GetProfileCode()));
         Assert.That("PX", Is.EqualTo(px.GetProfileString()));
 
-        var rx = new ApolloProfile
+        var rx = new Profile
         {
             HasProfile = false,
             HasPicture = false,
@@ -95,21 +95,21 @@ public class ApolloProfileTests
     [Test]
     public void ApolloProfileTests_GetModeStringTests()
     {
-        var admin = new ApolloProfile
+        var admin = new Profile
         {
             Level = EnumUserAccessLevel.Administrator
         };
 
         Assert.That("A", Is.EqualTo(admin.GetModeString()));
 
-        var sysop = new ApolloProfile
+        var sysop = new Profile
         {
             Level = EnumUserAccessLevel.Sysop
         };
 
         Assert.That("S", Is.EqualTo(sysop.GetModeString()));
 
-        var user = new ApolloProfile
+        var user = new Profile
         {
             Level = EnumUserAccessLevel.Member
         };
@@ -120,13 +120,13 @@ public class ApolloProfileTests
     [Test]
     public void ApolloProfileTests_GetAwayStringTests()
     {
-        var gone = new ApolloProfile
+        var gone = new Profile
         {
             Away = true
         };
         Assert.That("G", Is.EqualTo(gone.GetAwayString()));
 
-        var here = new ApolloProfile
+        var here = new Profile
         {
             Away = false
         };
@@ -136,7 +136,7 @@ public class ApolloProfileTests
     [Test]
     public void ApolloProfileTests_ToString()
     {
-        var here_admin_guest = new ApolloProfile
+        var here_admin_guest = new Profile
         {
             Away = false,
             Level = EnumUserAccessLevel.Administrator,
@@ -144,7 +144,7 @@ public class ApolloProfileTests
         };
         Assert.That("H,A,GO", Is.EqualTo(here_admin_guest.ToString()));
 
-        var here_user_guest = new ApolloProfile
+        var here_user_guest = new Profile
         {
             Away = false,
             Level = EnumUserAccessLevel.Member,
@@ -152,7 +152,7 @@ public class ApolloProfileTests
         };
         Assert.That("H,U,GO", Is.EqualTo(here_user_guest.ToString()));
 
-        var away_user_male_prof_registered = new ApolloProfile
+        var away_user_male_prof_registered = new Profile
         {
             Away = true,
             Level = EnumUserAccessLevel.Member,
@@ -163,7 +163,7 @@ public class ApolloProfileTests
         };
         Assert.That("G,U,MXB", Is.EqualTo(away_user_male_prof_registered.ToString()));
 
-        var away_user_female_prof_pic_registered = new ApolloProfile
+        var away_user_female_prof_pic_registered = new Profile
         {
             Away = true,
             Level = EnumUserAccessLevel.Member,
@@ -180,7 +180,7 @@ public class ApolloProfileTests
     [Test]
     public void ApolloProfileTests_Irc5_ToString()
     {
-        var here_admin_guest = new ApolloProfile
+        var here_admin_guest = new Profile
         {
             Away = false,
             Level = EnumUserAccessLevel.Administrator,
@@ -188,7 +188,7 @@ public class ApolloProfileTests
         };
         Assert.That("H,A,G", Is.EqualTo(here_admin_guest.Irc5_ToString()));
 
-        var here_user_guest = new ApolloProfile
+        var here_user_guest = new Profile
         {
             Away = false,
             Level = EnumUserAccessLevel.Member,
@@ -196,7 +196,7 @@ public class ApolloProfileTests
         };
         Assert.That("H,U,G", Is.EqualTo(here_user_guest.Irc5_ToString()));
 
-        var away_user_male_prof_registered = new ApolloProfile
+        var away_user_male_prof_registered = new Profile
         {
             Away = true,
             Level = EnumUserAccessLevel.Member,
@@ -211,7 +211,7 @@ public class ApolloProfileTests
     [Test]
     public void ApolloProfileTests_Irc7_ToString()
     {
-        var here_admin_guest = new ApolloProfile
+        var here_admin_guest = new Profile
         {
             Away = false,
             Level = EnumUserAccessLevel.Administrator,
@@ -219,7 +219,7 @@ public class ApolloProfileTests
         };
         Assert.That("H,A,G", Is.EqualTo(here_admin_guest.Irc7_ToString()));
 
-        var here_user_guest = new ApolloProfile
+        var here_user_guest = new Profile
         {
             Away = false,
             Level = EnumUserAccessLevel.Member,
@@ -227,7 +227,7 @@ public class ApolloProfileTests
         };
         Assert.That("H,U,G", Is.EqualTo(here_user_guest.Irc7_ToString()));
 
-        var away_user_male_prof_registered = new ApolloProfile
+        var away_user_male_prof_registered = new Profile
         {
             Away = true,
             Level = EnumUserAccessLevel.Member,

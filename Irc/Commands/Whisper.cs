@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
 
@@ -24,13 +25,13 @@ internal class Whisper : Command, ICommand
 
         if (chatFrame.Message.Parameters.Count == 1)
         {
-            user.Send(Raw.IRC_ERR_NORECIPIENT_411(server, user, nameof(Whisper)));
+            user.Send(Raws.IRC_ERR_NORECIPIENT_411(server, user, nameof(Whisper)));
             return;
         }
 
         if (chatFrame.Message.Parameters.Count == 2)
         {
-            user.Send(Raw.IRC_ERR_NOTEXT_412(server, user, nameof(Whisper)));
+            user.Send(Raws.IRC_ERR_NOTEXT_412(server, user, nameof(Whisper)));
             return;
         }
 
@@ -38,7 +39,7 @@ internal class Whisper : Command, ICommand
         var channel = chatFrame.Server.GetChannelByName(channelName);
         if (channel == null)
         {
-            user.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
+            user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
             return;
         }
 
@@ -47,19 +48,19 @@ internal class Whisper : Command, ICommand
         if (!user.IsOn(channel))
         {
             chatFrame.User.Send(
-                Raw.IRCX_ERR_NOTONCHANNEL_442(server, user, channel));
+                Raws.IRCX_ERR_NOTONCHANNEL_442(server, user, channel));
             return;
         }
 
         if (channelModes.NoWhisper)
         {
-            user.Send(Raw.IRCX_ERR_NOWHISPER_923(server, user, channel));
+            user.Send(Raws.IRCX_ERR_NOWHISPER_923(server, user, channel));
             return;
         }
 
         if (channelModes.NoGuestWhisper && user.IsGuest() && user.GetLevel() < EnumUserAccessLevel.Guide)
         {
-            user.Send(Raw.IRCX_ERR_NOWHISPER_923(server, user, channel));
+            user.Send(Raws.IRCX_ERR_NOWHISPER_923(server, user, channel));
             return;
         }
 
@@ -67,7 +68,7 @@ internal class Whisper : Command, ICommand
         var target = channel.GetMemberByNickname(targetNickname);
         if (target == null)
         {
-            user.Send(Raw.IRCX_ERR_NOSUCHNICK_401(server, user, targetNickname));
+            user.Send(Raws.IRCX_ERR_NOSUCHNICK_401(server, user, targetNickname));
             return;
         }
 
@@ -76,11 +77,11 @@ internal class Whisper : Command, ICommand
         if (target.GetUser().GetProtocol().GetProtocolType() < EnumProtocolType.IRCX)
             // PRIVMSG
             target.GetUser().Send(
-                Raw.RPL_PRIVMSG_USER(chatFrame.Server, chatFrame.User, (ChatObject)target.GetUser(), message)
+                Raws.RPL_PRIVMSG_USER(chatFrame.Server, chatFrame.User, (ChatObject)target.GetUser(), message)
             );
         else
             target.GetUser().Send(
-                Raw.RPL_CHAN_WHISPER(chatFrame.Server, chatFrame.User, channel, (ChatObject)target.GetUser(), message)
+                Raws.RPL_CHAN_WHISPER(chatFrame.Server, chatFrame.User, channel, (ChatObject)target.GetUser(), message)
             );
     }
 }

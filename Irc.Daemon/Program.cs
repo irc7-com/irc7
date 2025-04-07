@@ -3,10 +3,10 @@ using System.CommandLine.Invocation;
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
+using Irc.Directory;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Logging;
-using Irc.Objects.Channel;
 using Irc.Objects.Server;
 using Irc.Security;
 using Irc.Security.Credentials;
@@ -145,7 +145,7 @@ internal class Program
         {
             IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, securityManager,
                 floodProtectionManager, dataStoreServerConfig, channels, chatServerIp),
-            _ => new ApolloServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
+            _ => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
                 channels, credentialProvider)
         };
     }
@@ -189,12 +189,11 @@ internal class Program
             foreach (var keyValuePair in defaultChannel.Modes)
                 channel.Modes.SetModeChar(keyValuePair.Key, keyValuePair.Value);
 
-            if (channel is ExtendedChannel extendedChannel)
-                foreach (var keyValuePair in defaultChannel.Props)
-                {
-                    var prop = extendedChannel.PropCollection.GetProp(keyValuePair.Key);
-                    prop?.SetValue(keyValuePair.Value);
-                }
+            foreach (var keyValuePair in defaultChannel.Props)
+            {
+                var prop = channel.PropCollection.GetProp(keyValuePair.Key);
+                prop?.SetValue(keyValuePair.Value);
+            }
 
             server.AddChannel(channel);
         }

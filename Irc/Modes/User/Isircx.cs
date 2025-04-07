@@ -1,11 +1,12 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Modes.User;
 
 public class Isircx : ModeRule, IModeRule
 {
-    public Isircx() : base(ExtendedResources.UserModeIrcx)
+    public Isircx() : base(Resources.UserModeIrcx)
     {
     }
 

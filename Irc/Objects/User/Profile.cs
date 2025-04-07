@@ -41,7 +41,7 @@ IRC8 H,A,GO is correct as well as
 
 */
 
-public class ApolloProfile
+public class Profile
 {
     public EnumUserAccessLevel Level { get; set; }
     public bool Away { get; set; }

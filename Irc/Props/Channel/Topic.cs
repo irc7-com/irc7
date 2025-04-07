@@ -6,7 +6,7 @@ namespace Irc.Props.Channel;
 
 public class Topic : PropRule
 {
-    public Topic() : base(ExtendedResources.ChannelPropTopic, EnumChannelAccessLevel.ChatMember,
+    public Topic() : base(Resources.ChannelPropTopic, EnumChannelAccessLevel.ChatMember,
         EnumChannelAccessLevel.ChatHost, Resources.ChannelPropTopicRegex, string.Empty)
     {
     }

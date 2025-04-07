@@ -1,11 +1,11 @@
-﻿using Irc;
+﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
 public class Knock : ModeRuleChannel, IModeRule
 {
-    public Knock() : base(ExtendedResources.ChannelModeKnock)
+    public Knock() : base(Resources.ChannelModeKnock)
     {
     }
 

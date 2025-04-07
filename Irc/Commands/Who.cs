@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects.Channel;
@@ -29,7 +30,7 @@ public class Who : Command, ICommand
             var channel = server.GetChannelByName(criteria);
             if (channel == null)
             {
-                user.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(server, user, criteria));
+                user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, criteria));
                 return;
             }
 
@@ -58,7 +59,7 @@ public class Who : Command, ICommand
 
         // 315     RPL_ENDOFWHO
         //                 "<name> :End of /WHO list"
-        user.Send(Raw.IRCX_RPL_ENDOFWHO_315(server, user, criteria));
+        user.Send(Raws.IRCX_RPL_ENDOFWHO_315(server, user, criteria));
     }
 
     // TODO: The below function needs re-writing
@@ -87,7 +88,7 @@ public class Who : Command, ICommand
 
                 var modeString = chatUser.Modes.ToString();
 
-                user.Send(Raw.IRCX_RPL_WHOREPLY_352(
+                user.Send(Raws.IRCX_RPL_WHOREPLY_352(
                     server,
                     user,
                     channelStoredName,

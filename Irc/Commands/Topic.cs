@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
 
@@ -26,7 +27,7 @@ internal class Topic : Command, ICommand
         var channel = chatFrame.Server.GetChannelByName(channelName);
         if (channel == null)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User,
+            chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User,
                 chatFrame.Message.Parameters.First()));
         }
         else
@@ -36,18 +37,18 @@ internal class Topic : Command, ICommand
             {
                 case EnumIrcError.ERR_NOTONCHANNEL:
                 {
-                    chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
+                    chatFrame.User.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
                     break;
                 }
                 case EnumIrcError.ERR_NOCHANOP:
                 {
                     chatFrame.User.Send(
-                        Raw.IRCX_ERR_CHANOPRIVSNEEDED_482(chatFrame.Server, source, channel));
+                        Raws.IRCX_ERR_CHANOPRIVSNEEDED_482(chatFrame.Server, source, channel));
                     break;
                 }
                 case EnumIrcError.OK:
                 {
-                    channel.Send(Raw.RPL_TOPIC_IRC(chatFrame.Server, source, channel, topic));
+                    channel.Send(Raws.RPL_TOPIC_IRC(chatFrame.Server, source, channel, topic));
                     break;
                 }
             }
@@ -59,7 +60,7 @@ internal class Topic : Command, ICommand
         var sourceMember = channel.GetMember(source);
         if (sourceMember == null || !channel.CanBeModifiedBy((ChatObject)source))
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
+            chatFrame.User.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
             return EnumIrcError.ERR_NOTONCHANNEL;
         }
 

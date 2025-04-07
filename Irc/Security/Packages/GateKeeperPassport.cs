@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 using Irc.Interfaces;
-using Irc.Security;
 
 namespace Irc.Security.Packages;
 

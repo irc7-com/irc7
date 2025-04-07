@@ -1,6 +1,8 @@
 ﻿using Irc.Interfaces;
 
-public static class ApolloDirectoryRaws
+namespace Irc.Directory;
+
+public static class DirectoryRaws
 {
     public static string RPL_FINDS_MSN(DirectoryServer server, IUser user)
     {

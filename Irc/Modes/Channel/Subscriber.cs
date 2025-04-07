@@ -1,3 +1,4 @@
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 
@@ -5,7 +6,7 @@ namespace Irc.Modes.Channel;
 
 public class Subscriber : ModeRuleChannel, IModeRule
 {
-    public Subscriber() : base(ApolloResources.ChannelModeSubscriber)
+    public Subscriber() : base(Resources.ChannelModeSubscriber)
     {
     }
 

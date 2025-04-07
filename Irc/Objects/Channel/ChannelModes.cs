@@ -24,6 +24,8 @@ k - set a channel key (password).
 
     public ChannelModes()
     {
+        // IRC Modes
+
         Modes.Add(Resources.MemberModeHost, new Operator());
         Modes.Add(Resources.MemberModeVoice, new Voice());
         Modes.Add(Resources.ChannelModePrivate, new Private());
@@ -36,7 +38,101 @@ k - set a channel key (password).
         Modes.Add(Resources.ChannelModeUserLimit, new UserLimit());
         Modes.Add(Resources.ChannelModeBan, new BanList());
         Modes.Add(Resources.ChannelModeKey, new Key());
+
+        // IRCX Modes
+        Modes.Add(Resources.ChannelModeAuthOnly, new AuthOnly());
+        Modes.Add(Resources.ChannelModeProfanity, new NoFormat());
+        Modes.Add(Resources.ChannelModeRegistered, new Registered());
+        Modes.Add(Resources.ChannelModeKnock, new Knock());
+        Modes.Add(Resources.ChannelModeNoWhisper, new NoWhisper());
+        Modes.Add(Resources.ChannelModeAuditorium, new Auditorium());
+        Modes.Add(Resources.ChannelModeCloneable, new Cloneable());
+        Modes.Add(Resources.ChannelModeClone, new Clone());
+        Modes.Add(Resources.ChannelModeService, new Service());
+        Modes.Add(Resources.MemberModeOwner, new Owner());
+
+        // Apollo Modes
+        Modes.Add(Resources.ChannelModeNoGuestWhisper, new NoGuestWhisper());
+        Modes.Add(Resources.ChannelModeOnStage, new OnStage());
+        Modes.Add(Resources.ChannelModeSubscriber, new Subscriber());
     }
+
+    // IRCX Modes
+
+    public bool Auditorium
+    {
+        get => Modes[Resources.ChannelModeAuditorium].Get() == 1;
+        set => Modes[Resources.ChannelModeAuditorium].Set(Convert.ToInt32(value));
+    }
+
+    public bool NoGuestWhisper
+    {
+        get => Modes[Resources.ChannelModeNoGuestWhisper].Get() == 1;
+        set => Modes[Resources.ChannelModeNoGuestWhisper].Set(Convert.ToInt32(value));
+    }
+
+    public bool AuthOnly
+    {
+        get => Modes[Resources.ChannelModeAuthOnly].Get() == 1;
+        set => Modes[Resources.ChannelModeAuthOnly].Set(Convert.ToInt32(value));
+    }
+
+    public bool Profanity
+    {
+        get => Modes[Resources.ChannelModeProfanity].Get() == 1;
+        set => Modes[Resources.ChannelModeProfanity].Set(Convert.ToInt32(value));
+    }
+
+    public bool Registered
+    {
+        get => Modes[Resources.ChannelModeRegistered].Get() == 1;
+        set => Modes[Resources.ChannelModeRegistered].Set(Convert.ToInt32(value));
+    }
+
+    public bool Knock
+    {
+        get => Modes[Resources.ChannelModeKnock].Get() == 1;
+        set => Modes[Resources.ChannelModeKnock].Set(Convert.ToInt32(value));
+    }
+
+    public bool NoWhisper
+    {
+        get => Modes[Resources.ChannelModeNoWhisper].Get() == 1;
+        set => Modes[Resources.ChannelModeNoWhisper].Set(Convert.ToInt32(value));
+    }
+
+    public bool Cloneable
+    {
+        get => Modes[Resources.ChannelModeCloneable].Get() == 1;
+        set => Modes[Resources.ChannelModeCloneable].Set(Convert.ToInt32(value));
+    }
+
+    public bool Clone
+    {
+        get => Modes[Resources.ChannelModeClone].Get() == 1;
+        set => Modes[Resources.ChannelModeClone].Set(Convert.ToInt32(value));
+    }
+
+    public bool Service
+    {
+        get => Modes[Resources.ChannelModeService].Get() == 1;
+        set => Modes[Resources.ChannelModeService].Set(Convert.ToInt32(value));
+    }
+
+    // Apollo Modes
+    public bool OnStage
+    {
+        get => Modes[Resources.ChannelModeOnStage].Get() == 1;
+        set => Modes[Resources.ChannelModeOnStage].Set(Convert.ToInt32(value));
+    }
+
+    public bool Subscriber
+    {
+        get => Modes[Resources.ChannelModeSubscriber].Get() == 1;
+        set => Modes[Resources.ChannelModeSubscriber].Set(Convert.ToInt32(value));
+    }
+
+    // IRC Modes
 
     public bool InviteOnly
     {

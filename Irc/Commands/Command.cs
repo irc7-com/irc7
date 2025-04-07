@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Commands;
@@ -38,13 +39,13 @@ public class Command : ICommand
 
         if (parameterCount < _requiredMinimumParameters)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NEEDMOREPARAMS_461(chatFrame.Server, chatFrame.User, GetName()));
+            chatFrame.User.Send(Raws.IRCX_ERR_NEEDMOREPARAMS_461(chatFrame.Server, chatFrame.User, GetName()));
             return false;
         }
 
         if (_requiredMaximumParameters > 0 && parameterCount > _requiredMaximumParameters)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_TOOMANYARGUMENTS_901(chatFrame.Server, chatFrame.User, GetName()));
+            chatFrame.User.Send(Raws.IRCX_ERR_TOOMANYARGUMENTS_901(chatFrame.Server, chatFrame.User, GetName()));
             return false;
         }
 
@@ -55,7 +56,7 @@ public class Command : ICommand
     {
         if (!_registrationRequired || (_registrationRequired && chatFrame.User.IsRegistered())) return false;
 
-        chatFrame.User.Send(Raw.IRCX_ERR_NOTREGISTERED_451(chatFrame.Server, chatFrame.User));
+        chatFrame.User.Send(Raws.IRCX_ERR_NOTREGISTERED_451(chatFrame.Server, chatFrame.User));
         return true;
     }
 }

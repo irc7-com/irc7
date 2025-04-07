@@ -1,11 +1,11 @@
-﻿using Irc;
+﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
 public class Clone : ModeRuleChannel, IModeRule
 {
-    public Clone() : base(ExtendedResources.ChannelModeClone)
+    public Clone() : base(Resources.ChannelModeClone)
     {
     }
 
