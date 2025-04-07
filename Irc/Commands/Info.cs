@@ -5,10 +5,6 @@ namespace Irc.Commands;
 
 internal class Info : Command, ICommand
 {
-    public Info() : base()
-    {
-    }
-
     public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;

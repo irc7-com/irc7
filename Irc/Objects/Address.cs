@@ -1,37 +1,28 @@
-﻿using System.Text.RegularExpressions;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Irc.Objects;
 
 public class Address
 {
-    /* <nick> [ '!' <user> ] [ '@' <host> ]
-       $       The  '$' prefix identifies a server on the network.
-          The '$' character followed by a space or comma  may
-          be used to represent the local server the client is
-          connected to.
-    */
-
-    public record UserHostPair
-    {
-        public string User { get; set; } = string.Empty;
-        public string Host { get; set; } = string.Empty;
-
-        public override string ToString()
-        {
-            return $"{User}@{Host}";
-        }
-    }
-
     public UserHostPair UserHost = new();
 
     public string Nickname { private set; get; } = string.Empty;
 
-    public string User { set => UserHost.User = value; get => UserHost.User; }
+    public string User
+    {
+        set => UserHost.User = value;
+        get => UserHost.User;
+    }
 
     // TODO: NOTE: In Apollo, domain names are not supported in the host field; it must be a valid IP address.
-    public string Host { set => UserHost.Host = value; get => UserHost.Host; }
+    public string Host
+    {
+        set => UserHost.Host = value;
+        get => UserHost.Host;
+    }
+
     public string Server { set; get; } = string.Empty;
 
     public string RealName { set; get; } = string.Empty;
@@ -94,10 +85,10 @@ public class Address
 
     public static string ObfuscatedAddress(string address)
     {
-        using MD5 md5 = MD5.Create();
+        using var md5 = MD5.Create();
         // TODO: Temporary randomized
-        byte[] encoded = Encoding.UTF8.GetBytes(address + DateTime.UtcNow.Ticks.ToString());
-        byte[] hash = md5.ComputeHash(encoded);
+        var encoded = Encoding.UTF8.GetBytes(address + DateTime.UtcNow.Ticks);
+        var hash = md5.ComputeHash(encoded);
         var hexStr = string.Concat(hash.Select(b => $"{b:x2}"));
 
         return hexStr.Substring(8, address.Length - 8);
@@ -106,5 +97,22 @@ public class Address
     public override string ToString()
     {
         return GetAddress();
+    }
+    /* <nick> [ '!' <user> ] [ '@' <host> ]
+       $       The  '$' prefix identifies a server on the network.
+          The '$' character followed by a space or comma  may
+          be used to represent the local server the client is
+          connected to.
+    */
+
+    public record UserHostPair
+    {
+        public string User { get; set; } = string.Empty;
+        public string Host { get; set; } = string.Empty;
+
+        public override string ToString()
+        {
+            return $"{User}@{Host}";
+        }
     }
 }

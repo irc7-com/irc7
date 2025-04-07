@@ -1,6 +1,4 @@
-﻿using Irc.Commands;
-
-namespace Irc.Interfaces;
+﻿namespace Irc.Interfaces;
 
 public interface ICommandCollection
 {

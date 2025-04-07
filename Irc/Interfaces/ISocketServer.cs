@@ -1,5 +1,3 @@
-using Irc7d;
-
 namespace Irc.Interfaces;
 
 public interface ISocketServer

@@ -1,11 +1,7 @@
 ﻿using Irc.Enumerations;
-using Irc.Extensions.Security;
-using Irc.Interfaces;
-using Irc.IO;
-using Irc.Security;
-using Irc7d;
+using Irc.Objects;
 
-namespace Irc.Objects.Server;
+namespace Irc.Interfaces;
 
 public interface IServer
 {

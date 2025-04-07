@@ -1,6 +1,4 @@
-﻿using Irc.Commands;
-using Irc.Enumerations;
-using Irc.Objects;
+﻿using Irc.Enumerations;
 
 namespace Irc.Interfaces;
 

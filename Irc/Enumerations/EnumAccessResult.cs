@@ -24,5 +24,5 @@ public enum EnumIrcError
     ERR_SECUREONLYCHAN = 557,
     ERR_AUTHONLYCHAN = 904,
     ERR_BADVALUE = 906,
-    ERR_NOPERMS = 908,
+    ERR_NOPERMS = 908
 }

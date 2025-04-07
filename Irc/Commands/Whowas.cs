@@ -1,15 +1,10 @@
-﻿using Irc.Commands;
-using Irc.Enumerations;
+﻿using Irc.Enumerations;
 using Irc.Interfaces;
 
-namespace Irc.Extensions.Commands;
+namespace Irc.Commands;
 
 internal class Whowas : Command, ICommand
 {
-    public Whowas() : base()
-    {
-    }
-
     public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;

@@ -1,5 +1,4 @@
-﻿using Irc.Extensions.Security;
-using Irc.Security;
+﻿using Irc.Security;
 
 namespace Irc.Interfaces;
 

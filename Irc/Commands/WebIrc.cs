@@ -1,7 +1,6 @@
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
 using Irc.Objects.User;
 using NLog;
 
@@ -12,7 +11,7 @@ namespace Irc.Commands;
 
 public class WebIrc : Command, ICommand
 {
-    public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
+    public static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
     public WebIrc() : base(0, false)
     {

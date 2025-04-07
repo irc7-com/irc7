@@ -1,10 +1,7 @@
 ﻿using System.Text.RegularExpressions;
-using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
 using Irc.Objects.Channel;
-using Irc.Objects.Server;
 using Irc.Objects.User;
 
 namespace Irc.Commands;

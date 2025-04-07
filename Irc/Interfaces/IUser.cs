@@ -1,11 +1,8 @@
 ﻿using Irc.Enumerations;
-using Irc.Interfaces;
-using Irc.IO;
 using Irc.Modes;
-using Irc.Objects.Server;
-using Irc7d;
+using Irc.Objects;
 
-namespace Irc.Objects;
+namespace Irc.Interfaces;
 
 public interface IUser
 {

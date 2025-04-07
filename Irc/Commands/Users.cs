@@ -6,10 +6,6 @@ namespace Irc.Commands;
 
 public class Users : Command, ICommand
 {
-    public Users() : base()
-    {
-    }
-
     public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;

@@ -10,6 +10,7 @@ public enum EnumProtocolType
     IRC5 = 5,
     IRC6 = 6,
     IRC7 = 7,
-    IRC8 = 8,
+
+    IRC8 = 8
     //IRC9 = 9
 }

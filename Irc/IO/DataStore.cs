@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
+using Irc.Interfaces;
 
 namespace Irc.IO;
 
@@ -25,11 +25,8 @@ public class DataStore : IDataStore
             // (specifying PropertyNameCaseInsensitive = true in JsonSerializerOptions also didn't work)
             var tempSet = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path));
             if (tempSet == null) return;
-            
-            foreach (var kvp in tempSet)
-            {
-                _sets.Add(kvp.Key, kvp.Value);
-            }
+
+            foreach (var kvp in tempSet) _sets.Add(kvp.Key, kvp.Value);
         }
     }
 
@@ -58,10 +55,7 @@ public class DataStore : IDataStore
     public T GetAs<T>(string key) where T : new()
     {
         var json = Get(key);
-        if (string.IsNullOrEmpty(json))
-        {
-            return new T();
-        }
+        if (string.IsNullOrEmpty(json)) return new T();
         return JsonSerializer.Deserialize<T>(json) ?? new T();
     }
 

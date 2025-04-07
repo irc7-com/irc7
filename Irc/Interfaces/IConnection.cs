@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace Irc7d;
+namespace Irc.Interfaces;
 
 public interface IConnection
 {

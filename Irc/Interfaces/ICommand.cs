@@ -1,7 +1,6 @@
 ﻿using Irc.Enumerations;
-using Irc.Interfaces;
 
-namespace Irc.Commands;
+namespace Irc.Interfaces;
 
 public interface ICommand
 {

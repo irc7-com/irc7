@@ -1,6 +1,4 @@
-﻿using Irc.Objects;
-
-namespace Irc.Interfaces;
+﻿namespace Irc.Interfaces;
 
 public interface IChannelModes : IModeCollection
 {

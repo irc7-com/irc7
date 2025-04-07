@@ -1,6 +1,4 @@
 ﻿using Irc.Interfaces;
-using Irc.Objects;
-using Irc.Objects.Server;
 
 namespace Irc.Constants;
 
@@ -17,21 +15,10 @@ public static class IrcRaws
     public static string IRC_RAW_253 = ":%h 253 %a %d :unknown connection(s)";
     public static string IRC_RAW_254 = ":%h 254 %a %d :channels formed  ";
     public static string IRC_RAW_255 = ":%h 255 %a :I have %d clients and %d servers";
-    public static string IRC_RAW_256(IServer server, IUser user) => $":{server} 256 {user} :Administrative info about {server}";
-    public static string IRC_RAW_257(IServer server, IUser user, string message) => $":{server} 257 {user} :{message}";
-    public static string IRC_RAW_258(IServer server, IUser user, string message) => $":{server} 258 {user} :{message}";
-    public static string IRC_RAW_259(IServer server, IUser user, string email) => $":{server} 259 {user} :{email}";
     public static string IRC_RAW_301 = ":%h 301 %a %s :%s";
-    public static string IRC_RAW_303(IServer server, IUser user, string names) => $":{server} 303 {user} :{names}";
     public static string IRC_RAW_305 = ":%h 305 %a :You are no longer marked as being away  ";
     public static string IRC_RAW_306 = ":%h 306 %a :You have been marked as being away  ";
-    public static string IRC_RAW_311(IServer server, IUser user, IUser targetUser) => $":{server} 311 {user} {targetUser} {targetUser.GetAddress().User} {targetUser.GetAddress().Host} * :{targetUser.GetAddress().RealName}";
-    public static string IRC_RAW_312(IServer server, IUser user, IUser targetUser) => $":{server} 312 {user} {targetUser} {server} :{server.Info}";
-    public static string IRC_RAW_313(IServer server, IUser user, IUser targetUser) => $":{server} 313 {user} {targetUser} :is an IRC operator";
     public static string IRC_RAW_315 = ":%h 315 %a %s :End of /WHO list ";
-    public static string IRC_RAW_317(IServer server, IUser user, IUser targetUser, long seconds, long epoch) => $":{server} 317 {user} {targetUser} {seconds} {epoch} :seconds idle, signon time";
-    public static string IRC_RAW_318(IServer server, IUser user, string targetNicknames) => $":{server} 318 {user} {targetNicknames} :End of /WHOIS list";
-    public static string IRC_RAW_319(IServer server, IUser user, IUser targetUser, string channelList) => $":{server} 319 {user} {targetUser} :{channelList}";
     public static string IRC_RAW_321 = ":%h 321 %a Channel :Users  Name ";
     public static string IRC_RAW_322 = ":%h 322 %a %s %d :%s";
     public static string IRC_RAW_323 = ":%h 323 %a :End of /LIST";
@@ -41,9 +28,6 @@ public static class IrcRaws
     public static string IRC_RAW_341 = ":%h 341 %a %s %s";
     public static string IRC_RAW_351 = ":%h 351 %a %d.%d.%d %h :Microsoft Exchange Chat Service %d.%d   ";
     public static string IRC_RAW_352 = ":%h 352 %a %s %s %s %s %s %s%s :%d %s   ";
-    public static string IRC_RAW_353(IServer server, IUser user, IChannel channel, string names) => $":{server} 353 {user} = {channel} :{names}";
-    public static string IRC_RAW_364(IServer server, IUser user, string mask, int hopcount) => $":{server} 364 {user} {mask} {server} :{hopcount} P0 {server.Info}";
-    public static string IRC_RAW_365(IServer server, IUser user, string mask) => $":{server} 365 {user} {mask} :End of /LINKS list.";
     public static string IRC_RAW_366_STR = ":%h 366 %a %s :End of /NAMES list.  ";
     public static string IRC_RAW_366_ANY = ":%h 366 %a * :End of /NAMES list.   ";
     public static string IRC_RAW_366 = ":%h 366 %a %c :End of /NAMES list.  ";
@@ -67,27 +51,21 @@ public static class IrcRaws
     public static string IRC_RAW_412 = ":%h 412 %a :No text to send (%s)";
     public static string IRC_RAW_421 = ":%h 421 %a %s :Unknown command";
     public static string IRC_RAW_422 = ":%h 422 %a :MOTD File is missing";
-    public static string IRC_RAW_423(IServer server, IUser user) => $":{server} 423 {user} {server} :No administrative info available ";
     public static string IRC_RAW_431 = ":%h 431 :No nickname given  ";
     public static string IRC_RAW_432 = ":%h 432 %s :Erroneous nickname  ";
     public static string IRC_RAW_433 = ":%h 433 * %s :Nickname is already in use";
     public static string IRC_RAW_442 = ":%h 442 %a %s :You're not on that channel   ";
     public static string IRC_RAW_443 = ":%h 443 %a %s %s :is already on channel ";
-    public static string IRC_RAW_446(IServer server, IUser user) => $":{server} 446 {user} :USERS has been disabled";
     public static string IRC_RAW_451 = ":%h 451 %a :You have not registered ";
     public static string IRC_RAW_461 = ":%h 461 %a %s :Not enough parameters";
-    public static string IRC_RAW_462(IServer server, IUser user) => $":{server} 462 {user} :You may not reregister";
     public static string IRC_RAW_467 = ":%h 467 %a %c :Channel key already set  ";
     public static string IRC_RAW_471 = ":%h 471 %a %s :Cannot join channel (+l) ";
-    public static string IRC_RAW_472(IServer server, IUser user, string modeChar) => $":{server} 472 {user} {modeChar} :is unknown mode char to me";
     public static string IRC_RAW_473 = ":%h 473 %a %s :Cannot join channel (+i) ";
     public static string IRC_RAW_474 = ":%h 474 %a %s :Cannot join channel (+b) ";
     public static string IRC_RAW_475 = ":%h 475 %a %s :Cannot join channel (+k) ";
-    public static string IRC_RAW_481(IServer server, IUser user) => $":{server} 481 {user} :Permission Denied - You're not an IRC operator";
     public static string IRC_RAW_482 = ":%h 482 %a %s :You're not channel operator  ";
     public static string IRC_RAW_485 = ":%h 485 %a %s :You're not channel owner ";
     public static string IRC_RAW_491 = ":%h 491 %a :No O-lines for your host";
-    public static string IRC_RAW_501(IServer server, IUser user) => $":{server} 501 {user} :Unknown MODE flag";
     public static string IRC_RAW_502 = ":%h 502 %a :Cant change mode for other users";
     public static string IRC_RAW_554 = ":%h 554 %a %s :Command not supported.   ";
     public static string IRC_RAW_555 = ":%h 555 %a %s :Server option for this command is not supported. ";
@@ -99,15 +77,143 @@ public static class IrcRaws
     public static string IRC_RAW_904 = ":%h 904 %a %s :Only authenticated users may join channel";
     public static string IRC_RAW_905 = ":%h 905 %a :Nick changes are not permitted at this time, try again later";
     public static string IRC_RAW_906 = ":%h 906 %a %s :Cannot make host due to admin restriction";
-    public static string IRC_RAW_908(IServer server, IUser user) => $":{server} 908 {user} :No permissions to perform command";
     public static string IRC_RAW_998 = ":%h 998 %a %s :Already on channel   ";
-    public static string IRC_RAW_999(IServer server, IUser user, string message) => $":{server} 999 {user} :Oops! We've hit a snag: {message}";
 
-    public static string RPL_JOIN(IUser user, IChannel channel) => $":{user.GetAddress()} JOIN :{channel}";
-    public static string RPL_PART(IUser user, IChannel channel) => $":{user.GetAddress()} PART {channel}";
-    public static string RPL_PRIVMSG(IUser user, IChannel channel, string message) => $":{user.GetAddress()} PRIVMSG {channel} :{message}";
-    public static string RPL_NOTICE(IUser user, IChannel channel, string message) => $":{user.GetAddress()} NOTICE {channel} :{message}";
-    public static string RPL_QUIT(IUser user, string message) => $":{user.GetAddress()} QUIT :{message}";
+    public static string IRC_RAW_256(IServer server, IUser user)
+    {
+        return $":{server} 256 {user} :Administrative info about {server}";
+    }
+
+    public static string IRC_RAW_257(IServer server, IUser user, string message)
+    {
+        return $":{server} 257 {user} :{message}";
+    }
+
+    public static string IRC_RAW_258(IServer server, IUser user, string message)
+    {
+        return $":{server} 258 {user} :{message}";
+    }
+
+    public static string IRC_RAW_259(IServer server, IUser user, string email)
+    {
+        return $":{server} 259 {user} :{email}";
+    }
+
+    public static string IRC_RAW_303(IServer server, IUser user, string names)
+    {
+        return $":{server} 303 {user} :{names}";
+    }
+
+    public static string IRC_RAW_311(IServer server, IUser user, IUser targetUser)
+    {
+        return
+            $":{server} 311 {user} {targetUser} {targetUser.GetAddress().User} {targetUser.GetAddress().Host} * :{targetUser.GetAddress().RealName}";
+    }
+
+    public static string IRC_RAW_312(IServer server, IUser user, IUser targetUser)
+    {
+        return $":{server} 312 {user} {targetUser} {server} :{server.Info}";
+    }
+
+    public static string IRC_RAW_313(IServer server, IUser user, IUser targetUser)
+    {
+        return $":{server} 313 {user} {targetUser} :is an IRC operator";
+    }
+
+    public static string IRC_RAW_317(IServer server, IUser user, IUser targetUser, long seconds, long epoch)
+    {
+        return $":{server} 317 {user} {targetUser} {seconds} {epoch} :seconds idle, signon time";
+    }
+
+    public static string IRC_RAW_318(IServer server, IUser user, string targetNicknames)
+    {
+        return $":{server} 318 {user} {targetNicknames} :End of /WHOIS list";
+    }
+
+    public static string IRC_RAW_319(IServer server, IUser user, IUser targetUser, string channelList)
+    {
+        return $":{server} 319 {user} {targetUser} :{channelList}";
+    }
+
+    public static string IRC_RAW_353(IServer server, IUser user, IChannel channel, string names)
+    {
+        return $":{server} 353 {user} = {channel} :{names}";
+    }
+
+    public static string IRC_RAW_364(IServer server, IUser user, string mask, int hopcount)
+    {
+        return $":{server} 364 {user} {mask} {server} :{hopcount} P0 {server.Info}";
+    }
+
+    public static string IRC_RAW_365(IServer server, IUser user, string mask)
+    {
+        return $":{server} 365 {user} {mask} :End of /LINKS list.";
+    }
+
+    public static string IRC_RAW_423(IServer server, IUser user)
+    {
+        return $":{server} 423 {user} {server} :No administrative info available ";
+    }
+
+    public static string IRC_RAW_446(IServer server, IUser user)
+    {
+        return $":{server} 446 {user} :USERS has been disabled";
+    }
+
+    public static string IRC_RAW_462(IServer server, IUser user)
+    {
+        return $":{server} 462 {user} :You may not reregister";
+    }
+
+    public static string IRC_RAW_472(IServer server, IUser user, string modeChar)
+    {
+        return $":{server} 472 {user} {modeChar} :is unknown mode char to me";
+    }
+
+    public static string IRC_RAW_481(IServer server, IUser user)
+    {
+        return $":{server} 481 {user} :Permission Denied - You're not an IRC operator";
+    }
+
+    public static string IRC_RAW_501(IServer server, IUser user)
+    {
+        return $":{server} 501 {user} :Unknown MODE flag";
+    }
+
+    public static string IRC_RAW_908(IServer server, IUser user)
+    {
+        return $":{server} 908 {user} :No permissions to perform command";
+    }
+
+    public static string IRC_RAW_999(IServer server, IUser user, string message)
+    {
+        return $":{server} 999 {user} :Oops! We've hit a snag: {message}";
+    }
+
+    public static string RPL_JOIN(IUser user, IChannel channel)
+    {
+        return $":{user.GetAddress()} JOIN :{channel}";
+    }
+
+    public static string RPL_PART(IUser user, IChannel channel)
+    {
+        return $":{user.GetAddress()} PART {channel}";
+    }
+
+    public static string RPL_PRIVMSG(IUser user, IChannel channel, string message)
+    {
+        return $":{user.GetAddress()} PRIVMSG {channel} :{message}";
+    }
+
+    public static string RPL_NOTICE(IUser user, IChannel channel, string message)
+    {
+        return $":{user.GetAddress()} NOTICE {channel} :{message}";
+    }
+
+    public static string RPL_QUIT(IUser user, string message)
+    {
+        return $":{user.GetAddress()} QUIT :{message}";
+    }
 }
 
 public class IrcxRaws
@@ -325,7 +431,6 @@ public class IrcxRaws
     public static string MSN_FOUND_USER_HEAD = ":%h 641 %n :%s";
     public static string MSN_FOUND_USER = ":%h 642 %n %s %s %s"; //cid + nick + room
     public static string MSN_FOUND_USER_END = ":%h 643 %n :%s";
-
 
 
     public static string MSN_CAT_NOTFOUND = ":%h 701 %n :Category not found";

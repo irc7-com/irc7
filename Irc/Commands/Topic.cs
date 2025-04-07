@@ -62,7 +62,7 @@ internal class Topic : Command, ICommand
             chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
             return EnumIrcError.ERR_NOTONCHANNEL;
         }
-        
+
         if (sourceMember.GetLevel() < EnumChannelAccessLevel.ChatHost && channel.Modes.TopicOp)
             return EnumIrcError.ERR_NOCHANOP;
 

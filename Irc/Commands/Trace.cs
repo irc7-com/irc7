@@ -5,10 +5,6 @@ namespace Irc.Commands;
 
 internal class Trace : Command, ICommand
 {
-    public Trace() : base()
-    {
-    }
-
     public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;

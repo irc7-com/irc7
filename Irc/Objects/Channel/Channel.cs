@@ -3,8 +3,6 @@ using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.IO;
-using Irc.Objects.Server;
 
 namespace Irc.Objects.Channel;
 

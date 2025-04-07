@@ -22,9 +22,9 @@ public class Admin : Command, ICommand
         var adminInfo1 = chatFrame.Server.GetDataStore().Get(Resources.ConfigAdminInfo1);
         var adminInfo2 = chatFrame.Server.GetDataStore().Get(Resources.ConfigAdminInfo2);
         var adminInfo3 = chatFrame.Server.GetDataStore().Get(Resources.ConfigAdminInfo3);
-        
+
         var hasAdminInfo = !string.IsNullOrWhiteSpace(adminInfo1);
-        
+
         if (hasAdminInfo)
         {
             chatFrame.User.Send(IrcRaws.IRC_RAW_256(chatFrame.Server, chatFrame.User));

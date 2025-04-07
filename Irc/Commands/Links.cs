@@ -6,10 +6,6 @@ namespace Irc.Commands;
 
 public class Links : Command, ICommand
 {
-    public Links() : base()
-    {
-    }
-
     public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;

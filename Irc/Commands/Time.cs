@@ -5,10 +5,6 @@ namespace Irc.Commands;
 
 public class Time : Command, ICommand
 {
-    public Time() : base()
-    {
-    }
-
     public new EnumCommandDataType GetDataType()
     {
         return EnumCommandDataType.None;

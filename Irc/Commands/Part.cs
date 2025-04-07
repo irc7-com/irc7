@@ -1,7 +1,5 @@
 ﻿using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
-using Irc.Objects.Server;
 
 namespace Irc.Commands;
 

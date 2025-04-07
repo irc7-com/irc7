@@ -4,7 +4,7 @@ using Irc.Modes.Channel;
 using Irc.Modes.Channel.Member;
 using Irc.Objects.Collections;
 
-namespace Irc.Objects;
+namespace Irc.Objects.Channel;
 
 public class ChannelModes : ModeCollection, IChannelModes
 {

@@ -1,4 +1,4 @@
-﻿namespace Irc;
+﻿namespace Irc.Interfaces;
 
 public interface IDataRegulator
 {

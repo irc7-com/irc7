@@ -1,5 +1,4 @@
-﻿using Irc.Commands;
-using Irc.Interfaces;
+﻿using Irc.Interfaces;
 
 namespace Irc;
 

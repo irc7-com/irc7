@@ -47,9 +47,9 @@ public class ModeEngine
                         source.Send(Raw.IRCX_ERR_UNKNOWNMODE_472(source.Server, source, c));
                         continue;
                     }
-                    
+
                     var modeRule = modeCollection[c];
-                    string parameter = string.Empty;
+                    var parameter = string.Empty;
                     if (modeRule.RequiresParameter)
                     {
                         if (modeParameters != null && modeParameters.Count > 0)
@@ -69,11 +69,11 @@ public class ModeEngine
 
                     modeOperations.Enqueue(
                         new ModeOperation(
-                            mode: modeRule,
-                            source: source,
-                            target: target,
-                            modeFlag: modeFlag,
-                            modeParameter: parameter
+                            modeRule,
+                            source,
+                            target,
+                            modeFlag,
+                            parameter
                         )
                     );
 

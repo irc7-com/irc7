@@ -3,18 +3,15 @@ using System.Text;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.IO;
 using Irc.Modes;
-using Irc.Objects.Server;
 using Irc.Security.Packages;
-using Irc7d;
 using NLog;
 
 namespace Irc.Objects.User;
 
 public class User : ChatObject, IUser
 {
-    public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
+    public static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
     //public Access Access;
     private readonly IConnection _connection;
@@ -350,11 +347,8 @@ public class User : ChatObject, IUser
         var userAddress = GetAddress();
         var credentials = GetSupportPackage().GetCredentials();
 
-        if (credentials == null)
-        {
-            throw new Exception("Register: No credentials provided");
-        }
-        
+        if (credentials == null) throw new Exception("Register: No credentials provided");
+
         userAddress.User = credentials.GetUsername() ?? userAddress.MaskedIp;
         userAddress.Host = credentials.GetDomain();
         userAddress.Server = Server.Name;

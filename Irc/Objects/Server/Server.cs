@@ -1,17 +1,14 @@
 ﻿using System.Collections.Concurrent;
-using System.Reflection;
 using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
-using Irc.Extensions.Security;
 using Irc.Factories;
 using Irc.Interfaces;
 using Irc.IO;
+using Irc.Objects.Channel;
 using Irc.Objects.Collections;
 using Irc.Objects.User;
-using Irc.Security;
 using Irc.Security.Packages;
-using Irc7d;
 using NLog;
 using Version = System.Version;
 
@@ -19,23 +16,23 @@ namespace Irc.Objects.Server;
 
 public class Server : ChatObject, IServer
 {
-    public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
+    public static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
     private readonly CancellationTokenSource _cancellationTokenSource = new();
     protected readonly IDataStore _DataStore;
     private readonly IFloodProtectionManager _floodProtectionManager;
+    private readonly ConcurrentQueue<IUser> _pendingNewUserQueue = new();
+    private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
     private readonly Task _processingTask;
     private readonly ISecurityManager _securityManager;
     private readonly ISocketServer _socketServer;
-    protected IUserFactory UserFactory;
-    private readonly ConcurrentQueue<IUser> _pendingNewUserQueue = new();
-    private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
-    public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
 
     public IList<IChannel> Channels;
+    public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
+    protected IUserFactory UserFactory;
 
     public IList<IUser> Users = new List<IUser>();
-    
+
     public Server(ISocketServer socketServer,
         ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager,
@@ -58,7 +55,8 @@ public class Server : ChatObject, IServer
         _DataStore.Set("supported.channel.modes",
             new ChannelModes().GetSupportedModes());
         _DataStore.Set("supported.user.modes", new UserModes().GetSupportedModes());
-        SupportPackages = _DataStore.GetAs<List<string>>(Resources.ConfigSaslPackages)?.ToArray() ?? Array.Empty<string>();
+        SupportPackages = _DataStore.GetAs<List<string>>(Resources.ConfigSaslPackages)?.ToArray() ??
+                          Array.Empty<string>();
 
         if (MaxAnonymousConnections > 0) _securityManager.AddSupportPackage(new ANON());
 
@@ -110,7 +108,7 @@ public class Server : ChatObject, IServer
     public string SecurityPackages => _securityManager.GetSupportedPackages();
     public int SysopCount { get; } = 0;
     public int UnknownConnectionCount => _socketServer.CurrentConnections - NetUserCount;
-    public string RemoteIp { set; get; } = String.Empty;
+    public string RemoteIp { set; get; } = string.Empty;
     public bool DisableGuestMode { set; get; }
     public bool DisableUserRegistration { get; set; }
 
@@ -206,7 +204,7 @@ public class Server : ChatObject, IServer
         return Protocols;
     }
 
-    public Version ServerVersion { get; set; } = new Version(1, 0);
+    public Version ServerVersion { get; set; } = new(1, 0);
 
     public IDataStore GetDataStore()
     {
@@ -389,7 +387,7 @@ public class Server : ChatObject, IServer
     protected void AddCommand(ICommand command)
     {
         foreach (var protocol in Protocols)
-                protocol.Value.AddCommand(command, command.GetName());
+            protocol.Value.AddCommand(command, command.GetName());
     }
 
     protected void AddCommand(ICommand command, EnumProtocolType fromProtocol, string name)
@@ -433,7 +431,7 @@ public class Server : ChatObject, IServer
             return;
             // command not found
         }
-        
+
         var floodResult = _floodProtectionManager.Audit(user.GetFloodProtectionProfile(),
             command.GetDataType(), user.GetLevel());
         if (floodResult == EnumFloodResult.Ok)

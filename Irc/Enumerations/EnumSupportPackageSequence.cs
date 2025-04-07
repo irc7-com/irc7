@@ -1,6 +1,4 @@
-﻿namespace Irc.Extensions.Security;
-
-public enum EnumSupportPackageSequence
+﻿public enum EnumSupportPackageSequence
 {
     SSP_UNSUPPORTED = -2,
     SSP_UNKNOWN = -1,
