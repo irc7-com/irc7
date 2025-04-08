@@ -1,4 +1,5 @@
 using System;
+using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Security.Credentials;
 using NUnit.Framework;

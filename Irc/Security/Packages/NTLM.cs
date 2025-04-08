@@ -1,4 +1,5 @@
-﻿using Irc.Helpers;
+﻿using Irc.Enumerations;
+using Irc.Helpers;
 using Irc.Interfaces;
 using NLog;
 using SSPI.NTLM;

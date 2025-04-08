@@ -1,4 +1,6 @@
-﻿public enum EnumSupportPackageSequence
+﻿namespace Irc.Enumerations;
+
+public enum EnumSupportPackageSequence
 {
     SSP_UNSUPPORTED = -2,
     SSP_UNKNOWN = -1,

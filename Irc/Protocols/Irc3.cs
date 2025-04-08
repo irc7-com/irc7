@@ -1,7 +1,6 @@
 ﻿using Irc.Commands;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Privmsg = Irc.Commands.Privmsg;
 
 namespace Irc.Protocols;
 

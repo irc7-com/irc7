@@ -97,7 +97,11 @@ public class SocketServer : Socket, ISocketServer
 
     private void ClientDisconnected(object? sender, BigInteger bigIP)
     {
-        if (!Sockets.ContainsKey(bigIP)) Log.Error($"ClientDisconnected: Client {bigIP} is not connected");
+        if (!Sockets.ContainsKey(bigIP))
+        {
+            Log.Error($"ClientDisconnected: Client {bigIP} is not in the sockets collection");
+            return;
+        }
 
         var bag = Sockets[bigIP];
         bag.TryTake(out var connection);
