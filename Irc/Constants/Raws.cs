@@ -208,6 +208,14 @@ public static class Raws
             $":{server} 004 {user} {server} {version.Major}.{version.Minor}.{version.Revision} {server.GetSupportedUserModes()} {server.GetSupportedChannelModes()}";
     }
 
+    // Reference: https://www.ietf.org/archive/id/draft-brocklesby-irc-isupport-03.txt
+    // Example:
+    //     :irc.example.com 005 nickname CHANTYPES=#& PREFIX=(ov)@+ CHANLIMIT=#:200 :are supported by this server
+    public static string IRCX_RPL_ISUPPORT_005(IServer server, IUser user, string channelTypes, string memberModes, string memberModeFlags, string channelModes, int channelLimit)
+    {
+        return $":{server} 005 {user} CHANTYPES={channelTypes} PREFIX=({memberModes}){memberModeFlags} CHANMODES={channelModes} CHANLIMIT={channelTypes}:{channelLimit} :are supported by this server";
+    }
+
     public static string IRCX_RPL_UMODEIS_221(IServer server, IUser user, string modes)
     {
         return $":{server} 221 {user} {modes}";

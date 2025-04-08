@@ -20,7 +20,16 @@ public static class Register
             chatFrame.User.Send(Raws.IRCX_RPL_WELCOME_003(chatFrame.Server, chatFrame.User));
             chatFrame.User.Send(Raws.IRCX_RPL_WELCOME_004(chatFrame.Server, chatFrame.User,
                 chatFrame.Server.ServerVersion));
-
+            chatFrame.User.Send(Raws.IRCX_RPL_ISUPPORT_005(
+                chatFrame.Server, 
+                chatFrame.User,
+                Resources.ConfigChannelTypes,
+                "qov", // temporary
+                ".@+", // temporary
+                "b,k,l,SWadefghimnprstuwxz", // temporary
+                chatFrame.Server.MaxChannels
+                ));
+            
             chatFrame.User.Send(Raws.IRCX_RPL_LUSERCLIENT_251(chatFrame.Server, chatFrame.User, 0, 0, 0));
             chatFrame.User.Send(Raws.IRCX_RPL_LUSEROP_252(chatFrame.Server, chatFrame.User, 0));
             chatFrame.User.Send(Raws.IRCX_RPL_LUSERUNKNOWN_253(chatFrame.Server, chatFrame.User, 0));
