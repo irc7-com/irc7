@@ -1,7 +1,5 @@
-﻿using Irc.Commands;
-using Irc.Enumerations;
+﻿using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
 
 namespace Irc;
 
@@ -29,10 +27,6 @@ public class Protocol : IProtocol
         if (!Commands.ContainsKey(!string.IsNullOrWhiteSpace(name) ? command.GetName() : name))
             Commands.Add(name ?? command.GetName(), command);
     }
-    public void AddCommand(ICommand command)
-    {
-        if (!Commands.ContainsKey(command.GetName())) Commands.Add(command.GetName(), command);
-    }
 
     public void FlushCommands()
     {
@@ -51,16 +45,21 @@ public class Protocol : IProtocol
         throw new NotImplementedException();
     }
 
-    public void UpdateCommand(ICommand command)
+    public void UpdateCommand(ICommand command, string name)
     {
-        var commandName = command.GetName();
+        var commandName = !string.IsNullOrWhiteSpace(name) ? name : command.GetName();
         if (Commands.ContainsKey(commandName))
             Commands[commandName] = command;
     }
 
-    public void UpdateCommand(ICommand command, string name)
+    public void AddCommand(ICommand command)
     {
-        var commandName = !string.IsNullOrWhiteSpace(name) ? name : command.GetName();
+        if (!Commands.ContainsKey(command.GetName())) Commands.Add(command.GetName(), command);
+    }
+
+    public void UpdateCommand(ICommand command)
+    {
+        var commandName = command.GetName();
         if (Commands.ContainsKey(commandName))
             Commands[commandName] = command;
     }

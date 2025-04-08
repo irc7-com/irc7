@@ -1,7 +1,6 @@
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
 using Irc.Objects.User;
 using NLog;
 
@@ -12,7 +11,7 @@ namespace Irc.Commands;
 
 public class WebIrc : Command, ICommand
 {
-    public static readonly NLog.Logger Log = LogManager.GetCurrentClassLogger();
+    public static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
     public WebIrc() : base(0, false)
     {
@@ -36,13 +35,13 @@ public class WebIrc : Command, ICommand
         }
 
         var whitelistedIp = chatFrame.Server.GetDataStore().Get(Resources.ConfigWebircWhitelist);
-        if (remoteAddress != whitelistedIp || chatFrame.Message.Parameters.Count() < 4)
+        if (remoteAddress != whitelistedIp || chatFrame.ChatMessage.Parameters.Count() < 4)
         {
             Reject(chatFrame, remoteAddress);
             return;
         }
 
-        var parameters = chatFrame.Message.Parameters;
+        var parameters = chatFrame.ChatMessage.Parameters;
         var password = parameters.FirstOrDefault();
         var gateway = parameters[1];
         var hostname = parameters[2];
@@ -91,8 +90,8 @@ public class WebIrc : Command, ICommand
     public void Reject(IChatFrame chatFrame, string remoteAddress)
     {
         Log.Warn($"Unauthorized WEBIRC attempt from {remoteAddress}");
-        var originalCommand = chatFrame.Message.OriginalText.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        var originalCommand = chatFrame.ChatMessage.OriginalText.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .First();
-        chatFrame.User.Send(Raw.IRCX_ERR_UNKNOWNCOMMAND_421(chatFrame.Server, chatFrame.User, originalCommand));
+        chatFrame.User.Send(Raws.IRCX_ERR_UNKNOWNCOMMAND_421(chatFrame.Server, chatFrame.User, originalCommand));
     }
 }

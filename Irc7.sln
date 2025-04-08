@@ -5,27 +5,25 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EEDC7C53-32CD-44C5-B6FD-C28DB2C3151C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc.Extensions.Apollo", "Irc.Extensions.Apollo\Irc.Extensions.Apollo.csproj", "{C2D11BC8-27FB-43FE-9AF9-381D5EBD3F1E}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc.Extensions", "Irc.Extensions\Irc.Extensions.csproj", "{CED2E767-6A76-4474-8E6D-2866BBC2B19D}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc", "Irc\Irc.csproj", "{83C667EF-7EAC-414B-A842-685B5E821D17}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc.Helpers", "Irc.ClassExtensions\Irc.Helpers.csproj", "{467ADFC0-24A9-4393-81BE-F163CEF90366}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc.Helpers", "Irc.Helpers\Irc.Helpers.csproj", "{467ADFC0-24A9-4393-81BE-F163CEF90366}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc.Extensions.NTLM", "Irc.Extensions.NTLM\Irc.Extensions.NTLM.csproj", "{4CDF9005-41B8-4703-842A-FF84D7D3B3A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSPI.NTLM", "SSPI.NTLM\SSPI.NTLM.csproj", "{4CDF9005-41B8-4703-842A-FF84D7D3B3A2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{47F8D564-147C-46FF-AF10-8CAA9A1B4D87}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc.Extensions.NTLM.Tests", "Irc.Extensions.NTLM.Tests\Irc.Extensions.NTLM.Tests.csproj", "{AB1A4F07-A06B-448D-839E-4847F5ACA3BB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSPI.NTLM.Tests", "SSPI.NTLM.Tests\SSPI.NTLM.Tests.csproj", "{AB1A4F07-A06B-448D-839E-4847F5ACA3BB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc7d", "Irc7d\Irc7d.csproj", "{AE549A32-162C-4506-9A3C-2359B286B3DE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc.Daemon", "Irc.Daemon\Irc.Daemon.csproj", "{AE549A32-162C-4506-9A3C-2359B286B3DE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Irc.Extensions.Apollo.Tests", "Irc.Extensions.Apollo.Tests\Irc.Extensions.Apollo.Tests.csproj", "{EB7634C0-EE65-4363-9CD4-9DE78E1F6A9F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSPI.GateKeeper.Tests", "SSPI.GateKeeper.Tests\SSPI.GateKeeper.Tests.csproj", "{EB7634C0-EE65-4363-9CD4-9DE78E1F6A9F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Irc.Extensions.Apollo.Directory", "Irc.Extensions.Apollo.Directory\Irc.Extensions.Apollo.Directory.csproj", "{29B05500-BD84-4108-AE5F-45B0AE8B9FB4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Irc.Directory", "Irc.Directory\Irc.Directory.csproj", "{29B05500-BD84-4108-AE5F-45B0AE8B9FB4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Irc.Logger", "Irc.Logger\Irc.Logger.csproj", "{67C00D15-6366-45FC-A737-61DDE8EB64D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Irc.Logging", "Irc.Logging\Irc.Logging.csproj", "{67C00D15-6366-45FC-A737-61DDE8EB64D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SSPI.GateKeeper", "SSPI.GateKeeper\SSPI.GateKeeper.csproj", "{5E25BDE0-8F56-45A6-B4BA-0682963666DE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,14 +31,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C2D11BC8-27FB-43FE-9AF9-381D5EBD3F1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C2D11BC8-27FB-43FE-9AF9-381D5EBD3F1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C2D11BC8-27FB-43FE-9AF9-381D5EBD3F1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C2D11BC8-27FB-43FE-9AF9-381D5EBD3F1E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CED2E767-6A76-4474-8E6D-2866BBC2B19D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CED2E767-6A76-4474-8E6D-2866BBC2B19D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CED2E767-6A76-4474-8E6D-2866BBC2B19D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CED2E767-6A76-4474-8E6D-2866BBC2B19D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{83C667EF-7EAC-414B-A842-685B5E821D17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{83C667EF-7EAC-414B-A842-685B5E821D17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83C667EF-7EAC-414B-A842-685B5E821D17}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -73,6 +63,10 @@ Global
 		{67C00D15-6366-45FC-A737-61DDE8EB64D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{67C00D15-6366-45FC-A737-61DDE8EB64D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{67C00D15-6366-45FC-A737-61DDE8EB64D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E25BDE0-8F56-45A6-B4BA-0682963666DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E25BDE0-8F56-45A6-B4BA-0682963666DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E25BDE0-8F56-45A6-B4BA-0682963666DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E25BDE0-8F56-45A6-B4BA-0682963666DE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

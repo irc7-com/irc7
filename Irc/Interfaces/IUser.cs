@@ -1,11 +1,8 @@
 ﻿using Irc.Enumerations;
-using Irc.Interfaces;
-using Irc.IO;
 using Irc.Modes;
-using Irc.Objects.Server;
-using Irc7d;
+using Irc.Objects.User;
 
-namespace Irc.Objects;
+namespace Irc.Interfaces;
 
 public interface IUser
 {
@@ -44,7 +41,7 @@ public interface IUser
     IProtocol GetProtocol();
     IConnection GetConnection();
     EnumUserAccessLevel GetLevel();
-    Address GetAddress();
+    UserAddress GetAddress();
     bool IsGuest();
     bool IsRegistered();
     bool IsAuthenticated();

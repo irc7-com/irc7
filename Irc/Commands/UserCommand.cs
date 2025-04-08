@@ -25,11 +25,11 @@ public class UserCommand : Command, ICommand
         var address = chatFrame.User.GetAddress();
         if (!string.IsNullOrWhiteSpace(address.RealName))
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_ALREADYREGISTERED_462(chatFrame.Server, chatFrame.User));
+            chatFrame.User.Send(Raws.IRCX_ERR_ALREADYREGISTERED_462(chatFrame.Server, chatFrame.User));
         }
         else
         {
-            var parameters = chatFrame.Message.Parameters;
+            var parameters = chatFrame.ChatMessage.Parameters;
             // TODO: Check length
             if (string.IsNullOrWhiteSpace(address.RealName))
             {

@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
 
@@ -53,7 +54,7 @@ public class ModeRule : IModeRule
         string parameter)
     {
         target.Send(
-            Raw.RPL_MODE_IRC(
+            Raws.RPL_MODE_IRC(
                 (IUser)source,
                 target,
                 $"{(flag ? "+" : "-")}{modeChar}{(parameter != null ? $" {parameter}" : string.Empty)}"
@@ -61,11 +62,12 @@ public class ModeRule : IModeRule
         );
     }
 
-    public static void DispatchModeChange(ChatObject recipientObject, char modeChar, ChatObject source, ChatObject target,
+    public static void DispatchModeChange(ChatObject recipientObject, char modeChar, ChatObject source,
+        ChatObject target,
         bool flag, string parameter)
     {
         recipientObject.Send(
-            Raw.RPL_MODE_IRC(
+            Raws.RPL_MODE_IRC(
                 (IUser)source,
                 target,
                 $"{(flag ? "+" : "-")}{modeChar}{(parameter != null ? $" {parameter}" : string.Empty)}"

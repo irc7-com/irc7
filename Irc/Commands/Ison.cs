@@ -19,7 +19,7 @@ internal class Ison : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var parameters = chatFrame.Message.Parameters;
+        var parameters = chatFrame.ChatMessage.Parameters;
 
         var nicknames = parameters.Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
         var foundNicknames = new List<string>();
@@ -31,6 +31,6 @@ internal class Ison : Command, ICommand
             if (found) foundNicknames.Add(nickname);
         }
 
-        user.Send(IrcRaws.IRC_RAW_303(server, user, string.Join(' ', foundNicknames)));
+        user.Send(Raws.IRC_RAW_303(server, user, string.Join(' ', foundNicknames)));
     }
 }

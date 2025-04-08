@@ -1,4 +1,4 @@
-﻿namespace Irc.IO;
+﻿namespace Irc.Interfaces;
 
 public interface IDataStore
 {

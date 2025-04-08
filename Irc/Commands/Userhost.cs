@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Commands;
@@ -17,12 +18,12 @@ internal class Userhost : Command, ICommand
     public new void Execute(IChatFrame chatFrame)
     {
         var maxUsers = 30;
-        var users = chatFrame.Server.GetUsersByList(chatFrame.Message.GetParameters(), ' ');
+        var users = chatFrame.Server.GetUsersByList(chatFrame.ChatMessage.GetParameters(), ' ');
         if (users.Count < maxUsers)
             foreach (var user in users)
-                chatFrame.User.Send(Raw.IRCX_RPL_USERHOST_302(chatFrame.Server, user));
+                chatFrame.User.Send(Raws.IRCX_RPL_USERHOST_302(chatFrame.Server, user));
         else
-            chatFrame.User.Send(Raw.IRCX_ERR_TOOMANYARGUMENTS_901(chatFrame.Server, chatFrame.User, GetName()));
+            chatFrame.User.Send(Raws.IRCX_ERR_TOOMANYARGUMENTS_901(chatFrame.Server, chatFrame.User, GetName()));
         // :sky-8a15b323126 901 Sky2k USERHOST :Too many arguments
     }
 }

@@ -1,4 +1,4 @@
-﻿using Irc.Extensions.Security;
+﻿using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Security;
