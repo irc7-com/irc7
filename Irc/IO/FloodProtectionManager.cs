@@ -1,12 +1,11 @@
 ﻿using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
 using Irc.Objects.User;
 
 namespace Irc.IO;
 /*
  * If the service receives one of these messages, it temporarily suspends the user's session. After the delay expires, the service resumes normal message processing.
- * Also, if a user tries to join a channel using the wrong password, the service delays processing subsequent attempts by that user to join the channel. 
+ * Also, if a user tries to join a channel using the wrong password, the service delays processing subsequent attempts by that user to join the channel.
  */
 
 /*

@@ -1,28 +1,13 @@
 ﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.IO;
 
 namespace Irc.Objects;
 
 public class ChatObject : IChatObject
 {
-    public readonly IDataStore DataStore;
-    public virtual EnumUserAccessLevel Level
-    {
-        get
-        {
-            return EnumUserAccessLevel.None;
-        }
-    }
     protected readonly IModeCollection _modes;
-    public virtual IModeCollection Modes
-    {
-        get
-        {
-            return _modes;
-        }
-    }
+    public readonly IDataStore DataStore;
 
     public ChatObject(IModeCollection modes, IDataStore dataStore)
     {
@@ -31,7 +16,14 @@ public class ChatObject : IChatObject
         DataStore.SetId(Id.ToString());
     }
 
-    public IModeCollection GetModes() => _modes;
+    public virtual EnumUserAccessLevel Level => EnumUserAccessLevel.None;
+
+    public virtual IModeCollection Modes => _modes;
+
+    public IModeCollection GetModes()
+    {
+        return _modes;
+    }
 
     public Guid Id { get; } = Guid.NewGuid();
 

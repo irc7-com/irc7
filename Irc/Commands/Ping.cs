@@ -16,6 +16,6 @@ public class Ping : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
-        chatFrame.User.Send($"PONG :{chatFrame.Message.Parameters.First()}");
+        chatFrame.User.Send($"PONG :{chatFrame.ChatMessage.Parameters.First()}");
     }
 }

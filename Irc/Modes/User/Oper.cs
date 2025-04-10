@@ -1,7 +1,6 @@
 ﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
 using Irc.Objects.User;
 
 namespace Irc.Modes.User;

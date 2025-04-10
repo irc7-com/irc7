@@ -1,4 +1,5 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
 
@@ -18,16 +19,16 @@ internal class Topic : Command, ICommand
     public new void Execute(IChatFrame chatFrame)
     {
         var source = chatFrame.User;
-        var channelName = chatFrame.Message.Parameters.First();
-        var topic = chatFrame.Message.Parameters[1];
+        var channelName = chatFrame.ChatMessage.Parameters.First();
+        var topic = chatFrame.ChatMessage.Parameters[1];
 
-        if (chatFrame.Message.Parameters.Count > 2) topic = chatFrame.Message.Parameters[2];
+        if (chatFrame.ChatMessage.Parameters.Count > 2) topic = chatFrame.ChatMessage.Parameters[2];
 
         var channel = chatFrame.Server.GetChannelByName(channelName);
         if (channel == null)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User,
-                chatFrame.Message.Parameters.First()));
+            chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User,
+                chatFrame.ChatMessage.Parameters.First()));
         }
         else
         {
@@ -36,18 +37,18 @@ internal class Topic : Command, ICommand
             {
                 case EnumIrcError.ERR_NOTONCHANNEL:
                 {
-                    chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
+                    chatFrame.User.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
                     break;
                 }
                 case EnumIrcError.ERR_NOCHANOP:
                 {
                     chatFrame.User.Send(
-                        Raw.IRCX_ERR_CHANOPRIVSNEEDED_482(chatFrame.Server, source, channel));
+                        Raws.IRCX_ERR_CHANOPRIVSNEEDED_482(chatFrame.Server, source, channel));
                     break;
                 }
                 case EnumIrcError.OK:
                 {
-                    channel.Send(Raw.RPL_TOPIC_IRC(chatFrame.Server, source, channel, topic));
+                    channel.Send(Raws.RPL_TOPIC_IRC(chatFrame.Server, source, channel, topic));
                     break;
                 }
             }
@@ -59,10 +60,10 @@ internal class Topic : Command, ICommand
         var sourceMember = channel.GetMember(source);
         if (sourceMember == null || !channel.CanBeModifiedBy((ChatObject)source))
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
+            chatFrame.User.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
             return EnumIrcError.ERR_NOTONCHANNEL;
         }
-        
+
         if (sourceMember.GetLevel() < EnumChannelAccessLevel.ChatHost && channel.Modes.TopicOp)
             return EnumIrcError.ERR_NOCHANOP;
 

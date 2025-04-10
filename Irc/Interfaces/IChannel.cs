@@ -1,7 +1,5 @@
 ﻿using Irc.Enumerations;
-using Irc.IO;
 using Irc.Objects;
-using Irc.Objects.Server;
 
 namespace Irc.Interfaces;
 
@@ -9,6 +7,7 @@ public interface IChannel
 {
     IDataStore ChannelStore { get; }
     IChannelModes Modes { get; }
+    IPropCollection PropCollection { get; }
     string GetName();
     IChannelMember? GetMember(IUser User);
     IChannelMember? GetMemberByNickname(string nickname);

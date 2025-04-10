@@ -1,3 +1,4 @@
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 
@@ -18,12 +19,12 @@ internal class Kill : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var target = chatFrame.Message.Parameters.First();
-        var reason = chatFrame.Message.Parameters[1];
+        var target = chatFrame.ChatMessage.Parameters.First();
+        var reason = chatFrame.ChatMessage.Parameters[1];
 
         if (user.GetLevel() < EnumUserAccessLevel.Sysop)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_SECURITY_908(server, user));
+            chatFrame.User.Send(Raws.IRCX_ERR_SECURITY_908(server, user));
             return;
         }
 
@@ -35,7 +36,7 @@ internal class Kill : Command, ICommand
 
             if (member == null)
             {
-                chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHNICK_401(server, user, target));
+                chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHNICK_401(server, user, target));
                 return;
             }
 
@@ -43,15 +44,15 @@ internal class Kill : Command, ICommand
 
             if (targetUser.GetLevel() > user.GetLevel())
             {
-                chatFrame.User.Send(Raw.IRCX_ERR_SECURITY_908(server, user));
+                chatFrame.User.Send(Raws.IRCX_ERR_SECURITY_908(server, user));
                 return;
             }
 
             targetUser.RemoveChannel(channel);
             channel.GetMembers().Remove(member);
-            channel.Send(Raw.RPL_KILL_IRC(user, targetUser, reason));
+            channel.Send(Raws.RPL_KILL_IRC(user, targetUser, reason));
             targetUser.Disconnect(
-                Raw.IRCX_CLOSINGLINK_007_SYSTEMKILL(server, targetUser, targetUser.GetAddress().RemoteIp));
+                Raws.IRCX_CLOSINGLINK_007_SYSTEMKILL(server, targetUser, targetUser.GetAddress().RemoteIp));
         }
     }
 }

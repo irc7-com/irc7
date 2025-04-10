@@ -141,7 +141,8 @@ public static class Resources
     public static string ConfigAdminInfo1 = "AdminInfo1";
     public static string ConfigAdminInfo2 = "AdminInfo2";
     public static string ConfigAdminInfo3 = "AdminInfo3";
-
+    public static string ConfigChannelTypes = "%";
+    
     #endregion
 
     #region Channel Categories
@@ -206,6 +207,9 @@ public static class Resources
     public static string ChannelPropPICS = "PICS";
     public static string ChannelPropOnJoin = "ONJOIN";
     public static string ChannelPropOnPart = "ONPART";
+    public static string ChannelPropAccount = "ACCOUNT";
+    public static string ChannelPropServicePath = "SERVICEPATH";
+    public static string ChannelPropClient = "CLIENT";
     public static string ChannelPropClientGuid = "CLIENTGUID";
 
     public static string ChannelPropNameRegex = @"^%?[#&][^ \07,]{1,200}$";
@@ -268,15 +272,38 @@ public static class Resources
 
     #endregion
 
+    #region "Channel Modes"
+
+    public static char ChannelModeAuthOnly = 'a'; // a - NTLM auth only
+    public static char ChannelModeCloneable = 'd';
+    public static char ChannelModeClone = 'e';
+    public static char ChannelModeProfanity = 'f';
+    public static char ChannelModeRegistered = 'r';
+    public static char ChannelModeNoWhisper = 'w';
+    public static char ChannelModeNoGuestWhisper = 'W';
+    public static char ChannelModeService = 'z';
+    public static char ChannelModeKnock = 'u';
+    public static char ChannelModeAuditorium = 'x';
+
+    #endregion
+
     #region "User Modes"
 
+    // IRCX
     public static char UserModeAdmin = 'a';
     public static char UserModeOper = 'o';
-    public static char UserModeOwner = 'q';
+    public static char UserModeIrcx = 'x';
+    public static char UserModeGag = 'z';
     public static char UserModeInvisible = 'i';
     public static char UserModeServerNotice = 's';
     public static char UserModeSecure = 'S';
     public static char UserModeWallops = 'w';
+
+    // Apollo
+    public static char ChannelModeSubscriber = 'S';
+    public static char ChannelModeOnStage = 'g';
+
+    public static char UserModeHost = 'h';
 
     #endregion
 

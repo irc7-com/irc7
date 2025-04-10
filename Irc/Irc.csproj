@@ -1,26 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>$(TargetFrameworkVersion)</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyVersion>6.0.0.0</AssemblyVersion>
-    <FileVersion>6.0.0.0</FileVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyVersion>6.0.0.0</AssemblyVersion>
+        <FileVersion>6.0.0.0</FileVersion>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Operations\**" />
-    <EmbeddedResource Remove="Operations\**" />
-    <None Remove="Operations\**" />
-    <None Remove="Logging\" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="Operations\**"/>
+        <EmbeddedResource Remove="Operations\**"/>
+        <None Remove="Operations\**"/>
+        <None Remove="Logging\"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Irc.ClassExtensions\Irc.Helpers.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Logging\" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Irc.Helpers\Irc.Helpers.csproj"/>
+        <ProjectReference Include="..\SSPI.NTLM\SSPI.NTLM.csproj"/>
+    </ItemGroup>
 
 </Project>

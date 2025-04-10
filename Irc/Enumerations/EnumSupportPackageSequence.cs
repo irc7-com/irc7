@@ -1,4 +1,4 @@
-﻿namespace Irc.Extensions.Security;
+﻿namespace Irc.Enumerations;
 
 public enum EnumSupportPackageSequence
 {

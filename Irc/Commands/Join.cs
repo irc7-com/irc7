@@ -1,8 +1,7 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
 using Irc.Objects.Channel;
-using Irc.Objects.Server;
 
 namespace Irc.Commands;
 
@@ -21,8 +20,8 @@ public class Join : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var channels = chatFrame.Message.Parameters.First();
-        var key = chatFrame.Message.Parameters.Count > 1 ? chatFrame.Message.Parameters[1] : string.Empty;
+        var channels = chatFrame.ChatMessage.Parameters.First();
+        var key = chatFrame.ChatMessage.Parameters.Count > 1 ? chatFrame.ChatMessage.Parameters[1] : string.Empty;
 
         var channelNames = ValidateChannels(server, user, channels);
         if (channelNames.Count == 0) return;
@@ -36,7 +35,7 @@ public class Join : Command, ICommand
 
         if (channelNames.Count == 0)
         {
-            user.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(server, user, string.Empty));
+            user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, string.Empty));
         }
         else
         {
@@ -45,7 +44,7 @@ public class Join : Command, ICommand
 
             // TODO: Could do better below for reporting invalid channel / empty channel
             if (invalidChannelNames.Count > 0)
-                invalidChannelNames.ForEach(c => user.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(server, user, c)));
+                invalidChannelNames.ForEach(c => user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, c)));
         }
 
         return channelNames;
@@ -58,7 +57,7 @@ public class Join : Command, ICommand
         {
             if (user.GetChannels().Count >= server.MaxChannels)
             {
-                user.Send(Raw.IRCX_ERR_TOOMANYCHANNELS_405(server, user, channelName));
+                user.Send(Raws.IRCX_ERR_TOOMANYCHANNELS_405(server, user, channelName));
                 continue;
             }
 
@@ -67,7 +66,7 @@ public class Join : Command, ICommand
 
             if (channel.HasUser(user))
             {
-                user.Send(Raw.IRCX_ERR_ALREADYONCHANNEL_927(server, user, channel));
+                user.Send(Raws.IRCX_ERR_ALREADYONCHANNEL_927(server, user, channel));
                 continue;
             }
 
@@ -90,17 +89,17 @@ public class Join : Command, ICommand
         {
             case EnumChannelAccessResult.ERR_BADCHANNELKEY:
             {
-                user.Send(Raw.IRCX_ERR_BADCHANNELKEY_475(server, user, channel));
+                user.Send(Raws.IRCX_ERR_BADCHANNELKEY_475(server, user, channel));
                 break;
             }
             case EnumChannelAccessResult.ERR_INVITEONLYCHAN:
             {
-                user.Send(Raw.IRCX_ERR_INVITEONLYCHAN_473(server, user, channel));
+                user.Send(Raws.IRCX_ERR_INVITEONLYCHAN_473(server, user, channel));
                 break;
             }
             case EnumChannelAccessResult.ERR_CHANNELISFULL:
             {
-                user.Send(Raw.IRCX_ERR_CHANNELISFULL_471(server, user, channel));
+                user.Send(Raws.IRCX_ERR_CHANNELISFULL_471(server, user, channel));
                 break;
             }
             default:

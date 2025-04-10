@@ -22,20 +22,20 @@ public class Admin : Command, ICommand
         var adminInfo1 = chatFrame.Server.GetDataStore().Get(Resources.ConfigAdminInfo1);
         var adminInfo2 = chatFrame.Server.GetDataStore().Get(Resources.ConfigAdminInfo2);
         var adminInfo3 = chatFrame.Server.GetDataStore().Get(Resources.ConfigAdminInfo3);
-        
+
         var hasAdminInfo = !string.IsNullOrWhiteSpace(adminInfo1);
-        
+
         if (hasAdminInfo)
         {
-            chatFrame.User.Send(IrcRaws.IRC_RAW_256(chatFrame.Server, chatFrame.User));
-            chatFrame.User.Send(IrcRaws.IRC_RAW_257(chatFrame.Server, chatFrame.User, adminInfo1));
-            chatFrame.User.Send(IrcRaws.IRC_RAW_258(chatFrame.Server, chatFrame.User, adminInfo2));
-            chatFrame.User.Send(IrcRaws.IRC_RAW_259(chatFrame.Server, chatFrame.User, adminInfo3));
+            chatFrame.User.Send(Raws.IRC_RAW_256(chatFrame.Server, chatFrame.User));
+            chatFrame.User.Send(Raws.IRC_RAW_257(chatFrame.Server, chatFrame.User, adminInfo1));
+            chatFrame.User.Send(Raws.IRC_RAW_258(chatFrame.Server, chatFrame.User, adminInfo2));
+            chatFrame.User.Send(Raws.IRC_RAW_259(chatFrame.Server, chatFrame.User, adminInfo3));
         }
         else
         {
             // <- :sky-8a15b323126 423 Sky sky-8a15b323126 :No administrative info available
-            chatFrame.User.Send(IrcRaws.IRC_RAW_423(chatFrame.Server, chatFrame.User));
+            chatFrame.User.Send(Raws.IRC_RAW_423(chatFrame.Server, chatFrame.User));
         }
     }
 }

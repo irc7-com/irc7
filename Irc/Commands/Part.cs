@@ -1,7 +1,6 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
-using Irc.Objects.Server;
 
 namespace Irc.Commands;
 
@@ -20,7 +19,7 @@ internal class Part : Command, ICommand
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var parameters = chatFrame.Message.Parameters.First();
+        var parameters = chatFrame.ChatMessage.Parameters.First();
 
         var channelNames = Join.ValidateChannels(server, user, parameters);
         if (channelNames.Count == 0) return;
@@ -39,7 +38,7 @@ internal class Part : Command, ICommand
                 {
                     if (!user.IsOn(channel))
                     {
-                        user.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(server, user, channel));
+                        user.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(server, user, channel));
 
                         return;
                     }

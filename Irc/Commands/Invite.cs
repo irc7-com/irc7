@@ -1,6 +1,6 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Constants;
+using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
 
 namespace Irc.Commands;
 
@@ -21,18 +21,18 @@ internal class Invite : Command, ICommand
         // Invite <nick> <channel>
 
         // Minimum parameters is 1 so this should work without fail
-        var targetNickname = chatFrame.Message.Parameters.First();
+        var targetNickname = chatFrame.ChatMessage.Parameters.First();
         var targetUser = chatFrame.Server.GetUserByNickname(targetNickname);
 
         if (targetUser == null)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHNICK_401(chatFrame.Server, chatFrame.User, targetNickname));
+            chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHNICK_401(chatFrame.Server, chatFrame.User, targetNickname));
             return;
         }
 
-        if (chatFrame.Message.Parameters.Count() == 1) InviteNickToCurrentChannel(chatFrame, targetUser);
+        if (chatFrame.ChatMessage.Parameters.Count() == 1) InviteNickToCurrentChannel(chatFrame, targetUser);
 
-        if (chatFrame.Message.Parameters.Count() > 1) InviteNickToSpecificChannel(chatFrame, targetUser);
+        if (chatFrame.ChatMessage.Parameters.Count() > 1) InviteNickToSpecificChannel(chatFrame, targetUser);
     }
 
 
@@ -44,7 +44,7 @@ internal class Invite : Command, ICommand
 
         if (targetChannel == null)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_U_NOTINCHANNEL_928(chatFrame.Server, chatFrame.User));
+            chatFrame.User.Send(Raws.IRCX_ERR_U_NOTINCHANNEL_928(chatFrame.Server, chatFrame.User));
             return;
         }
 
@@ -53,11 +53,11 @@ internal class Invite : Command, ICommand
 
     public static void InviteNickToSpecificChannel(IChatFrame chatFrame, IUser targetUser)
     {
-        var targetChannelName = chatFrame.Message.Parameters[1];
+        var targetChannelName = chatFrame.ChatMessage.Parameters[1];
         var targetChannel = chatFrame.Server.GetChannelByName(targetChannelName);
         if (targetChannel == null)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, targetChannelName));
+            chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User, targetChannelName));
             return;
         }
 
@@ -70,7 +70,7 @@ internal class Invite : Command, ICommand
 
         if (currentMember == null || chatFrame.User.GetLevel() < EnumUserAccessLevel.Guide)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, chatFrame.User, targetChannel));
+            chatFrame.User.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, chatFrame.User, targetChannel));
             return;
         }
 
@@ -82,24 +82,24 @@ internal class Invite : Command, ICommand
     {
         if (targetChannel.Modes.InviteOnly && member.GetLevel() < EnumChannelAccessLevel.ChatHost)
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_CHANOPRIVSNEEDED_482(chatFrame.Server, chatFrame.User, targetChannel));
+            chatFrame.User.Send(Raws.IRCX_ERR_CHANOPRIVSNEEDED_482(chatFrame.Server, chatFrame.User, targetChannel));
             return;
         }
 
         if (targetUser.IsOn(targetChannel))
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_USERONCHANNEL_443(chatFrame.Server, targetUser, targetChannel));
+            chatFrame.User.Send(Raws.IRCX_ERR_USERONCHANNEL_443(chatFrame.Server, targetUser, targetChannel));
             return;
         }
 
         if (!targetChannel.InviteMember(targetUser))
         {
-            chatFrame.User.Send(Raw.IRCX_ERR_TOOMANYINVITES_929(chatFrame.Server, chatFrame.User, targetUser,
+            chatFrame.User.Send(Raws.IRCX_ERR_TOOMANYINVITES_929(chatFrame.Server, chatFrame.User, targetUser,
                 targetChannel));
             return;
         }
 
-        targetUser.Send(Raw.RPL_INVITE(chatFrame.Server, chatFrame.User, targetUser, chatFrame.Server.RemoteIp,
+        targetUser.Send(Raws.RPL_INVITE(chatFrame.Server, chatFrame.User, targetUser, chatFrame.Server.RemoteIp,
             targetChannel));
     }
 }

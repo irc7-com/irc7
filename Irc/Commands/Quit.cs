@@ -1,7 +1,6 @@
 ﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects;
 
 namespace Irc.Commands;
 
@@ -22,7 +21,7 @@ internal class Quit : Command, ICommand
         var user = chatFrame.User;
 
         var quitMessage = Resources.CONNRESETBYPEER;
-        if (chatFrame.Message.Parameters.Count > 0) quitMessage = chatFrame.Message.Parameters.First();
+        if (chatFrame.ChatMessage.Parameters.Count > 0) quitMessage = chatFrame.ChatMessage.Parameters.First();
 
         QuitChannels(user, quitMessage);
     }
@@ -41,7 +40,7 @@ internal class Quit : Command, ICommand
 
         user.GetChannels().Clear();
 
-        var quitRaw = IrcRaws.RPL_QUIT(user, message);
+        var quitRaw = Raws.RPL_QUIT(user, message);
 
         foreach (var targetUser in users) targetUser.Send(quitRaw);
         user.Disconnect(quitRaw);
