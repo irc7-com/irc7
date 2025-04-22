@@ -1,6 +1,8 @@
-﻿using Irc.Constants;
+﻿using Irc.Access;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Objects.Collections;
 
 namespace Irc.Objects;
 
@@ -59,8 +61,11 @@ public class ChatObject : IChatObject
         return Name;
     }
 
-    public virtual bool CanBeModifiedBy(ChatObject source)
+    public virtual bool CanBeModifiedBy(IChatObject source)
     {
         throw new NotImplementedException();
     }
+
+    public IPropCollection PropCollection { protected set; get; } = new PropCollection();
+    public IAccessList AccessList { protected set; get; } = new AccessList();
 }

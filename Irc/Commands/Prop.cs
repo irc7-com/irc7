@@ -43,7 +43,7 @@ public class Prop : Command, ICommand
                         if (string.Compare("NICK", chatFrame.ChatMessage.Parameters[1], true) == 0)
                         {
                             chatFrame.User.Nickname = chatFrame.User.Name;
-                            SendProp(chatFrame.Server, chatFrame.User, (IExtendedChatObject)chatFrame.User, "NICK",
+                            SendProp(chatFrame.Server, chatFrame.User, (IChatObject)chatFrame.User, "NICK",
                                 chatFrame.User.Name);
                         }
                         else if (string.Compare("MSNREGCOOKIE", chatFrame.ChatMessage.Parameters[1], true) == 0)
@@ -86,13 +86,13 @@ public class Prop : Command, ICommand
         }
         else
         {
-            IExtendedChatObject? chatObject;
+            IChatObject? chatObject;
 
             // <$> The $ value is used to indicate the user that originated the request.
             if (objectName == "$")
-                chatObject = (IExtendedChatObject?)chatFrame.User;
+                chatObject = (IChatObject?)chatFrame.User;
             else
-                chatObject = (IExtendedChatObject?)chatFrame.Server.GetChatObject(objectName);
+                chatObject = (IChatObject?)chatFrame.Server.GetChatObject(objectName);
 
             if (chatObject == null)
             {
@@ -175,7 +175,7 @@ public class Prop : Command, ICommand
     }
 
     // TODO: Rewrite this code
-    public void SendProps(IServer server, IUser user, IExtendedChatObject targetObject, List<IPropRule> props)
+    public void SendProps(IServer server, IUser user, IChatObject targetObject, List<IPropRule> props)
     {
         var propsSent = 0;
         foreach (var prop in props)
@@ -211,7 +211,7 @@ public class Prop : Command, ICommand
         if (propsSent > 0) user.Send(Raws.IRCX_RPL_PROPEND_819(server, user, targetObject));
     }
 
-    public void SendProp(IServer server, IUser user, IExtendedChatObject targetObject, string propName,
+    public void SendProp(IServer server, IUser user, IChatObject targetObject, string propName,
         string propValue)
     {
         user.Send(Raws.IRCX_RPL_PROPLIST_818(server, user, targetObject, propName, propValue));

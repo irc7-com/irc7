@@ -31,7 +31,7 @@ internal class Access : Command, ICommand
             return;
         }
 
-        var targetObject = (IExtendedChatObject?)chatFrame.Server.GetChatObject(objectName);
+        var targetObject = (IChatObject?)chatFrame.Server.GetChatObject(objectName);
         if (targetObject == null)
         {
             // No such object
@@ -72,7 +72,7 @@ internal class Access : Command, ICommand
     }
 
     // TODO: The below should be offloaded to the respective Access class
-    private bool CanModify(IChatFrame chatFrame, IExtendedChatObject targetObject)
+    private bool CanModify(IChatFrame chatFrame, IChatObject targetObject)
     {
         if (targetObject is Server && !chatFrame.User.IsAdministrator())
             // No Access
@@ -93,7 +93,7 @@ internal class Access : Command, ICommand
         return true;
     }
 
-    private void ClearAccess(IChatFrame chatFrame, IExtendedChatObject targetObject)
+    private void ClearAccess(IChatFrame chatFrame, IChatObject targetObject)
     {
         var parameters = chatFrame.ChatMessage.Parameters.TakeLast(chatFrame.ChatMessage.Parameters.Count - 2).ToList();
 
@@ -118,7 +118,7 @@ internal class Access : Command, ICommand
         }
     }
 
-    private void DeleteAccess(IChatFrame chatFrame, IExtendedChatObject targetObject)
+    private void DeleteAccess(IChatFrame chatFrame, IChatObject targetObject)
     {
         // ACCESS <object> ADD|DELETE <level> <mask>
 
@@ -149,7 +149,7 @@ internal class Access : Command, ICommand
                 entry.EntryLevel.ToString(), entry.Mask, entry.Timeout, entry.EntryAddress, entry.Reason));
     }
 
-    private void AddAccess(IChatFrame chatFrame, IExtendedChatObject targetObject)
+    private void AddAccess(IChatFrame chatFrame, IChatObject targetObject)
     {
         // ACCESS <object> ADD|DELETE <level> <mask> [< timeout > [:< reason >]]
 
@@ -191,7 +191,7 @@ internal class Access : Command, ICommand
                 entry.AccessLevel.ToString(), entry.Mask, entry.Timeout, entry.EntryAddress, entry.Reason));
     }
 
-    private void ListAccess(IChatFrame chatFrame, IExtendedChatObject targetObject)
+    private void ListAccess(IChatFrame chatFrame, IChatObject targetObject)
     {
         chatFrame.User.Send(Raws.IRCX_RPL_ACCESSSTART_803(chatFrame.Server, chatFrame.User, targetObject));
 

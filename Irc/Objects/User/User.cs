@@ -13,7 +13,6 @@ namespace Irc.Objects.User;
 public class User : ChatObject, IUser
 {
     public static readonly Logger Log = LogManager.GetCurrentClassLogger();
-    private readonly UserAccess _accessList = new();
 
     //public Access Access;
     private readonly IConnection _connection;
@@ -26,7 +25,6 @@ public class User : ChatObject, IUser
     private long _commandSequence;
     private bool _guest;
     private EnumUserAccessLevel _level;
-    protected UserProps _properties;
     private IProtocol _protocol;
     private bool _registered;
     private ISupportPackage _supportPackage;
@@ -46,7 +44,8 @@ public class User : ChatObject, IUser
         _floodProtectionProfile = floodProtectionProfile;
         _dataStore = dataStore;
         _supportPackage = new ANON();
-        _properties = new UserProps((Server.Server)server, dataStore);
+        PropCollection = new UserProps((Server.Server)server, dataStore);
+        AccessList = new UserAccess();
         Channels = new ConcurrentDictionary<IChannel, IChannelMember>();
 
         _connection.OnReceive += (sender, s) =>
@@ -63,10 +62,6 @@ public class User : ChatObject, IUser
     private UserProfile UserProfile { get; } = new();
 
     public override EnumUserAccessLevel Level => GetLevel();
-
-    public IPropCollection PropCollection => _properties;
-
-    public IAccessList AccessList => _accessList;
 
     public UserAddress UserAddress { get; set; } = new();
     public bool Utf8 { get; set; }
@@ -407,7 +402,7 @@ public class User : ChatObject, IUser
         return UserProfile;
     }
 
-    public new virtual bool CanBeModifiedBy(ChatObject source)
+    public override bool CanBeModifiedBy(IChatObject source)
     {
         return source == this;
     }

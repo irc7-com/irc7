@@ -3,12 +3,6 @@ using Irc.Objects;
 
 namespace Irc.Interfaces;
 
-public interface IExtendedChatObject : IChatObject
-{
-    IPropCollection PropCollection { get; }
-    IAccessList AccessList { get; }
-}
-
 public interface IChatObject
 {
     Guid Id { get; }
@@ -21,5 +15,7 @@ public interface IChatObject
     void Send(string message, ChatObject except);
     void Send(string message, EnumChannelAccessLevel accessLevel);
     string ToString();
-    bool CanBeModifiedBy(ChatObject source);
+    bool CanBeModifiedBy(IChatObject source);
+    IPropCollection PropCollection { get; }
+    IAccessList AccessList { get; }
 }

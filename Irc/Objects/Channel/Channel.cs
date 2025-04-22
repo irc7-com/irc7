@@ -11,22 +11,18 @@ namespace Irc.Objects.Channel;
 
 public class Channel : ChatObject, IChannel
 {
-    private readonly ChannelAccess _accessList = new();
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
-    private readonly ChannelProps _properties = new();
     public HashSet<string> BanList = new();
     public HashSet<string> InviteList = new();
 
     public Channel(string name, IChannelModes modes, IDataStore dataStore) : base(modes, dataStore)
     {
+        PropCollection = new ChannelProps();
+        AccessList = new ChannelAccess();
         SetName(name);
         DataStore.SetId(Name);
-        _properties.SetProp("NAME", name);
+        PropCollection.SetProp("NAME", name);
     }
-
-    public IAccessList AccessList => _accessList;
-
-    public IPropCollection PropCollection => _properties;
 
     public override IChannelModes Modes => (IChannelModes)base.Modes;
 
@@ -157,7 +153,7 @@ public class Channel : ChatObject, IChannel
         return false;
     }
 
-    public bool CanBeModifiedBy(IChatObject source)
+    public override bool CanBeModifiedBy(IChatObject source)
     {
         return source is IServer || ((IUser)source).GetChannels().Keys.Contains(this);
     }

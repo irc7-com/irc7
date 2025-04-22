@@ -88,6 +88,7 @@ public class Server : ChatObject, IServer
         //IRCX Initialization
         _credentialProvider = credentialProvider;
         PropCollection = new PropCollection();
+        AccessList = new ServerAccess();
 
         if (SupportPackages.Contains("NTLM"))
             GetSecurityManager()
@@ -120,9 +121,6 @@ public class Server : ChatObject, IServer
         _DataStore.Set("supported.channel.modes", modes);
         _DataStore.Set("supported.user.modes", new UserModes().GetSupportedModes());
     }
-
-    public IPropCollection PropCollection { get; }
-    public IAccessList AccessList { get; } = new ServerAccess();
 
     public string[] SupportPackages { get; }
 
