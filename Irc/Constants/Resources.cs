@@ -318,7 +318,7 @@ public static class Resources
     public static string GenericProps = @"[\x20-\x7F]{0,31}";
     public static string JoinPartProp = @"[\x00]{1}";
     public static string IrcChannelRegex = @"#[\x21-\x2B,\x2D-\xFF]{1,200}";
-    public static string IrcxChannelRegex = @"%#[\x21-\x2B,\x2D-\xFF]{1,200}";
+    public static string IrcxChannelRegex = @"^%#[\x21-\x2B\x2D-\xFF]{1,200}$";
     public static string GuestNicknameMask = @"^>(?!(Sysop)|(Admin)|(Guide))[\x41-\xFF\-0-9]+$";
     public static string NicknameMask = @"^(?!(Sysop)|(Admin)|(Guide))[\x41-\xFF][\x41-\xFF\-0-9]*$";
     public static string StandardNickname = @"^[\x41-\xFF][\x41-\xFF\-0-9]*$";

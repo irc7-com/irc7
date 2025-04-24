@@ -366,7 +366,8 @@ public class User : ChatObject, IUser
             var credUser = credentials.GetUsername();
             userHost = string.IsNullOrWhiteSpace(credUser) ? userAddress.MaskedIp : credUser;
         }
-        userAddress.Host = userHost;
+        userAddress.User = userHost;
+        userAddress.Host = credentials.GetDomain();
         userAddress.Server = Server.Name;
 
         LoggedOn = DateTime.UtcNow;
