@@ -25,7 +25,7 @@ public class Command : ICommand
 
     public EnumCommandDataType GetDataType()
     {
-        throw new NotImplementedException();
+        return EnumCommandDataType.Standard;
     }
 
     public void Execute(IChatFrame chatFrame)
