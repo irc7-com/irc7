@@ -360,8 +360,13 @@ public class User : ChatObject, IUser
 
         if (credentials == null) throw new Exception("Register: No credentials provided");
 
-        userAddress.User = credentials.GetUsername() ?? userAddress.MaskedIp;
-        userAddress.Host = credentials.GetDomain();
+        var userHost = string.IsNullOrWhiteSpace(userAddress.User) ? userAddress.MaskedIp : userAddress.User;
+        if (GetSupportPackage() is not ANON)
+        {
+            var credUser = credentials.GetUsername();
+            userHost = string.IsNullOrWhiteSpace(credUser) ? userAddress.MaskedIp : credUser;
+        }
+        userAddress.Host = userHost;
         userAddress.Server = Server.Name;
 
         LoggedOn = DateTime.UtcNow;
