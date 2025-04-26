@@ -55,6 +55,8 @@ public class Join : Command, ICommand
         // TODO: Optimize the below code
         foreach (var channelName in channelNames)
         {
+            var isCreator = false;
+            
             if (user.GetChannels().Count >= server.MaxChannels)
             {
                 user.Send(Raws.IRCX_ERR_TOOMANYCHANNELS_405(server, user, channelName));
@@ -62,7 +64,13 @@ public class Join : Command, ICommand
             }
 
             var channel = server
-                .GetChannelByName(channelName) ?? server.CreateChannel(user, channelName, key);
+                .GetChannelByName(channelName);
+            
+            if (channel == null)
+            {
+                isCreator = true;
+                channel = server.CreateChannel(user, channelName, key);
+            }
 
             if (channel.HasUser(user))
             {
@@ -77,7 +85,7 @@ public class Join : Command, ICommand
                 continue;
             }
 
-            channel.Join(user, channelAccessResult)
+            channel.Join(user, isCreator ? EnumChannelAccessResult.SUCCESS_OWNER : channelAccessResult)
                 .SendTopic(user)
                 .SendNames(user);
         }
