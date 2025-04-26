@@ -10,12 +10,25 @@ public class ModeRule : IModeRule
     public ModeRule(char modeChar, bool requiresParameter = false, int initialValue = 0)
     {
         ModeChar = modeChar;
-        ModeValue = initialValue;
+        Value = initialValue;
         RequiresParameter = requiresParameter;
     }
 
     protected char ModeChar { get; }
-    private int ModeValue { get; set; }
+
+    public bool ModeValue
+    {
+        get
+        {
+            return Value == 1;
+        }
+        set
+        {
+            Value = Convert.ToInt32(value);
+        }
+    }
+
+    public int Value { get; set; }
     public bool RequiresParameter { get; }
 
     // Although the below is a string we are to evaluate and cast to integer
@@ -32,17 +45,17 @@ public class ModeRule : IModeRule
 
     public void Set(int value)
     {
-        ModeValue = value;
+        Value = value;
     }
 
     public void Set(bool value)
     {
-        ModeValue = value ? 1 : 0;
+        Value = value ? 1 : 0;
     }
 
     public int Get()
     {
-        return ModeValue;
+        return Value;
     }
 
     public char GetModeChar()

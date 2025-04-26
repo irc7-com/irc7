@@ -17,7 +17,7 @@ public class Oper : ModeRule, IModeRule
         if (source is IUser && ((IUser)source).IsSysop() && flag == false)
         {
             var userModes = (UserModes)target.Modes;
-            userModes.Oper = flag;
+            userModes.Oper.ModeValue = flag;
             DispatchModeChange(source, target, flag, parameter);
             return EnumIrcError.OK;
         }

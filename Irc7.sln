@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Irc.Logging", "Irc.Logging\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SSPI.GateKeeper", "SSPI.GateKeeper\SSPI.GateKeeper.csproj", "{5E25BDE0-8F56-45A6-B4BA-0682963666DE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Irc.Tests", "Irc.Tests\Irc.Tests.csproj", "{2AC2B51D-E073-41F5-9F00-731DBF9AA02C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -67,6 +69,10 @@ Global
 		{5E25BDE0-8F56-45A6-B4BA-0682963666DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E25BDE0-8F56-45A6-B4BA-0682963666DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E25BDE0-8F56-45A6-B4BA-0682963666DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2AC2B51D-E073-41F5-9F00-731DBF9AA02C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AC2B51D-E073-41F5-9F00-731DBF9AA02C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AC2B51D-E073-41F5-9F00-731DBF9AA02C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AC2B51D-E073-41F5-9F00-731DBF9AA02C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -74,6 +80,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{AB1A4F07-A06B-448D-839E-4847F5ACA3BB} = {47F8D564-147C-46FF-AF10-8CAA9A1B4D87}
 		{EB7634C0-EE65-4363-9CD4-9DE78E1F6A9F} = {47F8D564-147C-46FF-AF10-8CAA9A1B4D87}
+		{2AC2B51D-E073-41F5-9F00-731DBF9AA02C} = {47F8D564-147C-46FF-AF10-8CAA9A1B4D87}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {18F1E682-F389-4D54-9FFA-AA9E6E64D4C7}

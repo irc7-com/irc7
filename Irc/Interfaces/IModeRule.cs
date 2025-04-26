@@ -9,6 +9,7 @@ public interface IModeRule
     void Set(bool value);
     int Get();
     char GetModeChar();
+    int Value { get; set; }
 
     EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter);
     void DispatchModeChange(IChatObject source, IChatObject target, bool flag, string parameter);

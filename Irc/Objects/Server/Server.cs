@@ -67,9 +67,25 @@ public class Server : ChatObject, IServer
                           Array.Empty<string>();
 
         if (MaxAnonymousConnections > 0) _securityManager.AddSupportPackage(new ANON());
+        
+        //IRCX Initialization
+        _credentialProvider = credentialProvider;
+        Props = new PropCollection();
+        Access = new ServerAccess();
 
-        Protocols.Add(EnumProtocolType.IRC, new Protocols.Irc());
+        if (SupportPackages.Contains("NTLM"))
+            GetSecurityManager()
+                .AddSupportPackage(new NTLM(credentialProvider ?? new NtlmProvider()));
 
+        AddProtocol(EnumProtocolType.IRC, new Protocols.Irc());
+        AddProtocol(EnumProtocolType.IRCX, new IrcX());
+        AddProtocol(EnumProtocolType.IRC3, new Irc3());
+        AddProtocol(EnumProtocolType.IRC4, new Irc4());
+        AddProtocol(EnumProtocolType.IRC5, new Irc5());
+        AddProtocol(EnumProtocolType.IRC6, new Irc6());
+        AddProtocol(EnumProtocolType.IRC7, new Irc7());
+        AddProtocol(EnumProtocolType.IRC8, new Irc8());
+        
         socketServer.OnClientConnecting += (sender, connection) =>
         {
             // TODO: Need to pass a Interfaced factory in to create the appropriate user
@@ -87,36 +103,12 @@ public class Server : ChatObject, IServer
         };
         socketServer.Listen();
 
-        //IRCX Initialization
-        _credentialProvider = credentialProvider;
-        Props = new PropCollection();
-        Access = new ServerAccess();
-
-        if (SupportPackages.Contains("NTLM"))
-            GetSecurityManager()
-                .AddSupportPackage(new NTLM(credentialProvider ?? new NtlmProvider()));
-
-        AddProtocol(EnumProtocolType.IRCX, new IrcX());
-        AddProtocol(EnumProtocolType.IRC3, new Irc3());
-        AddProtocol(EnumProtocolType.IRC4, new Irc4());
-        AddProtocol(EnumProtocolType.IRC5, new Irc5());
-        AddProtocol(EnumProtocolType.IRC6, new Irc6());
-        AddProtocol(EnumProtocolType.IRC7, new Irc7());
-        AddProtocol(EnumProtocolType.IRC8, new Irc8());
-
         if (SupportPackages.Contains("GateKeeper"))
         {
             _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
             securityManager.AddSupportPackage(new GateKeeper(new DefaultProvider()));
             securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(_passport)));
         }
-
-        AddCommand(new Auth());
-        AddCommand(new AuthX());
-        AddCommand(new Ircvers());
-        AddCommand(new Ircx());
-        AddCommand(new Prop());
-        AddCommand(new Listx());
 
         var modes = new ChannelModes().GetSupportedModes();
         modes = new string(modes.OrderBy(c => c).ToArray());
@@ -582,7 +574,7 @@ public class Server : ChatObject, IServer
     // IRCX 
     protected EnumChannelAccessResult CheckAuthOnly()
     {
-        if (Modes.GetModeChar(Resources.ChannelModeAuthOnly) == 1)
+        if (Modes.GetModeValue(Resources.ChannelModeAuthOnly) == 1)
             return EnumChannelAccessResult.ERR_AUTHONLYCHAN;
         return EnumChannelAccessResult.NONE;
     }

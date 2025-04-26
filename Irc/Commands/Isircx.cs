@@ -3,7 +3,7 @@ using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 
-internal class Isircx : Command, ICommand
+public class Isircx : Command, ICommand
 {
     public Isircx() : base(0, false)
     {

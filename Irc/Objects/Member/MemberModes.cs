@@ -34,17 +34,17 @@ public class MemberModes : ModeCollection, IMemberModes
 
     public bool IsOwner()
     {
-        return GetModeChar(Resources.MemberModeOwner) > 0;
+        return GetModeValue(Resources.MemberModeOwner) > 0;
     }
 
     public bool IsHost()
     {
-        return GetModeChar(Resources.MemberModeHost) > 0;
+        return GetModeValue(Resources.MemberModeHost) > 0;
     }
 
     public bool IsVoice()
     {
-        return GetModeChar(Resources.MemberModeVoice) > 0;
+        return GetModeValue(Resources.MemberModeVoice) > 0;
     }
 
     public bool IsNormal()

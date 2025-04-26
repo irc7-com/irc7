@@ -6,7 +6,7 @@ namespace Irc.Interfaces;
 
 public interface IChannel
 {
-    IAccessList AccessList { get; }
+    IAccessList Access { get; }
     IChannelModes Modes { get; }
     IChannelProps Props { get; }
     string GetName();

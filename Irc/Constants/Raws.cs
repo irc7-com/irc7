@@ -631,7 +631,7 @@ public static class Raws
         return $":{server} 482 {user} {channel} :You're not channel operator";
     }
 
-    public static string IRCX_ERR_CHANQPRIVSNEEDED_485(IServer server, IUser user, ChatObject channel)
+    public static string IRCX_ERR_CHANQPRIVSNEEDED_485(IServer server, IUser user, IChatObject channel)
     {
         return $":{server} 485 {user} {channel} :You're not channel owner";
     }

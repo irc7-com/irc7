@@ -187,7 +187,7 @@ internal class Program
 
             channel.Props.Topic.Value = defaultChannel.Topic;
             foreach (var keyValuePair in defaultChannel.Modes)
-                channel.Modes.SetModeChar(keyValuePair.Key, keyValuePair.Value);
+                channel.Modes.SetModeValue(keyValuePair.Key, keyValuePair.Value);
 
             foreach (var keyValuePair in defaultChannel.Props)
             {

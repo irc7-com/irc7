@@ -16,7 +16,7 @@ public class Invisible : ModeRule, IModeRule
         if (source == target)
         {
             var userModes = (UserModes)target.Modes;
-            userModes.Invisible = flag;
+            userModes.Invisible.ModeValue = flag;
             DispatchModeChange(source, target, flag, parameter);
             return EnumIrcError.OK;
         }

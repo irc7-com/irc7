@@ -34,7 +34,7 @@ public class PropCollection : IPropCollection
         return properties.Values.ToList();
     }
 
-    public void AddProp(IPropRule prop)
+    protected void AddProp(IPropRule prop)
     {
         properties[prop.Name.ToUpper()] = prop;
     }

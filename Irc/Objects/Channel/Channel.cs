@@ -13,16 +13,18 @@ public class Channel : ChatObject, IChannel
 {
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
     public HashSet<string> InviteList = new();
-    public override IChannelProps Props => (IChannelProps)base.Props;
-    public IAccessList AccessList { get; }
-    public override IChannelModes Modes => (IChannelModes)base.Modes;
+
+    public new IAccessList Access => (IAccessList)base.Access;
+    public new IChannelProps Props => (IChannelProps)base.Props;
+    public new IChannelModes Modes => (IChannelModes)base.Modes;
 
     public Channel(string name)
     {
-        base.Name = name;
-        Modes = new ChannelModes();
-        Props = new ChannelProps();
-        Access = new ChannelAccess();
+        base.Modes = new ChannelModes();
+        base.Props = new ChannelProps();
+        base.Access = new ChannelAccess();
+        
+        Name = name;
         Props.Name.Value = name;
     }
 
@@ -43,7 +45,7 @@ public class Channel : ChatObject, IChannel
     public IChannelMember? GetMemberByNickname(string nickname)
     {
         return _members.FirstOrDefault(member =>
-            string.Compare(member.GetUser().GetAddress().Nickname, nickname, true) == 0);
+            String.Compare(member.GetUser().GetAddress().Nickname, nickname, StringComparison.OrdinalIgnoreCase) == 0);
     }
 
     public bool Allows(IUser user)
@@ -255,7 +257,7 @@ public class Channel : ChatObject, IChannel
                 channelMember.GetUser().Send(message);
     }
 
-    public virtual EnumChannelAccessResult GetAccess(IUser user, string? key, bool isGoto = false)
+    public EnumChannelAccessResult GetAccess(IUser user, string? key, bool isGoto = false)
     {
         var hostKeyCheck = CheckHostKey(user, key);
 
@@ -303,7 +305,7 @@ public class Channel : ChatObject, IChannel
             : accessPermissions;
     }
 
-    public virtual bool InviteMember(IUser user)
+    public bool InviteMember(IUser user)
     {
         var address = user.GetAddress().GetAddress();
         return InviteList.Add(address);
@@ -345,7 +347,7 @@ public class Channel : ChatObject, IChannel
         return EnumChannelAccessResult.NONE;
     }
 
-    protected virtual IChannelMember AddMember(IUser user,
+    protected IChannelMember AddMember(IUser user,
         EnumChannelAccessResult accessResult = EnumChannelAccessResult.NONE)
     {
         var member = new Member.Member(user);
@@ -416,7 +418,7 @@ public class Channel : ChatObject, IChannel
     {
         if (string.IsNullOrWhiteSpace(key)) return EnumChannelAccessResult.NONE;
 
-        if (Modes.GetModeChar(Resources.ChannelModeKey) == 1)
+        if (Modes.GetModeValue(Resources.ChannelModeKey) == 1)
         {
             if (Modes.Key == key)
                 return EnumChannelAccessResult.SUCCESS_MEMBER;

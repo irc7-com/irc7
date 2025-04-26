@@ -9,6 +9,13 @@ public class Irc : Protocol, IProtocol
 {
     public Irc()
     {
+        AddCommand(new Auth());
+        AddCommand(new AuthX());
+        AddCommand(new Ircvers());
+        AddCommand(new Ircx());
+        AddCommand(new Prop());
+        AddCommand(new Listx());
+        
         AddCommand(new Privmsg());
         AddCommand(new Notice());
         AddCommand(new Ping());
@@ -38,6 +45,18 @@ public class Irc : Protocol, IProtocol
         AddCommand(new Topic());
         AddCommand(new Invite());
         AddCommand(new WebIrc());
+        
+        AddCommand(new global::Access());
+        AddCommand(new Away());
+        AddCommand(new Create());
+        AddCommand(new Data());
+        AddCommand(new Event());
+        AddCommand(new Isircx());
+        AddCommand(new Kill());
+        AddCommand(new Listx());
+        AddCommand(new Reply());
+        AddCommand(new Request());
+        AddCommand(new Whisper());
     }
 
     public new ICommand? GetCommand(string name)

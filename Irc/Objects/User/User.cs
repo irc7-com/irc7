@@ -15,12 +15,14 @@ public class User : ChatObject, IUser
 {
     public static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    //public Access Access;
     private readonly IConnection _connection;
     private readonly IDataRegulator _dataRegulator;
     private readonly IFloodProtectionProfile _floodProtectionProfile;
     private readonly Queue<ModeOperation> _modeOperations = new();
     private bool _authenticated;
+    public override IUserProps Props => (IUserProps)base.Props;
+    public override IUserModes Modes => (IUserModes)base.Modes;
+    public override IAccessList Access => base.Access;
 
     private long _commandSequence;
     private bool _guest;
@@ -32,8 +34,8 @@ public class User : ChatObject, IUser
 
     public DateTime LastPing = DateTime.UtcNow;
     public long PingCount;
-    public string Client { get; set; }
-    public string Pass { get; set; }
+    public string Client { get; set; } = string.Empty;
+    public string Pass { get; set; } = string.Empty;
 
     public User(
         IConnection connection, 
@@ -48,10 +50,10 @@ public class User : ChatObject, IUser
         _dataRegulator = dataRegulator;
         _floodProtectionProfile = floodProtectionProfile;
         _supportPackage = new ANON();
-        Modes = new UserModes();
-        Props = new UserProps();
-        Access = new UserAccess();
         Channels = new ConcurrentDictionary<IChannel, IChannelMember>();
+        base.Modes = new UserModes();
+        base.Props = new UserProps();
+        base.Access = new UserAccess();
 
         _connection.OnReceive += (sender, s) =>
         {
@@ -69,7 +71,7 @@ public class User : ChatObject, IUser
     public override EnumUserAccessLevel Level => GetLevel();
 
     public UserAddress UserAddress { get; set; } = new();
-    public IUserProps Props { get; set; } = new UserProps();
+
     public bool Utf8 { get; set; }
     public DateTime LastIdle { get; set; } = DateTime.UtcNow;
     public DateTime LoggedOn { get; private set; } = DateTime.UtcNow;
@@ -253,12 +255,12 @@ public class User : ChatObject, IUser
 
     public bool IsSysop()
     {
-        return Modes.GetModeChar(Resources.UserModeOper) == 1;
+        return Modes.GetModeValue(Resources.UserModeOper) == 1;
     }
 
     public bool IsAdministrator()
     {
-        return Modes.HasMode('a') && Modes.GetModeChar(Resources.UserModeAdmin) == 1;
+        return Modes.HasMode('a') && Modes.GetModeValue(Resources.UserModeAdmin) == 1;
     }
 
     public virtual void SetAway(IServer server, IUser user, string message)
@@ -289,9 +291,8 @@ public class User : ChatObject, IUser
 
     public virtual void PromoteToAdministrator()
     {
-        var mode = Modes[Resources.UserModeAdmin];
-        mode.Set(true);
-        mode.DispatchModeChange(this, this, true, string.Empty);
+        Modes.Admin.ModeValue = true;
+        Modes.Admin.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Administrator;
         UserProfile.Level = EnumUserAccessLevel.Administrator;
         Send(Raws.IRCX_RPL_YOUREADMIN_386(Server, this));
@@ -299,8 +300,8 @@ public class User : ChatObject, IUser
 
     public virtual void PromoteToSysop()
     {
-        ((UserModes)Modes).Oper = true;
-        ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
+        Modes.Oper.ModeValue = true;
+        Modes.Oper.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Sysop;
         UserProfile.Level = EnumUserAccessLevel.Sysop;
         Send(Raws.IRCX_RPL_YOUREOPER_381(Server, this));
@@ -308,8 +309,8 @@ public class User : ChatObject, IUser
 
     public virtual void PromoteToGuide()
     {
-        ((UserModes)Modes).Oper = true;
-        ModeRule.DispatchModeChange(Resources.UserModeOper, this, this, true, string.Empty);
+        Modes.Oper.ModeValue = true;
+        Modes.Oper.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Guide;
         UserProfile.Level = EnumUserAccessLevel.Guide;
         Send(Raws.IRCX_RPL_YOUREGUIDE_629(Server, this));

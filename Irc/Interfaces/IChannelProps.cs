@@ -21,9 +21,4 @@ public interface IChannelProps : IPropCollection
     PropRule ClientGUID { get; }
     PropRule ServicePath { get; }
     PropRule Account { get; }
-    string this[string key] { get; }
-    IPropRule? GetProp(string name);
-    List<IPropRule> GetProps();
-    void AddProp(IPropRule prop);
-    void SetProp(string name, string value);
 }

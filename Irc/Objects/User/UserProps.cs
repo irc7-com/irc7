@@ -89,7 +89,6 @@ public class UserProps : PropCollection, IUserProps
     public PropProfile Profile { get; } = new();
     public PropRole Role { get; } = new();
     
-    
     public UserProps()
     {
         // IRC Props

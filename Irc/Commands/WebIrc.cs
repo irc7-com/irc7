@@ -82,7 +82,7 @@ public class WebIrc : Command, ICommand
                 if (option.Key.ToLowerInvariant() == Resources.webirc_option_secure)
                 {
                     var userModes = (UserModes)chatFrame.User.Modes;
-                    userModes.Secure = true;
+                    userModes.Secure.ModeValue = true;
                 }
         }
     }

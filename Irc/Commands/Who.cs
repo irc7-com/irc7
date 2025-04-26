@@ -70,7 +70,7 @@ public class Who : Command, ICommand
         {
             var isCurrentUser = user == chatUser;
             var userModes = (UserModes)chatUser.Modes;
-            if (!userModes.Invisible || ignoreInvisible || isCurrentUser)
+            if (!userModes.Invisible.ModeValue || ignoreInvisible || isCurrentUser)
             {
                 // 352     RPL_WHOREPLY
                 //                 "<channel> <user> <host> <server> <nick> \
