@@ -64,7 +64,7 @@ internal class Listx : Command, ICommand
                     channel.Modes.GetModeString(),
                     channel.GetMembers().Count,
                     channel.Modes.UserLimit,
-                    channel.ChannelStore.Get("topic")
+                    channel.Props.Topic.Value
                 ));
         user.Send(Raws.IRCX_RPL_LISTXEND_817(server, user));
     }

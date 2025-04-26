@@ -2,7 +2,7 @@
 using Irc.Enumerations;
 using Irc.Interfaces;
 
-namespace Irc.Props;
+namespace Irc.Objects;
 
 public class PropRule : IPropRule
 {
@@ -15,11 +15,11 @@ public class PropRule : IPropRule
         ReadAccessLevel = readAccessLevel;
         WriteAccessLevel = writeAccessLevel;
         this.validationMask = validationMask;
-        _value = initialValue;
+        Value = initialValue;
         ReadOnly = readOnly;
     }
 
-    private string _value { get; set; }
+    public string Value { get; set; }
 
     public string Name { get; }
 
@@ -74,11 +74,11 @@ public class PropRule : IPropRule
 
     public virtual void SetValue(string value)
     {
-        _value = value;
+        Value = value;
     }
 
     public virtual string GetValue(IChatObject target)
     {
-        return _value;
+        return Value;
     }
 }

@@ -39,7 +39,7 @@ public class Privmsg : Command, ICommand
             {
                 var user = (User)chatFrame.User;
                 var channel = (Channel)chatObject;
-                var channelModes = channel.GetModes();
+                var channelModes = channel.Modes;
                 var channelMember = channel.GetMember(chatFrame.User);
                 var isOnChannel = channelMember != null;
                 var noExtern = channelModes.NoExtern;

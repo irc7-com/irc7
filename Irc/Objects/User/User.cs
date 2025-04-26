@@ -5,6 +5,7 @@ using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
+using Irc.Objects.Collections;
 using Irc.Security.Packages;
 using NLog;
 
@@ -17,7 +18,6 @@ public class User : ChatObject, IUser
     //public Access Access;
     private readonly IConnection _connection;
     private readonly IDataRegulator _dataRegulator;
-    private readonly IDataStore _dataStore;
     private readonly IFloodProtectionProfile _floodProtectionProfile;
     private readonly Queue<ModeOperation> _modeOperations = new();
     private bool _authenticated;
@@ -32,20 +32,25 @@ public class User : ChatObject, IUser
 
     public DateTime LastPing = DateTime.UtcNow;
     public long PingCount;
+    public string Client { get; set; }
+    public string Pass { get; set; }
 
-    public User(IConnection connection, IProtocol protocol, IDataRegulator dataRegulator,
-        IFloodProtectionProfile floodProtectionProfile, IDataStore dataStore, IModeCollection modes,
-        IServer server) : base(modes, dataStore)
+    public User(
+        IConnection connection, 
+        IProtocol protocol, 
+        IDataRegulator dataRegulator,
+        IFloodProtectionProfile floodProtectionProfile,
+        IServer server)
     {
         Server = server;
         _connection = connection;
         _protocol = protocol;
         _dataRegulator = dataRegulator;
         _floodProtectionProfile = floodProtectionProfile;
-        _dataStore = dataStore;
         _supportPackage = new ANON();
-        PropCollection = new UserProps((Server.Server)server, dataStore);
-        AccessList = new UserAccess();
+        Modes = new UserModes();
+        Props = new UserProps();
+        Access = new UserAccess();
         Channels = new ConcurrentDictionary<IChannel, IChannelMember>();
 
         _connection.OnReceive += (sender, s) =>
@@ -64,6 +69,7 @@ public class User : ChatObject, IUser
     public override EnumUserAccessLevel Level => GetLevel();
 
     public UserAddress UserAddress { get; set; } = new();
+    public IUserProps Props { get; set; } = new UserProps();
     public bool Utf8 { get; set; }
     public DateTime LastIdle { get; set; } = DateTime.UtcNow;
     public DateTime LoggedOn { get; private set; } = DateTime.UtcNow;
@@ -378,11 +384,6 @@ public class User : ChatObject, IUser
     public void Authenticate()
     {
         _authenticated = true;
-    }
-
-    public IDataStore GetDataStore()
-    {
-        return _dataStore;
     }
 
     public Queue<ModeOperation> GetModeOperations()

@@ -106,7 +106,7 @@ internal class Access : Command, ICommand
                 return;
             }
 
-        var accessResult = targetObject.AccessList.Clear(chatFrame.User.GetLevel(), accessLevel);
+        var accessResult = targetObject.Access.Clear(chatFrame.User.GetLevel(), accessLevel);
         if (accessResult == EnumAccessError.IRCERR_INCOMPLETE)
         {
             // Some entries were not cleared due to ...
@@ -139,7 +139,7 @@ internal class Access : Command, ICommand
 
         var mask = parameters[1];
         var entry = new AccessEntry(mask, chatFrame.User.GetLevel(), accessLevel, mask, 0, string.Empty);
-        var accessError = targetObject.AccessList.Delete(entry);
+        var accessError = targetObject.Access.Delete(entry);
 
         if (accessError == EnumAccessError.IRCERR_NOACCESS)
             chatFrame.User.Send(Raws.IRCX_ERR_DUPACCESS_914(chatFrame.Server, chatFrame.User));
@@ -181,7 +181,7 @@ internal class Access : Command, ICommand
         // TODO: Solve below level issue
         var entry = new AccessEntry(chatFrame.User.GetAddress().GetUserHost(), chatFrame.User.GetLevel(), accessLevel,
             mask, timeout, reason);
-        var accessError = targetObject.AccessList.Add(entry);
+        var accessError = targetObject.Access.Add(entry);
 
         if (accessError == EnumAccessError.IRCERR_DUPACCESS)
             chatFrame.User.Send(Raws.IRCX_ERR_DUPACCESS_914(chatFrame.Server, chatFrame.User));
@@ -197,7 +197,7 @@ internal class Access : Command, ICommand
 
         // TODO: Some entries were not listed due to level restriction
         // :TK2CHATCHATA01 804 'Admin_Koach * DENY *!96E5C937AE1CEFB3@*$* 2873 Sysop_Wondrously@cg :Violation of MSN Code of Conduct - 6-US
-        targetObject.AccessList.GetEntries().Values.ToList().ForEach(
+        targetObject.Access.GetEntries().Values.ToList().ForEach(
             list => list.ForEach(entry =>
                 chatFrame.User.Send(Raws.IRCX_RPL_ACCESSLIST_804(chatFrame.Server, chatFrame.User, targetObject,
                     entry.AccessLevel.ToString(), entry.Mask, entry.Ttl.Minutes,

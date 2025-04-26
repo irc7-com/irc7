@@ -98,7 +98,7 @@ public static class Register
 
         // Basic Auth would happen here
 
-        var pass = user.GetDataStore().Get("pass");
+        var pass = user.Pass;
         if (!string.IsNullOrWhiteSpace(pass)) return true;
 
         return false;

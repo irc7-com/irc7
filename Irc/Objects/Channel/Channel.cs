@@ -12,22 +12,19 @@ namespace Irc.Objects.Channel;
 public class Channel : ChatObject, IChannel
 {
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
-    public HashSet<string> BanList = new();
     public HashSet<string> InviteList = new();
-
-    public Channel(string name, IChannelModes modes, IDataStore dataStore) : base(modes, dataStore)
-    {
-        PropCollection = new ChannelProps();
-        AccessList = new ChannelAccess();
-        SetName(name);
-        DataStore.SetId(Name);
-        PropCollection.SetProp("NAME", name);
-    }
-
+    public override IChannelProps Props => (IChannelProps)base.Props;
+    public IAccessList AccessList { get; }
     public override IChannelModes Modes => (IChannelModes)base.Modes;
 
-    // TODO: The ‘l’, ‘b’, ‘k’ mode is stored with the Channel Store.
-    public IDataStore ChannelStore => DataStore;
+    public Channel(string name)
+    {
+        base.Name = name;
+        Modes = new ChannelModes();
+        Props = new ChannelProps();
+        Access = new ChannelAccess();
+        Props.Name.Value = name;
+    }
 
     public string GetName()
     {
@@ -86,7 +83,7 @@ public class Channel : ChatObject, IChannel
 
     public IChannel SendTopic(IUser user)
     {
-        user.Send(Raws.IRCX_RPL_TOPIC_332(user.Server, user, this, DataStore.Get("topic")));
+        user.Send(Raws.IRCX_RPL_TOPIC_332(user.Server, user, this, Props.Topic.Value));
         return this;
     }
 
@@ -135,11 +132,6 @@ public class Channel : ChatObject, IChannel
     public IList<IChannelMember> GetMembers()
     {
         return _members;
-    }
-
-    public new IChannelModes GetModes()
-    {
-        return (IChannelModes)_modes;
     }
 
     public bool HasUser(IUser user)
@@ -321,7 +313,7 @@ public class Channel : ChatObject, IChannel
     {
         var userAccessLevel = EnumAccessLevel.NONE;
         var addressString = user.GetAddress().GetFullAddress();
-        var accessEntries = AccessList.GetEntries();
+        var accessEntries = Access.GetEntries();
 
         foreach (var accessKvp in accessEntries)
         {
@@ -347,22 +339,10 @@ public class Channel : ChatObject, IChannel
     {
         if (string.IsNullOrWhiteSpace(key)) return EnumChannelAccessResult.NONE;
 
-        if (PropCollection.GetProp("OWNERKEY")?.GetValue(this) == key)
+        if (Props.GetProp("OWNERKEY")?.GetValue(this) == key)
             return EnumChannelAccessResult.SUCCESS_OWNER;
-        if (PropCollection.GetProp("HOSTKEY")?.GetValue(this) == key) return EnumChannelAccessResult.SUCCESS_HOST;
+        if (Props.GetProp("HOSTKEY")?.GetValue(this) == key) return EnumChannelAccessResult.SUCCESS_HOST;
         return EnumChannelAccessResult.NONE;
-    }
-
-    public virtual bool BanMask(UserAddress userAddress)
-    {
-        var formattedAddress = userAddress.GetAddress();
-        return BanList.Add(formattedAddress);
-    }
-
-    public virtual bool UnbanMask(UserAddress userAddress)
-    {
-        var formattedAddress = userAddress.GetAddress();
-        return BanList.Remove(formattedAddress);
     }
 
     protected virtual IChannelMember AddMember(IUser user,

@@ -11,10 +11,13 @@ public interface IUser
     string ShortId { get; }
     string Name { get; set; }
     string Nickname { get; set; }
+    string Client { get; set; }
+    string Pass { get; set; }
     bool Away { get; set; }
     DateTime LastIdle { get; set; }
     DateTime LoggedOn { get; }
     IModeCollection Modes { get; }
+    IUserProps Props { get; }
     bool Utf8 { get; set; }
     IChatFrame GetNextFrame();
     void ChangeNickname(string newNick, bool utf8Prefix);
@@ -28,7 +31,6 @@ public interface IUser
     KeyValuePair<IChannel, IChannelMember> GetChannelMemberInfo(IChannel channel);
     KeyValuePair<IChannel, IChannelMember> GetChannelInfo(string Name);
     IDictionary<IChannel, IChannelMember> GetChannels();
-    IModeCollection GetModes();
     void Send(string message);
     void Send(string message, EnumChannelAccessLevel accessLevel);
     void Flush();
@@ -57,7 +59,6 @@ public interface IUser
     string ToString();
     void Register();
     void Authenticate();
-    IDataStore GetDataStore();
     void DisconnectIfInactive();
     Queue<ModeOperation> GetModeOperations();
 }

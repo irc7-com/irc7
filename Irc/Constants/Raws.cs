@@ -349,7 +349,7 @@ public static class Raws
 
     public static string IRCX_RPL_MODE_322(IServer server, IUser user, IChannel channel)
     {
-        return $":{server} 322 {user} {channel} {channel.GetMembers().Count} :{channel.ChannelStore.Get("topic")}";
+        return $":{server} 322 {user} {channel} {channel.GetMembers().Count} :{channel.Props.Topic.Value}";
     }
 
     public static string IRCX_RPL_MODE_323(IServer server, IUser user)

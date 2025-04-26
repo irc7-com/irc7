@@ -10,12 +10,11 @@ public interface IChatObject
     IModeCollection Modes { get; }
     string Name { get; set; }
     string ShortId { get; }
-    IModeCollection GetModes();
     void Send(string message);
     void Send(string message, ChatObject except);
     void Send(string message, EnumChannelAccessLevel accessLevel);
     string ToString();
     bool CanBeModifiedBy(IChatObject source);
-    IPropCollection PropCollection { get; }
-    IAccessList AccessList { get; }
+    IPropCollection Props { get; }
+    IAccessList Access { get; }
 }

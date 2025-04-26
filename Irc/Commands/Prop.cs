@@ -108,7 +108,7 @@ public class Prop : Command, ICommand
 
                     // Setter
                     // TODO: Needs refactoring
-                    var prop = chatObject.PropCollection.GetProp(chatFrame.ChatMessage.Parameters[1]);
+                    var prop = chatObject.Props.GetProp(chatFrame.ChatMessage.Parameters[1]);
                     if (prop != null)
                     {
                         if (chatObject.CanBeModifiedBy((ChatObject)chatFrame.User))
@@ -155,11 +155,11 @@ public class Prop : Command, ICommand
 
                     if (chatFrame.ChatMessage.Parameters[1] == "*")
                     {
-                        props.AddRange(chatObject.PropCollection.GetProps());
+                        props.AddRange(chatObject.Props.GetProps());
                     }
                     else
                     {
-                        var prop = chatObject.PropCollection.GetProp(chatFrame.ChatMessage.Parameters[1]);
+                        var prop = chatObject.Props.GetProp(chatFrame.ChatMessage.Parameters[1]);
                         if (prop != null)
                             props.Add(prop);
                         else

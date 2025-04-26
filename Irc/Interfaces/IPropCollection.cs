@@ -2,7 +2,7 @@
 
 public interface IPropCollection
 {
-    IPropRule? GetProp(string name);
-    List<IPropRule> GetProps();
-    void SetProp(string name, string value);
+    public IPropRule? GetProp(string name);
+    public List<IPropRule> GetProps();
+    public void SetProp(string name, string value);
 }

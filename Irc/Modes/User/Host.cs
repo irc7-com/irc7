@@ -22,10 +22,10 @@ public class Host : ModeRuleChannel, IModeRule
             var channelModes = channel.Modes;
             var member = user.GetChannels().LastOrDefault().Value;
 
-            var ownerkeyProp = channel.PropCollection.GetProp("OWNERKEY");
-            var hostkeyProp = channel.PropCollection.GetProp("HOSTKEY");
+            var ownerkeyProp = channel.Props.OwnerKey;
+            var hostkeyProp = channel.Props.HostKey;
 
-            if (ownerkeyProp?.GetValue(target) == parameter)
+            if (ownerkeyProp.GetValue(target) == parameter)
             {
                 if (member.IsHost())
                 {
@@ -37,7 +37,7 @@ public class Host : ModeRuleChannel, IModeRule
                 member.SetOwner(true);
                 DispatchModeChange(Resources.MemberModeOwner, source, (IChatObject)channel, true, target.ToString());
             }
-            else if (hostkeyProp?.GetValue(target) == parameter)
+            else if (hostkeyProp.GetValue(target) == parameter)
             {
                 if (member.IsOwner())
                 {
