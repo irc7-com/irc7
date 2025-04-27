@@ -50,7 +50,7 @@ public class Esubmit : Command, ICommand
                 return;
             }
 
-            if (!channel!.Modes.OnStage)
+            if (!channel!.Modes.OnStage.ModeValue)
             {
                 chatFrame.User.Send(
                     Raws.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));

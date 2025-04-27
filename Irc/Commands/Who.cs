@@ -37,7 +37,7 @@ public class Who : Command, ICommand
             var userIsOnChannel = user.IsOn(channel);
             var canIgnoreInvisible = userIsOnChannel || userIsOperator;
 
-            if (user.IsOn(channel) || (!channel.Modes.Secret && !channel.Modes.Private) || userIsOperator)
+            if (user.IsOn(channel) || (!channel.Modes.Secret.ModeValue && !channel.Modes.Private.ModeValue) || userIsOperator)
                 SendWho(server, user, channel.GetMembers().Select(m => m.GetUser()).ToList(), criteria,
                     canIgnoreInvisible);
         }

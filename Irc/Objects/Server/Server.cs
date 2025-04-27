@@ -259,9 +259,9 @@ public class Server : ChatObject, IServer
         var chanProps = (ChannelProps)channel.Props;
         chanProps.Topic.Value = name;
         chanProps.OwnerKey.Value = key;
-        channel.Modes.NoExtern = true;
-        channel.Modes.TopicOp = true;
-        channel.Modes.UserLimit = 50;
+        channel.Modes.NoExtern.ModeValue = true;
+        channel.Modes.TopicOp.ModeValue = true;
+        channel.Modes.UserLimit.Value = 50;
         AddChannel(channel);
         return channel;
     }

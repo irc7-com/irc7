@@ -154,9 +154,9 @@ public static class Raws
         return $":{user.GetAddress()} INVITE {targetUser} {host} {channel}";
     }
 
-    public static string RPL_KNOCK_CHAN(IServer server, IUser user, IChannel channel)
+    public static string RPL_KNOCK_CHAN(IServer server, IUser user, IChannel channel, string reason)
     {
-        return $":{user.GetAddress()} KNOCK {channel} %s";
+        return $":{user.GetAddress()} KNOCK {channel} {reason}";
     }
 
     public static string RPL_NICK(IServer server, IUser user, string newNick)

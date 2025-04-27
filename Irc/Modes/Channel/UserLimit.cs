@@ -26,7 +26,7 @@ public class UserLimit : ModeRuleChannel, IModeRule
             if (isAdministrator)
             {
                 // TODO: Currently does not support unsetting limit without extra parameter
-                channelModes.UserLimit = 0;
+                channelModes.UserLimit.Value = 0;
                 DispatchModeChange(source, target, false, string.Empty);
             }
 
@@ -38,7 +38,7 @@ public class UserLimit : ModeRuleChannel, IModeRule
 
         if (limit > 0 && (limit <= 100 || isAdministrator))
         {
-            channelModes.UserLimit = limit;
+            channelModes.UserLimit.Value = limit;
             DispatchModeChange(source, target, true, limit.ToString());
         }
 

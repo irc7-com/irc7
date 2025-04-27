@@ -5,7 +5,6 @@ namespace Irc.Objects.Collections;
 public class ModeCollection : IModeCollection
 {
     // TODO: <CHANKEY> Below is temporary until implemented properly
-    protected string? Keypass = string.Empty;
     protected Dictionary<char, IModeRule> Modes = new();
 
     public void SetModeValue(char mode, int value)

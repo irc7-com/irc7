@@ -20,7 +20,9 @@ public class ModeRule : IModeRule
     {
         get
         {
-            return Value == 1;
+            // Necessary as this is a mode rule, we need to check if the value is greater than 0
+            // E.g. UserLimit could be > 1
+            return Value > 0;
         }
         set
         {

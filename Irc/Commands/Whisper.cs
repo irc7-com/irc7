@@ -52,13 +52,13 @@ internal class Whisper : Command, ICommand
             return;
         }
 
-        if (channelModes.NoWhisper)
+        if (channelModes.NoWhisper.ModeValue)
         {
             user.Send(Raws.IRCX_ERR_NOWHISPER_923(server, user, channel));
             return;
         }
 
-        if (channelModes.NoGuestWhisper && user.IsGuest() && user.GetLevel() < EnumUserAccessLevel.Guide)
+        if (channelModes.NoGuestWhisper.ModeValue && user.IsGuest() && user.GetLevel() < EnumUserAccessLevel.Guide)
         {
             user.Send(Raws.IRCX_ERR_NOWHISPER_923(server, user, channel));
             return;

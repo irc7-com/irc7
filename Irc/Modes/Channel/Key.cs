@@ -1,11 +1,12 @@
-﻿using Irc.Constants;
+﻿using System.Security.Cryptography.X509Certificates;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
 
 namespace Irc.Modes.Channel;
 
-internal class Key : ModeRuleChannel, IModeRule
+public class Key : ModeRuleChannel, IModeRule
 {
     public Key() : base(Resources.ChannelModeKey, true)
     {
@@ -18,9 +19,11 @@ internal class Key : ModeRuleChannel, IModeRule
         if (member?.GetLevel() >= EnumChannelAccessLevel.ChatHost)
         {
             // Unset key
-            if (!flag && parameter == channel.Modes.Key)
+            if (!flag && parameter == channel.Props.MemberKey.Value)
             {
-                channel.Modes.Key = null;
+                channel.Modes.Key.ModeValue = false;
+                channel.Modes.Keypass = string.Empty;
+                channel.Props.MemberKey.Value = string.Empty;
                 DispatchModeChange(source, (ChatObject)target, flag, parameter);
                 return EnumIrcError.OK;
             }
@@ -28,9 +31,11 @@ internal class Key : ModeRuleChannel, IModeRule
             // Set key
             if (flag)
             {
-                if (!string.IsNullOrWhiteSpace(channel.Modes.Key)) return EnumIrcError.ERR_KEYSET;
+                if (!string.IsNullOrWhiteSpace(channel.Props.MemberKey.Value)) return EnumIrcError.ERR_KEYSET;
 
-                channel.Modes.Key = flag ? parameter : null;
+                channel.Modes.Key.ModeValue = true;
+                channel.Modes.Keypass = parameter;
+                channel.Props.MemberKey.Value = parameter;
                 DispatchModeChange(source, (ChatObject)target, flag, parameter);
             }
 

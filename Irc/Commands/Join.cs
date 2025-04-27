@@ -93,6 +93,15 @@ public class Join : Command, ICommand
 
     public static void SendJoinError(IServer server, IChannel channel, IUser user, EnumChannelAccessResult result)
     {
+        // Broadcast to channel if Knocks are on
+        if (channel.Modes.Knock.ModeValue)
+        {
+            channel.Send(
+                Raws.RPL_KNOCK_CHAN(server, user, channel, result.ToString()), 
+                EnumChannelAccessLevel.ChatHost);
+        }
+        
+        // Send error to user
         switch (result)
         {
             case EnumChannelAccessResult.ERR_BADCHANNELKEY:

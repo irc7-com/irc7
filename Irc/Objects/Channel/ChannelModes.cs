@@ -6,6 +6,8 @@ using Irc.Objects.Collections;
 
 namespace Irc.Objects.Channel;
 
+
+
 public class ChannelModes : ModeCollection, IChannelModes
 {
     /*
@@ -21,183 +23,75 @@ b - set a ban mask to keep users out;
 v - give/take the ability to speak on a moderated channel;
 k - set a channel key (password).
 */
+    public string Keypass { get; set; } = string.Empty;
 
+    public Operator Operator { get; } = new Operator();
+    public Voice Voice { get; } = new Voice();
+    public Private Private { get; } = new Private();
+    public Secret Secret { get; } = new Secret();
+    public Hidden Hidden { get; } = new Hidden();
+    public InviteOnly InviteOnly { get; } = new InviteOnly();
+    public TopicOp TopicOp { get; } = new TopicOp();
+    public NoExtern NoExtern { get; } = new NoExtern();
+    public Moderated Moderated { get; } = new Moderated();
+    public UserLimit UserLimit { get; } = new UserLimit();
+    public BanList BanList { get; } = new BanList();
+    public Key Key { get; } = new Key();
+    
+    public AuthOnly AuthOnly { get; } = new AuthOnly();
+    public NoFormat Profanity { get; } = new NoFormat();
+    public Registered Registered { get; } = new Registered();
+    public Knock Knock { get; } = new Knock();
+    public NoWhisper NoWhisper { get; } = new NoWhisper();
+    public Auditorium Auditorium { get; } = new Auditorium();
+    public Cloneable Cloneable { get; } = new Cloneable();
+    public Clone Clone { get; } = new Clone();
+    public Service Service { get; } = new Service();
+    public Owner Owner { get; } = new Owner();
+    
+    public NoGuestWhisper NoGuestWhisper { get; } = new NoGuestWhisper();
+    public OnStage OnStage { get; } = new OnStage();
+    public Subscriber Subscriber { get; } = new Subscriber();
+    
     public ChannelModes()
     {
         // IRC Modes
-
-        Modes.Add(Resources.MemberModeHost, new Operator());
-        Modes.Add(Resources.MemberModeVoice, new Voice());
-        Modes.Add(Resources.ChannelModePrivate, new Private());
-        Modes.Add(Resources.ChannelModeSecret, new Secret());
-        Modes.Add(Resources.ChannelModeHidden, new Hidden());
-        Modes.Add(Resources.ChannelModeInvite, new InviteOnly());
-        Modes.Add(Resources.ChannelModeTopicOp, new TopicOp());
-        Modes.Add(Resources.ChannelModeNoExtern, new NoExtern());
-        Modes.Add(Resources.ChannelModeModerated, new Moderated());
-        Modes.Add(Resources.ChannelModeUserLimit, new UserLimit());
-        Modes.Add(Resources.ChannelModeBan, new BanList());
-        Modes.Add(Resources.ChannelModeKey, new Key());
+        Modes.Add(Resources.MemberModeHost, Operator);
+        Modes.Add(Resources.MemberModeVoice, Voice);
+        Modes.Add(Resources.ChannelModePrivate, Private);
+        Modes.Add(Resources.ChannelModeSecret, Secret);
+        Modes.Add(Resources.ChannelModeHidden, Hidden);
+        Modes.Add(Resources.ChannelModeInvite, InviteOnly);
+        Modes.Add(Resources.ChannelModeTopicOp, TopicOp);
+        Modes.Add(Resources.ChannelModeNoExtern, NoExtern);
+        Modes.Add(Resources.ChannelModeModerated, Moderated);
+        Modes.Add(Resources.ChannelModeUserLimit, UserLimit);
+        Modes.Add(Resources.ChannelModeBan, BanList);
+        Modes.Add(Resources.ChannelModeKey, Key);
 
         // IRCX Modes
-        Modes.Add(Resources.ChannelModeAuthOnly, new AuthOnly());
-        Modes.Add(Resources.ChannelModeProfanity, new NoFormat());
-        Modes.Add(Resources.ChannelModeRegistered, new Registered());
-        Modes.Add(Resources.ChannelModeKnock, new Knock());
-        Modes.Add(Resources.ChannelModeNoWhisper, new NoWhisper());
-        Modes.Add(Resources.ChannelModeAuditorium, new Auditorium());
-        Modes.Add(Resources.ChannelModeCloneable, new Cloneable());
-        Modes.Add(Resources.ChannelModeClone, new Clone());
-        Modes.Add(Resources.ChannelModeService, new Service());
-        Modes.Add(Resources.MemberModeOwner, new Owner());
+        Modes.Add(Resources.ChannelModeAuthOnly, AuthOnly);
+        Modes.Add(Resources.ChannelModeProfanity, Profanity);
+        Modes.Add(Resources.ChannelModeRegistered, Registered);
+        Modes.Add(Resources.ChannelModeKnock, Knock);
+        Modes.Add(Resources.ChannelModeNoWhisper, NoWhisper);
+        Modes.Add(Resources.ChannelModeAuditorium, Auditorium);
+        Modes.Add(Resources.ChannelModeCloneable, Cloneable);
+        Modes.Add(Resources.ChannelModeClone, Clone);
+        Modes.Add(Resources.ChannelModeService, Service);
+        Modes.Add(Resources.MemberModeOwner, Owner);
 
         // Apollo Modes
-        Modes.Add(Resources.ChannelModeNoGuestWhisper, new NoGuestWhisper());
-        Modes.Add(Resources.ChannelModeOnStage, new OnStage());
-        Modes.Add(Resources.ChannelModeSubscriber, new Subscriber());
-    }
-
-    // IRCX Modes
-
-    public bool Auditorium
-    {
-        get => Modes[Resources.ChannelModeAuditorium].Get() == 1;
-        set => Modes[Resources.ChannelModeAuditorium].Set(Convert.ToInt32(value));
-    }
-
-    public bool NoGuestWhisper
-    {
-        get => Modes[Resources.ChannelModeNoGuestWhisper].Get() == 1;
-        set => Modes[Resources.ChannelModeNoGuestWhisper].Set(Convert.ToInt32(value));
-    }
-
-    public bool AuthOnly
-    {
-        get => Modes[Resources.ChannelModeAuthOnly].Get() == 1;
-        set => Modes[Resources.ChannelModeAuthOnly].Set(Convert.ToInt32(value));
-    }
-
-    public bool Profanity
-    {
-        get => Modes[Resources.ChannelModeProfanity].Get() == 1;
-        set => Modes[Resources.ChannelModeProfanity].Set(Convert.ToInt32(value));
-    }
-
-    public bool Registered
-    {
-        get => Modes[Resources.ChannelModeRegistered].Get() == 1;
-        set => Modes[Resources.ChannelModeRegistered].Set(Convert.ToInt32(value));
-    }
-
-    public bool Knock
-    {
-        get => Modes[Resources.ChannelModeKnock].Get() == 1;
-        set => Modes[Resources.ChannelModeKnock].Set(Convert.ToInt32(value));
-    }
-
-    public bool NoWhisper
-    {
-        get => Modes[Resources.ChannelModeNoWhisper].Get() == 1;
-        set => Modes[Resources.ChannelModeNoWhisper].Set(Convert.ToInt32(value));
-    }
-
-    public bool Cloneable
-    {
-        get => Modes[Resources.ChannelModeCloneable].Get() == 1;
-        set => Modes[Resources.ChannelModeCloneable].Set(Convert.ToInt32(value));
-    }
-
-    public bool Clone
-    {
-        get => Modes[Resources.ChannelModeClone].Get() == 1;
-        set => Modes[Resources.ChannelModeClone].Set(Convert.ToInt32(value));
-    }
-
-    public bool Service
-    {
-        get => Modes[Resources.ChannelModeService].Get() == 1;
-        set => Modes[Resources.ChannelModeService].Set(Convert.ToInt32(value));
-    }
-
-    // Apollo Modes
-    public bool OnStage
-    {
-        get => Modes[Resources.ChannelModeOnStage].Get() == 1;
-        set => Modes[Resources.ChannelModeOnStage].Set(Convert.ToInt32(value));
-    }
-
-    public bool Subscriber
-    {
-        get => Modes[Resources.ChannelModeSubscriber].Get() == 1;
-        set => Modes[Resources.ChannelModeSubscriber].Set(Convert.ToInt32(value));
-    }
-
-    // IRC Modes
-
-    public bool InviteOnly
-    {
-        get => Modes[Resources.ChannelModeInvite].Get() == 1;
-        set => Modes[Resources.ChannelModeInvite].Set(Convert.ToInt32(value));
-    }
-
-    public string? Key
-    {
-        get => Keypass;
-        set
-        {
-            var hasKey = !string.IsNullOrWhiteSpace(value);
-            Modes[Resources.ChannelModeKey].Set(hasKey);
-            Keypass = value;
-        }
-    }
-
-    public bool Moderated
-    {
-        get => Modes[Resources.ChannelModeModerated].Get() == 1;
-        set => Modes[Resources.ChannelModeModerated].Set(Convert.ToInt32(value));
-    }
-
-    public bool NoExtern
-    {
-        get => Modes[Resources.ChannelModeNoExtern].Get() == 1;
-        set => Modes[Resources.ChannelModeNoExtern].Set(Convert.ToInt32(value));
-    }
-
-    public bool Private
-    {
-        get => Modes[Resources.ChannelModePrivate].Get() == 1;
-        set => Modes[Resources.ChannelModePrivate].Set(Convert.ToInt32(value));
-    }
-
-    public bool Secret
-    {
-        get => Modes[Resources.ChannelModeSecret].Get() == 1;
-        set => Modes[Resources.ChannelModeSecret].Set(Convert.ToInt32(value));
-    }
-
-    public bool Hidden
-    {
-        get => Modes[Resources.ChannelModeHidden].Get() == 1;
-        set => Modes[Resources.ChannelModeHidden].Set(Convert.ToInt32(value));
-    }
-
-    public bool TopicOp
-    {
-        get => Modes[Resources.ChannelModeTopicOp].Get() == 1;
-        set => Modes[Resources.ChannelModeTopicOp].Set(Convert.ToInt32(value));
-    }
-
-    public int UserLimit
-    {
-        get => Modes[Resources.ChannelModeUserLimit].Get();
-        set => Modes[Resources.ChannelModeUserLimit].Set(value);
+        Modes.Add(Resources.ChannelModeNoGuestWhisper, NoGuestWhisper);
+        Modes.Add(Resources.ChannelModeOnStage, OnStage);
+        Modes.Add(Resources.ChannelModeSubscriber, Subscriber);
     }
 
     public override string ToString()
     {
         // TODO: <MODESTRING> Fix the below for Limit and Key on mode string
-        var limit = Modes['l'].Get() > 0 ? $" {Modes['l'].Get()}" : string.Empty;
-        var key = Modes['k'].Get() != 0 ? $" {Keypass}" : string.Empty;
+        var limit = UserLimit.ModeValue ? $" {UserLimit.Value}" : string.Empty;
+        var key = Key.ModeValue ? $" {Keypass}" : string.Empty;
 
         return
             $"{new string(Modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}{limit}{key}";

@@ -17,14 +17,14 @@ internal class List : Command, ICommand
         var user = chatFrame.User;
         var parameters = chatFrame.ChatMessage.Parameters;
 
-        var channels = server.GetChannels().Where(c => !c.Modes.Secret).ToList();
+        var channels = server.GetChannels().Where(c => !c.Modes.Secret.ModeValue).ToList();
         if (parameters.Count > 0)
         {
             var channelNames = parameters.First().Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
 
             channels = server
                 .GetChannels()
-                .Where(c => !c.Modes.Secret
+                .Where(c => !c.Modes.Secret.ModeValue
                             && channelNames.Contains(c.GetName(), StringComparer.InvariantCultureIgnoreCase)).ToList();
         }
 

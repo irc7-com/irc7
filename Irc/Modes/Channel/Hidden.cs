@@ -19,15 +19,15 @@ public class Hidden : ModeRuleChannel, IModeRule
 
             if (flag)
             {
-                if (channel.Modes.Secret)
+                if (channel.Modes.Secret.ModeValue)
                 {
-                    channel.Modes.Secret = false;
+                    channel.Modes.Secret.ModeValue = false;
                     DispatchModeChange(Resources.ChannelModeSecret, source, target, false, string.Empty);
                 }
 
-                if (channel.Modes.Private)
+                if (channel.Modes.Private.ModeValue)
                 {
-                    channel.Modes.Private = false;
+                    channel.Modes.Private.ModeValue = false;
                     DispatchModeChange(Resources.ChannelModePrivate, source, target, false, string.Empty);
                 }
             }

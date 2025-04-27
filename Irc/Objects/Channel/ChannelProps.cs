@@ -2,6 +2,7 @@
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Modes;
 using Irc.Objects.Collections;
 
 namespace Irc.Objects.Channel;
@@ -26,7 +27,7 @@ public class Topic : PropRule
         var channel = (IChannel)target;
 
         var result = EnumIrcError.OK;
-        if (channel.Modes.TopicOp)
+        if (channel.Modes.TopicOp.ModeValue)
         {
             result = base.EvaluateSet(source, target, propValue);
             if (result != EnumIrcError.OK) return result;   
@@ -59,7 +60,12 @@ public class Memberkey : PropRule
         if (result == EnumIrcError.OK)
         {
             var channel = (IChannel)target;
-            channel.Modes.Key = propValue;
+            var key = propValue.Trim();
+            var flag = !string.IsNullOrWhiteSpace(key);
+            channel.Props.MemberKey.Value = key;
+            channel.Modes.Keypass = key;
+            channel.Modes.Key.ModeValue = flag;
+            ModeRule.DispatchModeChange(Resources.ChannelModeKey, source, (ChatObject)target, flag, key);
         }
 
         return result;

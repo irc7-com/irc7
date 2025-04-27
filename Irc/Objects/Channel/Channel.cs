@@ -416,11 +416,9 @@ public class Channel : ChatObject, IChannel
 
     protected EnumChannelAccessResult CheckMemberKey(IUser user, string? key)
     {
-        if (string.IsNullOrWhiteSpace(key)) return EnumChannelAccessResult.NONE;
-
-        if (Modes.GetModeValue(Resources.ChannelModeKey) == 1)
+        if (Modes.Key.ModeValue)
         {
-            if (Modes.Key == key)
+            if (Props.MemberKey.Value == key)
                 return EnumChannelAccessResult.SUCCESS_MEMBER;
             return EnumChannelAccessResult.ERR_BADCHANNELKEY;
         }
@@ -430,7 +428,7 @@ public class Channel : ChatObject, IChannel
 
     protected EnumChannelAccessResult CheckInviteOnly(IUser user)
     {
-        if (Modes.InviteOnly)
+        if (Modes.InviteOnly.ModeValue)
             return InviteList.Contains(user.GetAddress().GetAddress())
                 ? EnumChannelAccessResult.SUCCESS_MEMBER
                 : EnumChannelAccessResult.ERR_INVITEONLYCHAN;
@@ -440,7 +438,7 @@ public class Channel : ChatObject, IChannel
 
     protected EnumChannelAccessResult CheckUserLimit(bool IsGoto)
     {
-        var userLimit = Modes.UserLimit > 0 ? Modes.UserLimit : int.MaxValue;
+        var userLimit = Modes.UserLimit.Value > 0 ? Modes.UserLimit.Value : int.MaxValue;
 
         if (IsGoto) userLimit = (int)Math.Ceiling(userLimit * 1.2);
 
