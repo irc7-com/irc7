@@ -3,7 +3,7 @@ using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
-public class Gag : ModeRule, IModeRule
+public class GagRule : ModeRule, IModeRule
 {
     /*
      * The GAG mode is applied by a sysop or sysop manager on a user
@@ -18,7 +18,7 @@ public class Gag : ModeRule, IModeRule
          MODE <nick> { + | - }z
     */
 
-    public Gag() : base(Resources.UserModeGag)
+    public GagRule() : base(Resources.UserModeGag)
     {
     }
 

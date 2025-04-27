@@ -4,9 +4,9 @@ using Irc.Interfaces;
 
 namespace Irc.Modes.Channel;
 
-public class Auditorium : ModeRuleChannel, IModeRule
+public class InviteOnlyRule : ModeRuleChannel, IModeRule
 {
-    public Auditorium() : base(Resources.ChannelModeAuditorium)
+    public InviteOnlyRule() : base(Resources.ChannelModeInvite)
     {
     }
 

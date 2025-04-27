@@ -3,9 +3,9 @@ using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
-public class Registered : ModeRuleChannel, IModeRule
+public class RegisteredRule : ModeRuleChannel, IModeRule
 {
-    public Registered() : base(Resources.ChannelModeRegistered)
+    public RegisteredRule() : base(Resources.ChannelModeRegistered)
     {
     }
 

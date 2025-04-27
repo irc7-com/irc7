@@ -1,14 +1,15 @@
+using Irc.Commands;
 using Irc.Modes.User;
 
 namespace Irc.Interfaces;
 
 public interface IUserModes: IModeCollection
 {
-    Oper Oper { get; }
-    Invisible Invisible { get; }
-    Secure Secure { get; }
-    Admin Admin { get; }
+    OperRule Oper { get; }
+    InvisibleRule Invisible { get; }
+    SecureRule Secure { get; }
+    AdminRule Admin { get; }
     Isircx Isircx { get; }
-    Gag Gag { get; }
-    Host Host { get; }
+    GagRule Gag { get; }
+    HostRule Host { get; }
 }

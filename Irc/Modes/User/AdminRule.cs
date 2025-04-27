@@ -3,9 +3,9 @@ using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
-public class Admin : ModeRule, IModeRule
+public class AdminRule : ModeRule, IModeRule
 {
-    public Admin() : base(Resources.UserModeAdmin)
+    public AdminRule() : base(Resources.UserModeAdmin)
     {
     }
 

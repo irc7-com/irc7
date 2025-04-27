@@ -3,9 +3,9 @@ using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
-public class Clone : ModeRuleChannel, IModeRule
+public class CloneRule : ModeRuleChannel, IModeRule
 {
-    public Clone() : base(Resources.ChannelModeClone)
+    public CloneRule() : base(Resources.ChannelModeClone)
     {
     }
 

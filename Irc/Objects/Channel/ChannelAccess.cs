@@ -1,6 +1,7 @@
-﻿using Irc.Enumerations;
+﻿using Irc.Access;
+using Irc.Enumerations;
 
-namespace Irc.Access.Channel;
+namespace Irc.Objects.Channel;
 
 public class ChannelAccess : AccessList
 {

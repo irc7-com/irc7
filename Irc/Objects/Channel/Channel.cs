@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using Irc.Access.Channel;
 using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;

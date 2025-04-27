@@ -4,14 +4,14 @@ using Irc.Interfaces;
 
 namespace Irc.Modes.User;
 
-public class Isircx : ModeRule, IModeRule
+public class ServerNoticeRule : ModeRule, IModeRule
 {
-    public Isircx() : base(Resources.UserModeIrcx)
+    public ServerNoticeRule() : base(Resources.UserModeServerNotice)
     {
     }
 
     public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
-        return EnumIrcError.ERR_UNKNOWNMODEFLAG;
+        return EnumIrcError.OK;
     }
 }

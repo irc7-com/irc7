@@ -8,27 +8,27 @@ public interface IChannelModes : IModeCollection
     string Keypass { get; set; }
     OperatorRule Operator { get; }
     VoiceRule Voice { get; }
-    Private Private { get; }
-    Secret Secret { get; }
-    Hidden Hidden { get; }
-    InviteOnly InviteOnly { get; }
-    TopicOp TopicOp { get; }
-    NoExtern NoExtern { get; }
-    Moderated Moderated { get; }
-    UserLimit UserLimit { get; }
-    BanList BanList { get; }
-    Key Key { get; }
-    AuthOnly AuthOnly { get; }
-    NoFormat Profanity { get; }
-    Registered Registered { get; }
-    Knock Knock { get; }
-    NoWhisper NoWhisper { get; }
-    Auditorium Auditorium { get; }
-    Cloneable Cloneable { get; }
-    Clone Clone { get; }
-    Service Service { get; }
+    PrivateRule Private { get; }
+    SecretRule Secret { get; }
+    HiddenRule Hidden { get; }
+    InviteOnlyRule InviteOnly { get; }
+    TopicOpRule TopicOp { get; }
+    NoExternRule NoExtern { get; }
+    ModeratedRule Moderated { get; }
+    UserLimitRule UserLimit { get; }
+    BanListRule BanList { get; }
+    KeyRule Key { get; }
+    AuthOnlyRule AuthOnly { get; }
+    NoFormatRule Profanity { get; }
+    RegisteredRule Registered { get; }
+    KnockRule Knock { get; }
+    NoWhisperRule NoWhisper { get; }
+    AuditoriumRule Auditorium { get; }
+    CloneableRule Cloneable { get; }
+    CloneRule Clone { get; }
+    ServiceRule Service { get; }
     OwnerRule OwnerRule { get; }
-    NoGuestWhisper NoGuestWhisper { get; }
-    OnStage OnStage { get; }
-    Subscriber Subscriber { get; }
+    NoGuestWhisperRule NoGuestWhisper { get; }
+    OnStageRule OnStage { get; }
+    SubscriberRule Subscriber { get; }
 }

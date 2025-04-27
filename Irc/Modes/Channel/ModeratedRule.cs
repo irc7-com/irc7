@@ -1,11 +1,12 @@
 ﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Modes;
 
-public class Knock : ModeRuleChannel, IModeRule
+namespace Irc.Modes.Channel;
+
+public class ModeratedRule : ModeRuleChannel, IModeRule
 {
-    public Knock() : base(Resources.ChannelModeKnock)
+    public ModeratedRule() : base(Resources.ChannelModeModerated)
     {
     }
 

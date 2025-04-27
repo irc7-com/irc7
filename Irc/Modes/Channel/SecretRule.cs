@@ -4,9 +4,9 @@ using Irc.Interfaces;
 
 namespace Irc.Modes.Channel;
 
-public class Secret : ModeRuleChannel, IModeRule
+public class SecretRule : ModeRuleChannel, IModeRule
 {
-    public Secret() : base(Resources.ChannelModeSecret)
+    public SecretRule() : base(Resources.ChannelModeSecret)
     {
     }
 

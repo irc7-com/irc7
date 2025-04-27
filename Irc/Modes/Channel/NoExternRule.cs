@@ -4,9 +4,9 @@ using Irc.Interfaces;
 
 namespace Irc.Modes.Channel;
 
-public class InviteOnly : ModeRuleChannel, IModeRule
+public class NoExternRule : ModeRuleChannel, IModeRule
 {
-    public InviteOnly() : base(Resources.ChannelModeInvite)
+    public NoExternRule() : base(Resources.ChannelModeNoExtern)
     {
     }
 

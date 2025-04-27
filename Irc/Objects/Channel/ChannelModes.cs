@@ -27,31 +27,31 @@ k - set a channel key (password).
 
     public OperatorRule Operator { get; } = new OperatorRule();
     public VoiceRule Voice { get; } = new VoiceRule();
-    public Private Private { get; } = new Private();
-    public Secret Secret { get; } = new Secret();
-    public Hidden Hidden { get; } = new Hidden();
-    public InviteOnly InviteOnly { get; } = new InviteOnly();
-    public TopicOp TopicOp { get; } = new TopicOp();
-    public NoExtern NoExtern { get; } = new NoExtern();
-    public Moderated Moderated { get; } = new Moderated();
-    public UserLimit UserLimit { get; } = new UserLimit();
-    public BanList BanList { get; } = new BanList();
-    public Key Key { get; } = new Key();
+    public PrivateRule Private { get; } = new PrivateRule();
+    public SecretRule Secret { get; } = new SecretRule();
+    public HiddenRule Hidden { get; } = new HiddenRule();
+    public InviteOnlyRule InviteOnly { get; } = new InviteOnlyRule();
+    public TopicOpRule TopicOp { get; } = new TopicOpRule();
+    public NoExternRule NoExtern { get; } = new NoExternRule();
+    public ModeratedRule Moderated { get; } = new ModeratedRule();
+    public UserLimitRule UserLimit { get; } = new UserLimitRule();
+    public BanListRule BanList { get; } = new BanListRule();
+    public KeyRule Key { get; } = new KeyRule();
     
-    public AuthOnly AuthOnly { get; } = new AuthOnly();
-    public NoFormat Profanity { get; } = new NoFormat();
-    public Registered Registered { get; } = new Registered();
-    public Knock Knock { get; } = new Knock();
-    public NoWhisper NoWhisper { get; } = new NoWhisper();
-    public Auditorium Auditorium { get; } = new Auditorium();
-    public Cloneable Cloneable { get; } = new Cloneable();
-    public Clone Clone { get; } = new Clone();
-    public Service Service { get; } = new Service();
+    public AuthOnlyRule AuthOnly { get; } = new AuthOnlyRule();
+    public NoFormatRule Profanity { get; } = new NoFormatRule();
+    public RegisteredRule Registered { get; } = new RegisteredRule();
+    public KnockRule Knock { get; } = new KnockRule();
+    public NoWhisperRule NoWhisper { get; } = new NoWhisperRule();
+    public AuditoriumRule Auditorium { get; } = new AuditoriumRule();
+    public CloneableRule Cloneable { get; } = new CloneableRule();
+    public CloneRule Clone { get; } = new CloneRule();
+    public ServiceRule Service { get; } = new ServiceRule();
     public OwnerRule OwnerRule { get; } = new OwnerRule();
     
-    public NoGuestWhisper NoGuestWhisper { get; } = new NoGuestWhisper();
-    public OnStage OnStage { get; } = new OnStage();
-    public Subscriber Subscriber { get; } = new Subscriber();
+    public NoGuestWhisperRule NoGuestWhisper { get; } = new NoGuestWhisperRule();
+    public OnStageRule OnStage { get; } = new OnStageRule();
+    public SubscriberRule Subscriber { get; } = new SubscriberRule();
     
     public ChannelModes()
     {

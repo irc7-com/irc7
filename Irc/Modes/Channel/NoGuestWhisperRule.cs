@@ -1,12 +1,11 @@
-﻿using Irc.Constants;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Modes;
 
-namespace Irc.Modes.Channel;
-
-public class TopicOp : ModeRuleChannel, IModeRule
+public class NoGuestWhisperRule : ModeRuleChannel, IModeRule
 {
-    public TopicOp() : base(Resources.ChannelModeTopicOp)
+    public NoGuestWhisperRule() : base(Resources.ChannelModeNoGuestWhisper)
     {
     }
 

@@ -6,9 +6,9 @@ using Irc.Objects;
 
 namespace Irc.Modes.Channel;
 
-public class Key : ModeRuleChannel, IModeRule
+public class KeyRule : ModeRuleChannel, IModeRule
 {
-    public Key() : base(Resources.ChannelModeKey, true)
+    public KeyRule() : base(Resources.ChannelModeKey, true)
     {
     }
 

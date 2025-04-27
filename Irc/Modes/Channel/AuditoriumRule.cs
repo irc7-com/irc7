@@ -4,9 +4,9 @@ using Irc.Interfaces;
 
 namespace Irc.Modes.Channel;
 
-public class Moderated : ModeRuleChannel, IModeRule
+public class AuditoriumRule : ModeRuleChannel, IModeRule
 {
-    public Moderated() : base(Resources.ChannelModeModerated)
+    public AuditoriumRule() : base(Resources.ChannelModeAuditorium)
     {
     }
 

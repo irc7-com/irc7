@@ -3,9 +3,9 @@ using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
-public class NoWhisper : ModeRuleChannel, IModeRule
+public class CloneableRule : ModeRuleChannel, IModeRule
 {
-    public NoWhisper() : base(Resources.ChannelModeNoWhisper)
+    public CloneableRule() : base(Resources.ChannelModeCloneable)
     {
     }
 

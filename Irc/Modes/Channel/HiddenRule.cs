@@ -4,9 +4,9 @@ using Irc.Interfaces;
 
 namespace Irc.Modes.Channel;
 
-public class Private : ModeRuleChannel, IModeRule
+public class HiddenRule : ModeRuleChannel, IModeRule
 {
-    public Private() : base(Resources.ChannelModePrivate)
+    public HiddenRule() : base(Resources.ChannelModeHidden)
     {
     }
 
@@ -25,10 +25,10 @@ public class Private : ModeRuleChannel, IModeRule
                     DispatchModeChange(Resources.ChannelModeSecret, source, target, false, string.Empty);
                 }
 
-                if (channel.Modes.Hidden.ModeValue)
+                if (channel.Modes.Private.ModeValue)
                 {
-                    channel.Modes.Hidden.ModeValue = false;
-                    DispatchModeChange(Resources.ChannelModeHidden, source, target, false, string.Empty);
+                    channel.Modes.Private.ModeValue = false;
+                    DispatchModeChange(Resources.ChannelModePrivate, source, target, false, string.Empty);
                 }
             }
 

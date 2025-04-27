@@ -3,9 +3,9 @@ using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
-public class AuthOnly : ModeRuleChannel, IModeRule
+public class AuthOnlyRule : ModeRuleChannel, IModeRule
 {
-    public AuthOnly() : base(Resources.ChannelModeAuthOnly)
+    public AuthOnlyRule() : base(Resources.ChannelModeAuthOnly)
     {
     }
 

@@ -5,22 +5,23 @@ using Irc.Objects.User;
 
 namespace Irc.Modes.User;
 
-public class Invisible : ModeRule, IModeRule
+public class OperRule : ModeRule, IModeRule
 {
-    public Invisible() : base(Resources.UserModeInvisible)
+    public OperRule() : base(Resources.UserModeOper)
     {
     }
 
     public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
-        if (source == target)
+        // :sky-8a15b323126 908 Sky :No permissions to perform command
+        if (source is IUser && ((IUser)source).IsSysop() && flag == false)
         {
             var userModes = (UserModes)target.Modes;
-            userModes.Invisible.ModeValue = flag;
+            userModes.Oper.ModeValue = flag;
             DispatchModeChange(source, target, flag, parameter);
             return EnumIrcError.OK;
         }
 
-        return EnumIrcError.ERR_NOSUCHCHANNEL;
+        return EnumIrcError.ERR_NOPERMS;
     }
 }

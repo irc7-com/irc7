@@ -1,17 +1,16 @@
 ﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Modes;
 
-namespace Irc.Modes.User;
-
-public class WallOps : ModeRule, IModeRule
+public class NoWhisperRule : ModeRuleChannel, IModeRule
 {
-    public WallOps() : base(Resources.UserModeWallops)
+    public NoWhisperRule() : base(Resources.ChannelModeNoWhisper)
     {
     }
 
     public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
-        return EnumIrcError.OK;
+        return EvaluateAndSet(source, target, flag, parameter);
     }
 }

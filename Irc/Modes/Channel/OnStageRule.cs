@@ -4,9 +4,9 @@ using Irc.Interfaces;
 
 namespace Irc.Modes.Channel;
 
-public class OnStage : ModeRuleChannel, IModeRule
+public class OnStageRule : ModeRuleChannel, IModeRule
 {
-    public OnStage() : base(Resources.ChannelModeOnStage)
+    public OnStageRule() : base(Resources.ChannelModeOnStage)
     {
     }
 

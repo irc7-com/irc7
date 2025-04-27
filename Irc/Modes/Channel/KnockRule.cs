@@ -3,9 +3,9 @@ using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
 
-public class Service : ModeRuleChannel, IModeRule
+public class KnockRule : ModeRuleChannel, IModeRule
 {
-    public Service() : base(Resources.ChannelModeService)
+    public KnockRule() : base(Resources.ChannelModeKnock)
     {
     }
 

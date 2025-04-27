@@ -1,16 +1,17 @@
 ﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Modes;
 
-public class Cloneable : ModeRuleChannel, IModeRule
+namespace Irc.Modes.User;
+
+public class WallOpsRule : ModeRule, IModeRule
 {
-    public Cloneable() : base(Resources.ChannelModeCloneable)
+    public WallOpsRule() : base(Resources.UserModeWallops)
     {
     }
 
     public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
-        return EvaluateAndSet(source, target, flag, parameter);
+        return EnumIrcError.OK;
     }
 }

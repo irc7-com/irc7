@@ -5,9 +5,9 @@ using Irc.Objects.Channel;
 
 namespace Irc.Modes.Channel;
 
-public class UserLimit : ModeRuleChannel, IModeRule
+public class UserLimitRule : ModeRuleChannel, IModeRule
 {
-    public UserLimit() : base(Resources.ChannelModeUserLimit, true)
+    public UserLimitRule() : base(Resources.ChannelModeUserLimit, true)
     {
     }
 

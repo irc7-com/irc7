@@ -4,15 +4,14 @@ using Irc.Interfaces;
 
 namespace Irc.Modes.Channel;
 
-public class BanList : ModeRuleChannel, IModeRule
+public class TopicOpRule : ModeRuleChannel, IModeRule
 {
-    public BanList() : base(Resources.ChannelModeBan)
+    public TopicOpRule() : base(Resources.ChannelModeTopicOp)
     {
     }
 
     public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
-        //return EvaluateAndSet(source, target, flag, parameter);
-        return EnumIrcError.OK;
+        return EvaluateAndSet(source, target, flag, parameter);
     }
 }

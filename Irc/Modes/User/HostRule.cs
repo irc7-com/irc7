@@ -4,9 +4,9 @@ using Irc.Interfaces;
 
 namespace Irc.Modes.User;
 
-public class Host : ModeRuleChannel, IModeRule
+public class HostRule : ModeRuleChannel, IModeRule
 {
-    public Host() : base(Resources.UserModeHost, true)
+    public HostRule() : base(Resources.UserModeHost, true)
     {
     }
 
