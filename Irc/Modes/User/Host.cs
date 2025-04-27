@@ -27,26 +27,26 @@ public class Host : ModeRuleChannel, IModeRule
 
             if (ownerkeyProp.GetValue(target) == parameter)
             {
-                if (member.IsHost())
+                if (member.Operator.ModeValue)
                 {
-                    member.SetHost(false);
+                    member.Operator.ModeValue = false;
                     DispatchModeChange(Resources.MemberModeHost, source, (IChatObject)channel, false,
                         target.ToString());
                 }
 
-                member.SetOwner(true);
+                member.Owner.ModeValue = true;
                 DispatchModeChange(Resources.MemberModeOwner, source, (IChatObject)channel, true, target.ToString());
             }
             else if (hostkeyProp.GetValue(target) == parameter)
             {
-                if (member.IsOwner())
+                if (member.Owner.ModeValue)
                 {
-                    member.SetOwner(false);
+                    member.Owner.ModeValue = false;
                     DispatchModeChange(Resources.MemberModeOwner, source, (IChatObject)channel, false,
                         target.ToString());
                 }
 
-                member.SetHost(true);
+                member.Operator.ModeValue = true;
                 DispatchModeChange(Resources.MemberModeHost, source, (IChatObject)channel, true, target.ToString());
             }
 

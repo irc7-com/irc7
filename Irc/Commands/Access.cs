@@ -87,7 +87,7 @@ internal class Access : Command, ICommand
             var channel = (IChannel)targetObject;
             var member = channel.GetMember(chatFrame.User);
 
-            if (member == null || (!member.IsHost() && !member.IsOwner())) return false;
+            if (member == null || (!member.Operator.ModeValue && !member.Owner.ModeValue)) return false;
         }
 
         return true;

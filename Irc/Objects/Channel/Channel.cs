@@ -5,7 +5,6 @@ using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
-using Irc.Objects.User;
 
 namespace Irc.Objects.Channel;
 
@@ -14,7 +13,7 @@ public class Channel : ChatObject, IChannel
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
     public HashSet<string> InviteList = new();
 
-    public new IAccessList Access => (IAccessList)base.Access;
+    public new IAccessList Access => base.Access;
     public new IChannelProps Props => (IChannelProps)base.Props;
     public new IChannelModes Modes => (IChannelModes)base.Modes;
 
@@ -64,11 +63,12 @@ public class Channel : ChatObject, IChannel
             {
                 channelMember.GetUser().Send(Raws.RPL_JOIN(user, this));
 
-                if (!joinMember.IsNormal())
+                if (!joinMember.HasModes())
                 {
-                    var modeChar = joinMember.IsOwner() ? Resources.MemberModeOwner :
-                        joinMember.IsHost() ? Resources.MemberModeHost :
-                        Resources.MemberModeVoice;
+                    var modeChar = joinMember.Owner.ModeValue ? 
+                        Resources.MemberModeOwner :
+                        joinMember.Operator.ModeValue ? 
+                            Resources.MemberModeHost : Resources.MemberModeVoice;
 
                     ModeRule.DispatchModeChange((ChatObject)channelUser, modeChar,
                         (ChatObject)user, this, true, user.ToString());
@@ -168,7 +168,7 @@ public class Channel : ChatObject, IChannel
 
         if (source.GetLevel() >= requiredLevel && source.GetLevel() >= target.GetLevel())
             return EnumIrcError.OK;
-        if (!source.IsOwner() && (requiredLevel >= EnumChannelAccessLevel.ChatOwner ||
+        if (!source.Owner.ModeValue && (requiredLevel >= EnumChannelAccessLevel.ChatOwner ||
                                   target.GetLevel() >= EnumChannelAccessLevel.ChatOwner))
             return EnumIrcError.ERR_NOCHANOWNER;
         return EnumIrcError.ERR_NOCHANOP;
@@ -352,9 +352,9 @@ public class Channel : ChatObject, IChannel
     {
         var member = new Member.Member(user);
 
-        if (accessResult == EnumChannelAccessResult.SUCCESS_OWNER) member.SetOwner(true);
-        else if (accessResult == EnumChannelAccessResult.SUCCESS_HOST) member.SetHost(true);
-        else if (accessResult == EnumChannelAccessResult.SUCCESS_VOICE) member.SetVoice(true);
+        if (accessResult == EnumChannelAccessResult.SUCCESS_OWNER) member.Owner.ModeValue = true;
+        else if (accessResult == EnumChannelAccessResult.SUCCESS_HOST) member.Operator.ModeValue = true;
+        else if (accessResult == EnumChannelAccessResult.SUCCESS_VOICE) member.Voice.ModeValue = true;
 
         _members.Add(member);
         user.AddChannel(this, member);

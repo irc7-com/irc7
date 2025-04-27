@@ -25,8 +25,8 @@ k - set a channel key (password).
 */
     public string Keypass { get; set; } = string.Empty;
 
-    public Operator Operator { get; } = new Operator();
-    public Voice Voice { get; } = new Voice();
+    public OperatorRule Operator { get; } = new OperatorRule();
+    public VoiceRule Voice { get; } = new VoiceRule();
     public Private Private { get; } = new Private();
     public Secret Secret { get; } = new Secret();
     public Hidden Hidden { get; } = new Hidden();
@@ -47,7 +47,7 @@ k - set a channel key (password).
     public Cloneable Cloneable { get; } = new Cloneable();
     public Clone Clone { get; } = new Clone();
     public Service Service { get; } = new Service();
-    public Owner Owner { get; } = new Owner();
+    public OwnerRule OwnerRule { get; } = new OwnerRule();
     
     public NoGuestWhisper NoGuestWhisper { get; } = new NoGuestWhisper();
     public OnStage OnStage { get; } = new OnStage();
@@ -79,7 +79,7 @@ k - set a channel key (password).
         Modes.Add(Resources.ChannelModeCloneable, Cloneable);
         Modes.Add(Resources.ChannelModeClone, Clone);
         Modes.Add(Resources.ChannelModeService, Service);
-        Modes.Add(Resources.MemberModeOwner, Owner);
+        Modes.Add(Resources.MemberModeOwner, OwnerRule);
 
         // Apollo Modes
         Modes.Add(Resources.ChannelModeNoGuestWhisper, NoGuestWhisper);

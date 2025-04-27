@@ -6,8 +6,8 @@ namespace Irc.Interfaces;
 public interface IChannelModes : IModeCollection
 {
     string Keypass { get; set; }
-    Operator Operator { get; }
-    Voice Voice { get; }
+    OperatorRule Operator { get; }
+    VoiceRule Voice { get; }
     Private Private { get; }
     Secret Secret { get; }
     Hidden Hidden { get; }
@@ -27,7 +27,7 @@ public interface IChannelModes : IModeCollection
     Cloneable Cloneable { get; }
     Clone Clone { get; }
     Service Service { get; }
-    Owner Owner { get; }
+    OwnerRule OwnerRule { get; }
     NoGuestWhisper NoGuestWhisper { get; }
     OnStage OnStage { get; }
     Subscriber Subscriber { get; }

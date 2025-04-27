@@ -5,9 +5,9 @@ using Irc.Objects;
 
 namespace Irc.Modes.Channel.Member;
 
-public class Voice : ModeRule, IModeRule
+public class VoiceRule : ModeRule, IModeRule
 {
-    public Voice() : base(Resources.MemberModeVoice, true)
+    public VoiceRule() : base(Resources.MemberModeVoice, true)
     {
     }
 
@@ -26,7 +26,7 @@ public class Voice : ModeRule, IModeRule
         var result = sourceMember.CanModify(targetMember, EnumChannelAccessLevel.ChatVoice, false);
         if (result == EnumIrcError.OK)
         {
-            targetMember.SetVoice(flag);
+            targetMember.Voice.ModeValue = flag;
             DispatchModeChange(source, target, flag, targetMember.GetUser().ToString());
         }
 
