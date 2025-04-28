@@ -87,7 +87,8 @@ public class Join : Command, ICommand
 
             channel.Join(user, isCreator ? EnumChannelAccessResult.SUCCESS_OWNER : channelAccessResult)
                 .SendTopic(user)
-                .SendNames(user);
+                .SendNames(user)
+                .SendOnJoinMessage(user);
         }
     }
 

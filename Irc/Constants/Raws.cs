@@ -1017,10 +1017,20 @@ public static class Raws
     {
         return $":{user.GetAddress()} PRIVMSG {channel} :{message}";
     }
+    
+    public static string RPL_PRIVMSG_CHAN(IChannel channel, IUser user, string message)
+    {
+        return $":{channel} PRIVMSG {channel} :{message}";
+    }
 
     public static string RPL_NOTICE(IUser user, IChannel channel, string message)
     {
         return $":{user.GetAddress()} NOTICE {channel} :{message}";
+    }
+    
+    public static string RPL_NOTICE_CHAN(IChannel channel, IUser user, string message)
+    {
+        return $":{channel} PRIVMSG {channel} :{message}";
     }
 
     public static string RPL_QUIT(IUser user, string message)
