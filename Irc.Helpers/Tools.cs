@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Irc.Helpers;
 
@@ -63,5 +64,23 @@ public static class Tools
     public static List<string> CSVToArray(string CSV)
     {
         return CSVToArray(CSV, false);
+    }
+
+    public static bool MatchesMask(string input, string mask)
+    {
+        if (string.IsNullOrEmpty(mask)) return false;
+
+        // 置換マッピングを辞書で定義
+        var replacements = new Dictionary<string, string>
+        {
+
+            { "*", ".*" }, // '*' は任意の文字列にマッチ
+            { "?", "." }   // '?' は任意の1文字にマッチ
+        };
+
+        var regexPattern = Regex.Replace(mask, @"\*|\?", match => replacements[match.Value]);
+
+        var regex = new Regex($"^{regexPattern}$", RegexOptions.IgnoreCase);
+        return regex.IsMatch(input);
     }
 }

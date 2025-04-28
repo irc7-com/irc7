@@ -9,7 +9,7 @@ internal class Irc7 : Irc6
     public override string FormattedUser(IChannelMember member)
     {
         var modeChar = string.Empty;
-        if (!member.HasModes()) modeChar += member.Owner.ModeValue ? '.' : member.Operator.ModeValue ? '@' : '+';
+        if (member.HasModes()) modeChar += member.Owner.ModeValue ? '.' : member.Operator.ModeValue ? '@' : '+';
 
         var profile = ((User)member.GetUser()).GetProfile().Irc7_ToString();
         return $"{profile},{modeChar}{member.GetUser().GetAddress().Nickname}";

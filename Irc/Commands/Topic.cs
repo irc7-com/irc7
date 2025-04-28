@@ -67,7 +67,7 @@ internal class Topic : Command, ICommand
         if (sourceMember.GetLevel() < EnumChannelAccessLevel.ChatHost && channel.Modes.TopicOp.ModeValue)
             return EnumIrcError.ERR_NOCHANOP;
 
-        channel.Props.Topic.Value = topic;
+        channel.UpdateTopic(topic);
         return EnumIrcError.OK;
     }
 }

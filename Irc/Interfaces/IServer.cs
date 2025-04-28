@@ -3,7 +3,7 @@ using Irc.Objects;
 
 namespace Irc.Interfaces;
 
-public interface IServer
+public interface IServer: IChatObject
 {
     string Title { get; }
     DateTime CreationDate { get; }
@@ -32,9 +32,9 @@ public interface IServer
     string RemoteIp { set; get; }
     bool DisableGuestMode { set; get; }
     bool DisableUserRegistration { get; set; }
-    Guid Id { get; }
-    string ShortId { get; }
-    string Name { get; set; }
+    new Guid Id { get; }
+    new string ShortId { get; }
+    new string Name { get; set; }
     Version ServerVersion { set; get; }
     void AddUser(IUser user);
     void RemoveUser(IUser user);
@@ -59,7 +59,7 @@ public interface IServer
     ISecurityManager GetSecurityManager();
     ICredentialProvider? GetCredentialManager();
     void Shutdown();
-    string ToString();
+    new string ToString();
     string[] GetMotd();
     void SetMotd(string motd);
     void ProcessCookie(IUser user, string name, string value);

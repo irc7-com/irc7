@@ -5,9 +5,9 @@ using Irc.Helpers;
 using Irc.Interfaces;
 using Irc.Objects.Channel;
 
-internal class Listx : Command, ICommand
+public class Listx : Command, ICommand
 {
-    public Listx() : base(1)
+    public Listx() : base()
     {
     }
 
@@ -18,34 +18,85 @@ internal class Listx : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
-        var server = chatFrame.Server;
-        var user = chatFrame.User;
-        var parameters = chatFrame.ChatMessage.Parameters;
+    var server = chatFrame.Server;
+    var user = chatFrame.User;
+    var parameters = chatFrame.ChatMessage.Parameters;
+    var channels = server.GetChannels();
+    var firstParam = parameters.FirstOrDefault();
 
-
-        var channels = server.GetChannels();
-        var firstParam = parameters.FirstOrDefault();
-
-        if (firstParam != null && Channel.ValidName(firstParam))
+    if (firstParam != null)
+    {
+        var queryTerms = Tools.CSVToArray(firstParam);
+        foreach (var term in queryTerms)
         {
-            channels = new List<IChannel>();
-            var channelNames = Tools.CSVToArray(firstParam);
-            foreach (var channelName in channelNames)
-                if (Channel.ValidName(channelName))
-                {
-                    var channel = server.GetChannelByName(channelName);
-
-                    if (channel == null)
-                    {
-                        user.Send(Raws.IRCX_ERR_BADCOMMAND_900(server, user, nameof(Listx)));
-                        return;
-                    }
-
-                    channels.Add(channel);
-                }
+            if (term.StartsWith("<") && int.TryParse(term.Substring(1), out var lessThan))
+            {
+                channels = channels.Where(c => c.GetMembers().Count < lessThan).ToList();
+            }
+            else if (term.StartsWith(">") && int.TryParse(term.Substring(1), out var greaterThan))
+            {
+                channels = channels.Where(c => c.GetMembers().Count > greaterThan).ToList();
+            }
+            else if (term.StartsWith("C<") && int.TryParse(term.Substring(2), out var createdLessThan))
+            {
+                var epochNow = Resources.GetEpochNowInSeconds();
+                channels = channels.Where(c => ((epochNow - c.Creation) / 60) < createdLessThan).ToList();
+            }
+            else if (term.StartsWith("C>") && int.TryParse(term.Substring(2), out var createdGreaterThan))
+            {
+                var epochNow = Resources.GetEpochNowInSeconds();
+                channels = channels.Where(c => ((epochNow - c.Creation) / 60) > createdGreaterThan).ToList();
+            }
+            else if (term.StartsWith("L="))
+            {
+                var mask = term.Substring(2);
+                channels = channels.Where(c => Tools.MatchesMask(c.Props.Language.Value, mask)).ToList();
+            }
+            else if (term.StartsWith("N="))
+            {
+                var mask = term.Substring(2);
+                channels = channels.Where(c => Tools.MatchesMask(c.Name, mask)).ToList();
+            }
+            else if (term == "R=0")
+            {
+                channels = channels.Where(c => !c.Modes.Registered.ModeValue).ToList();
+            }
+            else if (term == "R=1")
+            {
+                channels = channels.Where(c => c.Modes.Registered.ModeValue).ToList();
+            }
+            else if (term.StartsWith("S="))
+            {
+                var mask = term.Substring(2);
+                channels = channels.Where(c => Tools.MatchesMask(c.Props.Subject.Value, mask)).ToList();
+            }
+            else if (term.StartsWith("T<") && int.TryParse(term.Substring(2), out var topicChangedLessThan))
+            {
+                var epochNow = Resources.GetEpochNowInSeconds();
+                channels = channels.Where(c => ((epochNow - c.TopicChanged) / 60) < topicChangedLessThan).ToList();
+            }
+            else if (term.StartsWith("T>") && int.TryParse(term.Substring(2), out var topicChangedGreaterThan))
+            {
+                var epochNow = Resources.GetEpochNowInSeconds();
+                channels = channels.Where(c => ((epochNow - c.TopicChanged) / 60) > topicChangedGreaterThan).ToList();
+            }
+            else if (term.StartsWith("T="))
+            {
+                var mask = term.Substring(2);
+                channels = channels.Where(c => Tools.MatchesMask(c.Props.Topic.Value, mask)).ToList();
+            }
+            else if (int.TryParse(term, out var queryLimit))
+            {
+                channels = channels.Take(queryLimit).ToList();
+            }
         }
+    }
+    else
+    {
+        channels = server.GetChannels();
+    }
 
-        ListChannels(server, user, channels);
+    ListChannels(server, user, channels);
     }
 
     public static void ListChannels(IServer server, IUser user, IList<IChannel> channels)
