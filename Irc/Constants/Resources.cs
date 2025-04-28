@@ -141,7 +141,7 @@ public static class Resources
     public static string ConfigAdminInfo1 = "AdminInfo1";
     public static string ConfigAdminInfo2 = "AdminInfo2";
     public static string ConfigAdminInfo3 = "AdminInfo3";
-    public static string ConfigChannelTypes = "%";
+    public static string ConfigChannelTypes = "%#";
     
     #endregion
 
