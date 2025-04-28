@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Irc.Constants;
 using Irc.Enumerations;
+using Irc.Helpers;
 using Irc.Interfaces;
 using Irc.Objects.Channel;
 using Irc.Objects.User;
@@ -24,8 +25,21 @@ public class Who : Command, ICommand
         var user = chatFrame.User;
         var userIsOperator = user.GetLevel() >= EnumUserAccessLevel.Guide;
         var criteria = chatFrame.ChatMessage.Parameters.First();
+        var operOnly = false;
 
-        if (Channel.ValidName(criteria))
+        if (chatFrame.ChatMessage.Parameters.Count > 1)
+        {
+            if (chatFrame.ChatMessage.Parameters[1] == "o")
+            {
+                operOnly = true;
+            }
+        }
+
+        if (criteria == "0")
+        {
+            SendWho(server, user, server.GetUsers(), userIsOperator, operOnly);
+        }
+        else if (Channel.ValidName(criteria))
         {
             var channel = server.GetChannelByName(criteria);
             if (channel == null)
@@ -38,24 +52,19 @@ public class Who : Command, ICommand
             var canIgnoreInvisible = userIsOnChannel || userIsOperator;
 
             if (user.IsOn(channel) || (!channel.Modes.Secret.ModeValue && !channel.Modes.Private.ModeValue) || userIsOperator)
-                SendWho(server, user, channel.GetMembers().Select(m => m.GetUser()).ToList(), criteria,
-                    canIgnoreInvisible);
+                SendWho(server, user, channel.GetMembers().Select(m => m.GetUser()).ToList(),
+                    canIgnoreInvisible, operOnly);
         }
         else
         {
-            var regExStr = criteria.Replace("*", ".*").Replace("?", ".");
-            var regEx = new Regex(regExStr, RegexOptions.IgnoreCase);
-
             var matchedUsers = new List<IUser>();
             foreach (var matchUser in server.GetUsers())
             {
-                var fullAddress = matchUser.GetAddress().GetFullAddress();
-                if (regEx.IsMatch(fullAddress)) matchedUsers.Add(matchUser);
+                if (Tools.MatchesMask(matchUser.GetAddress().Nickname, criteria)) matchedUsers.Add(matchUser);
             }
 
-            SendWho(server, user, matchedUsers, criteria, userIsOperator);
+            SendWho(server, user, matchedUsers, userIsOperator, operOnly);
         }
-
 
         // 315     RPL_ENDOFWHO
         //                 "<name> :End of /WHO list"
@@ -63,11 +72,19 @@ public class Who : Command, ICommand
     }
 
     // TODO: The below function needs re-writing
-    public static void SendWho(IServer server, IUser user, IList<IUser> chatUsers, string channelName,
-        bool ignoreInvisible)
+    public static void SendWho(IServer server, IUser user, IList<IUser> chatUsers,
+        bool ignoreInvisible, bool operOnly = false)
     {
         foreach (var chatUser in chatUsers)
         {
+            if (operOnly)
+            {
+                if (user.GetLevel() < EnumUserAccessLevel.Guide)
+                {
+                    continue;
+                }
+            }
+            
             var isCurrentUser = user == chatUser;
             var userModes = (UserModes)chatUser.Modes;
             if (!userModes.Invisible.ModeValue || ignoreInvisible || isCurrentUser)
