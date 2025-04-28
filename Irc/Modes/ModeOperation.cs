@@ -7,7 +7,7 @@ namespace Irc.Modes;
 
 public class ModeOperation
 {
-    public ModeOperation(IModeRule mode, IUser source, ChatObject target, bool modeFlag, string modeParameter)
+    public ModeOperation(IModeRule mode, IUser source, IChatObject target, bool modeFlag, string modeParameter)
     {
         Mode = mode;
         Source = source;
@@ -18,7 +18,7 @@ public class ModeOperation
 
     public IModeRule Mode { get; set; }
     public IUser Source { get; set; }
-    public ChatObject Target { get; set; }
+    public IChatObject Target { get; set; }
     public bool ModeFlag { get; set; }
     public string ModeParameter { get; set; }
 

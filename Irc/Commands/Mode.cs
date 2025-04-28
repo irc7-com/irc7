@@ -57,7 +57,7 @@ internal class Mode : Command, ICommand
         }
     }
 
-    public void ProcessModes(IChatFrame chatFrame, ChatObject chatObject)
+    public void ProcessModes(IChatFrame chatFrame, IChatObject chatObject)
     {
         // Perform mode operation
         Queue<string> modeParameters = new();
@@ -66,7 +66,7 @@ internal class Mode : Command, ICommand
         ModeEngine.Breakdown(chatFrame.User, chatObject, chatFrame.ChatMessage.Parameters[1], modeParameters);
     }
 
-    public void ListModes(IChatFrame chatFrame, ChatObject chatObject)
+    public void ListModes(IChatFrame chatFrame, IChatObject chatObject)
     {
         /*-> sky-8a15b323126 MODE Sky
         <- :sky-8a15b323126 221 Sky +ix

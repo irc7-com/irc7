@@ -37,7 +37,7 @@ public class Who : Command, ICommand
             var userIsOnChannel = user.IsOn(channel);
             var canIgnoreInvisible = userIsOnChannel || userIsOperator;
 
-            if (user.IsOn(channel) || (!channel.Modes.Secret && !channel.Modes.Private) || userIsOperator)
+            if (user.IsOn(channel) || (!channel.Modes.Secret.ModeValue && !channel.Modes.Private.ModeValue) || userIsOperator)
                 SendWho(server, user, channel.GetMembers().Select(m => m.GetUser()).ToList(), criteria,
                     canIgnoreInvisible);
         }
@@ -70,7 +70,7 @@ public class Who : Command, ICommand
         {
             var isCurrentUser = user == chatUser;
             var userModes = (UserModes)chatUser.Modes;
-            if (!userModes.Invisible || ignoreInvisible || isCurrentUser)
+            if (!userModes.Invisible.ModeValue || ignoreInvisible || isCurrentUser)
             {
                 // 352     RPL_WHOREPLY
                 //                 "<channel> <user> <host> <server> <nick> \

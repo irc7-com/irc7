@@ -19,7 +19,7 @@ public class ModeEngine
         modeRules[modeChar] = modeRule;
     }
 
-    public static void Breakdown(IUser source, ChatObject target, string modeString,
+    public static void Breakdown(IUser source, IChatObject target, string modeString,
         Queue<string> modeParameters)
     {
         var modeOperations = source.GetModeOperations();
@@ -38,7 +38,7 @@ public class ModeEngine
                 {
                     var modeCollection = target.Modes;
                     var exists = modeCollection.HasMode(c);
-                    var modeValue = exists ? modeCollection.GetModeChar(c) : -1;
+                    var modeValue = exists ? modeCollection.GetModeValue(c) : -1;
 
                     if (!modeCollection.HasMode(c))
                     {

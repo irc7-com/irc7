@@ -5,20 +5,29 @@ namespace Irc.Objects.Collections;
 public class ModeCollection : IModeCollection
 {
     // TODO: <CHANKEY> Below is temporary until implemented properly
-    protected string? Keypass = string.Empty;
     protected Dictionary<char, IModeRule> Modes = new();
 
-    public void SetModeChar(char mode, int value)
+    public void SetModeValue(char mode, int value)
+    {
+        if (Modes.ContainsKey(mode)) Modes[mode].Set(value);
+    }
+    
+    public void SetModeValue(char mode, bool value)
     {
         if (Modes.ContainsKey(mode)) Modes[mode].Set(value);
     }
 
-    public void ToggleModeChar(char mode, bool flag)
+    public void ToggleModeValue(char mode, bool flag)
     {
-        SetModeChar(mode, flag ? 1 : 0);
+        SetModeValue(mode, flag ? 1 : 0);
+    }
+    
+    public bool IsEnabled(char mode)
+    {
+        return GetModeValue(mode) == 1;
     }
 
-    public int GetModeChar(char mode)
+    public int GetModeValue(char mode)
     {
         Modes.TryGetValue(mode, out var value);
         return value?.Get() ?? 0;

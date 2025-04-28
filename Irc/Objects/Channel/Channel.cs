@@ -1,33 +1,30 @@
 ﻿using System.Text.RegularExpressions;
-using Irc.Access.Channel;
 using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
-using Irc.Objects.User;
 
 namespace Irc.Objects.Channel;
 
 public class Channel : ChatObject, IChannel
 {
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
-    public HashSet<string> BanList = new();
     public HashSet<string> InviteList = new();
 
-    public Channel(string name, IChannelModes modes, IDataStore dataStore) : base(modes, dataStore)
+    public new IAccessList Access => base.Access;
+    public new IChannelProps Props => (IChannelProps)base.Props;
+    public new IChannelModes Modes => (IChannelModes)base.Modes;
+
+    public Channel(string name)
     {
-        PropCollection = new ChannelProps();
-        AccessList = new ChannelAccess();
-        SetName(name);
-        DataStore.SetId(Name);
-        PropCollection.SetProp("NAME", name);
+        base.Modes = new ChannelModes();
+        base.Props = new ChannelProps();
+        base.Access = new ChannelAccess();
+        
+        Name = name;
+        Props.Name.Value = name;
     }
-
-    public override IChannelModes Modes => (IChannelModes)base.Modes;
-
-    // TODO: The ‘l’, ‘b’, ‘k’ mode is stored with the Channel Store.
-    public IDataStore ChannelStore => DataStore;
 
     public string GetName()
     {
@@ -46,7 +43,7 @@ public class Channel : ChatObject, IChannel
     public IChannelMember? GetMemberByNickname(string nickname)
     {
         return _members.FirstOrDefault(member =>
-            string.Compare(member.GetUser().GetAddress().Nickname, nickname, true) == 0);
+            String.Compare(member.GetUser().GetAddress().Nickname, nickname, StringComparison.OrdinalIgnoreCase) == 0);
     }
 
     public bool Allows(IUser user)
@@ -65,11 +62,12 @@ public class Channel : ChatObject, IChannel
             {
                 channelMember.GetUser().Send(Raws.RPL_JOIN(user, this));
 
-                if (!joinMember.IsNormal())
+                if (!joinMember.HasModes())
                 {
-                    var modeChar = joinMember.IsOwner() ? Resources.MemberModeOwner :
-                        joinMember.IsHost() ? Resources.MemberModeHost :
-                        Resources.MemberModeVoice;
+                    var modeChar = joinMember.Owner.ModeValue ? 
+                        Resources.MemberModeOwner :
+                        joinMember.Operator.ModeValue ? 
+                            Resources.MemberModeHost : Resources.MemberModeVoice;
 
                     ModeRule.DispatchModeChange((ChatObject)channelUser, modeChar,
                         (ChatObject)user, this, true, user.ToString());
@@ -86,7 +84,7 @@ public class Channel : ChatObject, IChannel
 
     public IChannel SendTopic(IUser user)
     {
-        user.Send(Raws.IRCX_RPL_TOPIC_332(user.Server, user, this, DataStore.Get("topic")));
+        user.Send(Raws.IRCX_RPL_TOPIC_332(user.Server, user, this, Props.Topic.Value));
         return this;
     }
 
@@ -137,11 +135,6 @@ public class Channel : ChatObject, IChannel
         return _members;
     }
 
-    public new IChannelModes GetModes()
-    {
-        return (IChannelModes)_modes;
-    }
-
     public bool HasUser(IUser user)
     {
         foreach (var member in _members)
@@ -174,7 +167,7 @@ public class Channel : ChatObject, IChannel
 
         if (source.GetLevel() >= requiredLevel && source.GetLevel() >= target.GetLevel())
             return EnumIrcError.OK;
-        if (!source.IsOwner() && (requiredLevel >= EnumChannelAccessLevel.ChatOwner ||
+        if (!source.Owner.ModeValue && (requiredLevel >= EnumChannelAccessLevel.ChatOwner ||
                                   target.GetLevel() >= EnumChannelAccessLevel.ChatOwner))
             return EnumIrcError.ERR_NOCHANOWNER;
         return EnumIrcError.ERR_NOCHANOP;
@@ -263,7 +256,7 @@ public class Channel : ChatObject, IChannel
                 channelMember.GetUser().Send(message);
     }
 
-    public virtual EnumChannelAccessResult GetAccess(IUser user, string? key, bool isGoto = false)
+    public EnumChannelAccessResult GetAccess(IUser user, string? key, bool isGoto = false)
     {
         var hostKeyCheck = CheckHostKey(user, key);
 
@@ -311,7 +304,7 @@ public class Channel : ChatObject, IChannel
             : accessPermissions;
     }
 
-    public virtual bool InviteMember(IUser user)
+    public bool InviteMember(IUser user)
     {
         var address = user.GetAddress().GetAddress();
         return InviteList.Add(address);
@@ -321,7 +314,7 @@ public class Channel : ChatObject, IChannel
     {
         var userAccessLevel = EnumAccessLevel.NONE;
         var addressString = user.GetAddress().GetFullAddress();
-        var accessEntries = AccessList.GetEntries();
+        var accessEntries = Access.GetEntries();
 
         foreach (var accessKvp in accessEntries)
         {
@@ -347,32 +340,20 @@ public class Channel : ChatObject, IChannel
     {
         if (string.IsNullOrWhiteSpace(key)) return EnumChannelAccessResult.NONE;
 
-        if (PropCollection.GetProp("OWNERKEY")?.GetValue(this) == key)
+        if (Props.GetProp("OWNERKEY")?.GetValue(this) == key)
             return EnumChannelAccessResult.SUCCESS_OWNER;
-        if (PropCollection.GetProp("HOSTKEY")?.GetValue(this) == key) return EnumChannelAccessResult.SUCCESS_HOST;
+        if (Props.GetProp("HOSTKEY")?.GetValue(this) == key) return EnumChannelAccessResult.SUCCESS_HOST;
         return EnumChannelAccessResult.NONE;
     }
 
-    public virtual bool BanMask(UserAddress userAddress)
-    {
-        var formattedAddress = userAddress.GetAddress();
-        return BanList.Add(formattedAddress);
-    }
-
-    public virtual bool UnbanMask(UserAddress userAddress)
-    {
-        var formattedAddress = userAddress.GetAddress();
-        return BanList.Remove(formattedAddress);
-    }
-
-    protected virtual IChannelMember AddMember(IUser user,
+    protected IChannelMember AddMember(IUser user,
         EnumChannelAccessResult accessResult = EnumChannelAccessResult.NONE)
     {
         var member = new Member.Member(user);
 
-        if (accessResult == EnumChannelAccessResult.SUCCESS_OWNER) member.SetOwner(true);
-        else if (accessResult == EnumChannelAccessResult.SUCCESS_HOST) member.SetHost(true);
-        else if (accessResult == EnumChannelAccessResult.SUCCESS_VOICE) member.SetVoice(true);
+        if (accessResult == EnumChannelAccessResult.SUCCESS_OWNER) member.Owner.ModeValue = true;
+        else if (accessResult == EnumChannelAccessResult.SUCCESS_HOST) member.Operator.ModeValue = true;
+        else if (accessResult == EnumChannelAccessResult.SUCCESS_VOICE) member.Voice.ModeValue = true;
 
         _members.Add(member);
         user.AddChannel(this, member);
@@ -434,11 +415,9 @@ public class Channel : ChatObject, IChannel
 
     protected EnumChannelAccessResult CheckMemberKey(IUser user, string? key)
     {
-        if (string.IsNullOrWhiteSpace(key)) return EnumChannelAccessResult.NONE;
-
-        if (Modes.GetModeChar(Resources.ChannelModeKey) == 1)
+        if (Modes.Key.ModeValue)
         {
-            if (Modes.Key == key)
+            if (Props.MemberKey.Value == key)
                 return EnumChannelAccessResult.SUCCESS_MEMBER;
             return EnumChannelAccessResult.ERR_BADCHANNELKEY;
         }
@@ -448,7 +427,7 @@ public class Channel : ChatObject, IChannel
 
     protected EnumChannelAccessResult CheckInviteOnly(IUser user)
     {
-        if (Modes.InviteOnly)
+        if (Modes.InviteOnly.ModeValue)
             return InviteList.Contains(user.GetAddress().GetAddress())
                 ? EnumChannelAccessResult.SUCCESS_MEMBER
                 : EnumChannelAccessResult.ERR_INVITEONLYCHAN;
@@ -458,7 +437,7 @@ public class Channel : ChatObject, IChannel
 
     protected EnumChannelAccessResult CheckUserLimit(bool IsGoto)
     {
-        var userLimit = Modes.UserLimit > 0 ? Modes.UserLimit : int.MaxValue;
+        var userLimit = Modes.UserLimit.Value > 0 ? Modes.UserLimit.Value : int.MaxValue;
 
         if (IsGoto) userLimit = (int)Math.Ceiling(userLimit * 1.2);
 

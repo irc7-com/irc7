@@ -1,5 +1,6 @@
 ﻿using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Modes.User;
 
 namespace Irc.Objects.Member;
 
@@ -14,13 +15,13 @@ public class Member : MemberModes, IChannelMember
 
     public EnumChannelAccessLevel GetLevel()
     {
-        if (IsOwner())
+        if (Owner.ModeValue)
             return EnumChannelAccessLevel.ChatOwner;
 
-        if (IsHost())
+        if (Operator.ModeValue)
             return EnumChannelAccessLevel.ChatHost;
 
-        if (IsVoice())
+        if (Voice.ModeValue)
             return EnumChannelAccessLevel.ChatVoice;
 
         return EnumChannelAccessLevel.ChatMember;
@@ -40,9 +41,9 @@ public class Member : MemberModes, IChannelMember
                     _user.GetLevel() < target.GetUser().GetLevel()) return EnumIrcError.ERR_NOPERMS;
             }
 
-        var isOwner = IsOwner();
-        var targetIsOwner = target.IsOwner();
-        var isHost = IsHost();
+        var isOwner = Owner.ModeValue;
+        var targetIsOwner = target.Owner.ModeValue;
+        var isHost = Operator.ModeValue;
 
         if (!isOwner && (targetIsOwner || requiredLevel > EnumChannelAccessLevel.ChatHost))
             return EnumIrcError.ERR_NOCHANOWNER;

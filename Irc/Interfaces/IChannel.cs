@@ -1,13 +1,14 @@
 ﻿using Irc.Enumerations;
 using Irc.Objects;
+using Irc.Objects.Channel;
 
 namespace Irc.Interfaces;
 
 public interface IChannel
 {
-    IDataStore ChannelStore { get; }
+    IAccessList Access { get; }
     IChannelModes Modes { get; }
-    IPropCollection PropCollection { get; }
+    IChannelProps Props { get; }
     string GetName();
     IChannelMember? GetMember(IUser User);
     IChannelMember? GetMemberByNickname(string nickname);
@@ -31,7 +32,6 @@ public interface IChannel
     IChannel SendTopic();
     IChannel SendNames(IUser user);
     bool Allows(IUser user);
-    IChannelModes GetModes();
     EnumChannelAccessResult GetAccess(IUser user, string? key, bool IsGoto = false);
     bool InviteMember(IUser user);
 }

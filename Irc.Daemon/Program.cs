@@ -185,13 +185,13 @@ internal class Program
             var name = $"%#{defaultChannel.Name}";
             var channel = server.CreateChannel(name);
 
-            channel.ChannelStore.Set("topic", defaultChannel.Topic);
+            channel.Props.Topic.Value = defaultChannel.Topic;
             foreach (var keyValuePair in defaultChannel.Modes)
-                channel.Modes.SetModeChar(keyValuePair.Key, keyValuePair.Value);
+                channel.Modes.SetModeValue(keyValuePair.Key, keyValuePair.Value);
 
             foreach (var keyValuePair in defaultChannel.Props)
             {
-                var prop = channel.PropCollection.GetProp(keyValuePair.Key);
+                var prop = channel.Props.GetProp(keyValuePair.Key);
                 prop?.SetValue(keyValuePair.Value);
             }
 

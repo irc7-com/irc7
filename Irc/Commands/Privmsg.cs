@@ -39,7 +39,7 @@ public class Privmsg : Command, ICommand
             {
                 var user = (User)chatFrame.User;
                 var channel = (Channel)chatObject;
-                var channelModes = channel.GetModes();
+                var channelModes = channel.Modes;
                 var channelMember = channel.GetMember(chatFrame.User);
                 var isOnChannel = channelMember != null;
                 var noExtern = channelModes.NoExtern;
@@ -49,7 +49,7 @@ public class Privmsg : Command, ICommand
                 // Cannot send as a non-subscriber
                 if (user.GetLevel() < EnumUserAccessLevel.Guide &&
                     !user.GetProfile().IsSubscriber &&
-                    subscriberOnly
+                    subscriberOnly.ModeValue
                    )
                 {
                     chatFrame.User.Send(
@@ -59,9 +59,9 @@ public class Privmsg : Command, ICommand
 
                 if (
                     // No External Messages
-                    (!isOnChannel && noExtern) ||
+                    (!isOnChannel && noExtern.ModeValue) ||
                     // Moderated
-                    (isOnChannel && moderated && channelMember!.IsNormal())
+                    (isOnChannel && moderated.ModeValue && channelMember!.HasModes())
                 )
                 {
                     chatFrame.User.Send(

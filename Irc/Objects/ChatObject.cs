@@ -8,37 +8,22 @@ namespace Irc.Objects;
 
 public class ChatObject : IChatObject
 {
-    protected readonly IModeCollection _modes;
-    public readonly IDataStore DataStore;
-
-    public ChatObject(IModeCollection modes, IDataStore dataStore)
-    {
-        _modes = modes;
-        DataStore = dataStore;
-        DataStore.SetId(Id.ToString());
-    }
-
     public virtual EnumUserAccessLevel Level => EnumUserAccessLevel.None;
 
-    public virtual IModeCollection Modes => _modes;
-
-    public IModeCollection GetModes()
-    {
-        return _modes;
-    }
+    public virtual IModeCollection Modes { protected set; get; } = new ModeCollection();
+    public virtual IPropCollection Props { protected set; get; } = new PropCollection();
+    public virtual IAccessList Access { protected set; get; } = new AccessList();
 
     public Guid Id { get; } = Guid.NewGuid();
 
     public string ShortId => Id.ToString().Split('-').Last();
+    
+    private string _name = string.Empty;
 
     public string Name
     {
-        get
-        {
-            var storeNick = DataStore.Get("Name");
-            return string.IsNullOrWhiteSpace(storeNick) ? Resources.Wildcard : storeNick;
-        }
-        set => DataStore.Set("Name", value);
+        get => string.IsNullOrWhiteSpace(_name) ? Resources.Wildcard : _name;
+        set => _name = value;
     }
 
     public virtual void Send(string message)
@@ -66,6 +51,4 @@ public class ChatObject : IChatObject
         throw new NotImplementedException();
     }
 
-    public IPropCollection PropCollection { protected set; get; } = new PropCollection();
-    public IAccessList AccessList { protected set; get; } = new AccessList();
 }

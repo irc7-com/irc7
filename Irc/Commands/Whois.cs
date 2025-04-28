@@ -63,7 +63,7 @@ public class Whois : Command, ICommand
             user.Send(Raws.IRCX_RPL_WHOISIP_320(server, user, targetUser));
 
         var userModes = (UserModes)user.Modes;
-        if (userModes.Secure)
+        if (userModes.Secure.ModeValue)
             user.Send(Raws.IRC2_RPL_WHOISSECURE_671(server, user, targetUser));
 
         var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);

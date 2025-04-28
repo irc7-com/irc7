@@ -154,9 +154,9 @@ public static class Raws
         return $":{user.GetAddress()} INVITE {targetUser} {host} {channel}";
     }
 
-    public static string RPL_KNOCK_CHAN(IServer server, IUser user, IChannel channel)
+    public static string RPL_KNOCK_CHAN(IServer server, IUser user, IChannel channel, string reason)
     {
-        return $":{user.GetAddress()} KNOCK {channel} %s";
+        return $":{user.GetAddress()} KNOCK {channel} {reason}";
     }
 
     public static string RPL_NICK(IServer server, IUser user, string newNick)
@@ -349,7 +349,7 @@ public static class Raws
 
     public static string IRCX_RPL_MODE_322(IServer server, IUser user, IChannel channel)
     {
-        return $":{server} 322 {user} {channel} {channel.GetMembers().Count} :{channel.ChannelStore.Get("topic")}";
+        return $":{server} 322 {user} {channel} {channel.GetMembers().Count} :{channel.Props.Topic.Value}";
     }
 
     public static string IRCX_RPL_MODE_323(IServer server, IUser user)
@@ -631,7 +631,7 @@ public static class Raws
         return $":{server} 482 {user} {channel} :You're not channel operator";
     }
 
-    public static string IRCX_ERR_CHANQPRIVSNEEDED_485(IServer server, IUser user, ChatObject channel)
+    public static string IRCX_ERR_CHANQPRIVSNEEDED_485(IServer server, IUser user, IChatObject channel)
     {
         return $":{server} 485 {user} {channel} :You're not channel owner";
     }

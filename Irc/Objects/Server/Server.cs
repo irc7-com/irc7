@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
+using Irc.Access;
 using Irc.Access.Server;
 using Irc.Commands;
 using Irc.Constants;
@@ -44,8 +45,9 @@ public class Server : ChatObject, IServer
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
         IList<IChannel> channels,
-        ICredentialProvider? credentialProvider = null) : base(new ModeCollection(), dataStore)
+        ICredentialProvider? credentialProvider = null)
     {
+        Name = dataStore.Get("Name");
         Title = Name;
         _socketServer = socketServer;
         _securityManager = securityManager;
@@ -65,9 +67,25 @@ public class Server : ChatObject, IServer
                           Array.Empty<string>();
 
         if (MaxAnonymousConnections > 0) _securityManager.AddSupportPackage(new ANON());
+        
+        //IRCX Initialization
+        _credentialProvider = credentialProvider;
+        Props = new PropCollection();
+        Access = new ServerAccess();
 
-        Protocols.Add(EnumProtocolType.IRC, new Protocols.Irc());
+        if (SupportPackages.Contains("NTLM"))
+            GetSecurityManager()
+                .AddSupportPackage(new NTLM(credentialProvider ?? new NtlmProvider()));
 
+        AddProtocol(EnumProtocolType.IRC, new Protocols.Irc());
+        AddProtocol(EnumProtocolType.IRCX, new IrcX());
+        AddProtocol(EnumProtocolType.IRC3, new Irc3());
+        AddProtocol(EnumProtocolType.IRC4, new Irc4());
+        AddProtocol(EnumProtocolType.IRC5, new Irc5());
+        AddProtocol(EnumProtocolType.IRC6, new Irc6());
+        AddProtocol(EnumProtocolType.IRC7, new Irc7());
+        AddProtocol(EnumProtocolType.IRC8, new Irc8());
+        
         socketServer.OnClientConnecting += (sender, connection) =>
         {
             // TODO: Need to pass a Interfaced factory in to create the appropriate user
@@ -85,36 +103,12 @@ public class Server : ChatObject, IServer
         };
         socketServer.Listen();
 
-        //IRCX Initialization
-        _credentialProvider = credentialProvider;
-        PropCollection = new PropCollection();
-        AccessList = new ServerAccess();
-
-        if (SupportPackages.Contains("NTLM"))
-            GetSecurityManager()
-                .AddSupportPackage(new NTLM(credentialProvider ?? new NtlmProvider()));
-
-        AddProtocol(EnumProtocolType.IRCX, new IrcX());
-        AddProtocol(EnumProtocolType.IRC3, new Irc3());
-        AddProtocol(EnumProtocolType.IRC4, new Irc4());
-        AddProtocol(EnumProtocolType.IRC5, new Irc5());
-        AddProtocol(EnumProtocolType.IRC6, new Irc6());
-        AddProtocol(EnumProtocolType.IRC7, new Irc7());
-        AddProtocol(EnumProtocolType.IRC8, new Irc8());
-
         if (SupportPackages.Contains("GateKeeper"))
         {
             _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
             securityManager.AddSupportPackage(new GateKeeper(new DefaultProvider()));
             securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(_passport)));
         }
-
-        AddCommand(new Auth());
-        AddCommand(new AuthX());
-        AddCommand(new Ircvers());
-        AddCommand(new Ircx());
-        AddCommand(new Prop());
-        AddCommand(new Listx());
 
         var modes = new ChannelModes().GetSupportedModes();
         modes = new string(modes.OrderBy(c => c).ToArray());
@@ -187,7 +181,7 @@ public class Server : ChatObject, IServer
 
     public virtual IChannel CreateChannel(string name)
     {
-        return new Channel.Channel(name, new ChannelModes(), new DataStore(name, "store"));
+        return new Channel.Channel(name);
     }
 
     public IUser CreateUser(IConnection connection)
@@ -197,8 +191,6 @@ public class Server : ChatObject, IServer
             Protocols[EnumProtocolType.IRC],
             new DataRegulator(MaxInputBytes, MaxOutputBytes),
             new FloodProtectionProfile(),
-            new DataStore(connection.GetId().ToString(), "store"),
-            new UserModes(),
             this
         );
     }
@@ -264,12 +256,12 @@ public class Server : ChatObject, IServer
     public virtual IChannel CreateChannel(IUser creator, string name, string key)
     {
         var channel = CreateChannel(name);
-        channel.ChannelStore.Set("topic", name);
-        var ownerkeyProp = channel.PropCollection.GetProp(Resources.ChannelPropOwnerkey);
-        ownerkeyProp?.SetValue(key);
-        channel.Modes.NoExtern = true;
-        channel.Modes.TopicOp = true;
-        channel.Modes.UserLimit = 50;
+        var chanProps = (ChannelProps)channel.Props;
+        chanProps.Topic.Value = name;
+        chanProps.OwnerKey.Value = key;
+        channel.Modes.NoExtern.ModeValue = true;
+        channel.Modes.TopicOp.ModeValue = true;
+        channel.Modes.UserLimit.Value = 50;
         AddChannel(channel);
         return channel;
     }
@@ -367,7 +359,7 @@ public class Server : ChatObject, IServer
                 var modes = dict["umode"];
                 foreach (var mode in modes)
                 {
-                    var userModes = (UserModes)user.GetModes();
+                    var userModes = (UserModes)user.Modes;
                     if (userModes.HasMode(mode)) userModes[mode].Set(true);
                     ModeRule.DispatchModeChange(mode, (IChatObject)user, (IChatObject)user, true, string.Empty);
                 }
@@ -473,7 +465,7 @@ public class Server : ChatObject, IServer
             // add new pending users
             foreach (var user in _pendingNewUserQueue)
             {
-                user.GetDataStore().Set(Resources.UserPropOid, "0");
+                user.Props.Oid.Value = "0";
                 Users.Add(user);
             }
 
@@ -582,7 +574,7 @@ public class Server : ChatObject, IServer
     // IRCX 
     protected EnumChannelAccessResult CheckAuthOnly()
     {
-        if (Modes.GetModeChar(Resources.ChannelModeAuthOnly) == 1)
+        if (Modes.GetModeValue(Resources.ChannelModeAuthOnly) == 1)
             return EnumChannelAccessResult.ERR_AUTHONLYCHAN;
         return EnumChannelAccessResult.NONE;
     }

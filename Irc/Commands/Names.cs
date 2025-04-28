@@ -27,7 +27,7 @@ internal class Names : Command, ICommand
 
             if (channel != null)
             {
-                if (user.IsOn(channel) || (!channel.Modes.Private && !channel.Modes.Secret))
+                if (user.IsOn(channel) || (!channel.Modes.Private.ModeValue && !channel.Modes.Secret.ModeValue))
                     ProcessNamesReply(user, channel);
             }
             else
@@ -42,10 +42,10 @@ internal class Names : Command, ICommand
         // RFC 2812 "=" for others(public channels).
         var channelType = '=';
 
-        if (channel.Modes.Secret)
+        if (channel.Modes.Secret.ModeValue)
             // RFC 2812 "@" is used for secret channels
             channelType = '@';
-        else if (channel.Modes.Private)
+        else if (channel.Modes.Private.ModeValue)
             // RFC 2812 "*" for private
             channelType = '*';
 
