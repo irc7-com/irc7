@@ -61,7 +61,7 @@ public class Privmsg : Command, ICommand
                     // No External Messages
                     (!isOnChannel && noExtern.ModeValue) ||
                     // Moderated
-                    (isOnChannel && moderated.ModeValue && channelMember!.HasModes())
+                    (isOnChannel && moderated.ModeValue && !channelMember!.HasModes())
                 )
                 {
                     chatFrame.User.Send(

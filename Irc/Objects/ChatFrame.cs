@@ -1,11 +1,11 @@
 ﻿using Irc.Interfaces;
 
-namespace Irc;
+namespace Irc.Objects;
 
 public class ChatFrame : IChatFrame
 {
     public long SequenceId { get; set; }
-    public required ChatMessage ChatMessage { init; get; }
+    public required IChatMessage ChatMessage { init; get; }
     public required IServer Server { init; get; }
     public required IUser User { init; get; }
 }

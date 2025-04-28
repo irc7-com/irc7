@@ -24,7 +24,7 @@ public class Irc3 : IrcX
     public override string FormattedUser(IChannelMember member)
     {
         var modeChar = string.Empty;
-        if (!member.HasModes()) modeChar += member.Owner.ModeValue ? '.' : member.Operator.ModeValue ? '@' : '+';
+        if (member.HasModes()) modeChar += member.Owner.ModeValue ? '.' : member.Operator.ModeValue ? '@' : '+';
         return $"{modeChar}{member.GetUser().GetAddress().Nickname}";
     }
 }

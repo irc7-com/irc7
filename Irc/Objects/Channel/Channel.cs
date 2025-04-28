@@ -11,6 +11,8 @@ public class Channel : ChatObject, IChannel
 {
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
     public HashSet<string> InviteList = new();
+    public long Creation { get; } = Resources.GetEpochNowInSeconds();
+    public long TopicChanged { get; set; } = Resources.GetEpochNowInSeconds();
 
     public new IAccessList Access => base.Access;
     public new IChannelProps Props => (IChannelProps)base.Props;
@@ -24,6 +26,7 @@ public class Channel : ChatObject, IChannel
         
         Name = name;
         Props.Name.Value = name;
+        Props.Creation.Value = Creation.ToString();
     }
 
     public string GetName()
@@ -62,7 +65,7 @@ public class Channel : ChatObject, IChannel
             {
                 channelMember.GetUser().Send(Raws.RPL_JOIN(user, this));
 
-                if (!joinMember.HasModes())
+                if (joinMember.HasModes())
                 {
                     var modeChar = joinMember.Owner.ModeValue ? 
                         Resources.MemberModeOwner :
@@ -79,6 +82,13 @@ public class Channel : ChatObject, IChannel
             }
         }
 
+        return this;
+    }
+
+    public IChannel UpdateTopic(string topic)
+    {
+        Props.Topic.Value = topic;
+        TopicChanged = Resources.GetEpochNowInSeconds();
         return this;
     }
 
@@ -309,6 +319,7 @@ public class Channel : ChatObject, IChannel
         var address = user.GetAddress().GetAddress();
         return InviteList.Add(address);
     }
+
 
     public EnumAccessLevel GetChannelAccess(IUser user)
     {

@@ -33,7 +33,7 @@ public class Topic : PropRule
             if (result != EnumIrcError.OK) return result;   
         }
 
-        channel.Props.Topic.Value = propValue;
+        channel.UpdateTopic(propValue);
         return result;
     }
 }

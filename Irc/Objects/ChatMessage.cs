@@ -2,7 +2,7 @@
 
 namespace Irc;
 
-public class ChatMessage
+public class ChatMessage : IChatMessage
 {
     private readonly IProtocol _protocol;
     private ICommand? _command;
