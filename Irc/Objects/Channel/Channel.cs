@@ -92,6 +92,38 @@ public class Channel : ChatObject, IChannel
         return this;
     }
 
+    public IChannel SendOnJoinMessage(IUser user)
+    {
+        if (string.IsNullOrWhiteSpace(Props.Onjoin.Value)) return this;
+
+        foreach (var se in Props.Onjoin.Value.Split(@"\n", StringSplitOptions.RemoveEmptyEntries).ToList())
+        {
+            user.Send(Raws.RPL_PRIVMSG_CHAN(
+                    this,
+                    user,
+                    se
+                ));
+        }
+
+        return this;
+    }
+    
+    public IChannel SendOnPartMessage(IUser user)
+    {
+        if (string.IsNullOrWhiteSpace(Props.Onpart.Value)) return this;
+        
+        foreach (var se in Props.Onpart.Value.Split(@"\n", StringSplitOptions.RemoveEmptyEntries).ToList())
+        {
+            user.Send(Raws.RPL_NOTICE_CHAN(
+                this,
+                user,
+                se
+            ));
+        }
+        
+        return this;
+    }
+    
     public IChannel SendTopic(IUser user)
     {
         user.Send(Raws.IRCX_RPL_TOPIC_332(user.Server, user, this, Props.Topic.Value));

@@ -45,6 +45,7 @@ internal class Part : Command, ICommand
 
                     channel.Part(user);
                     user.RemoveChannel(channel);
+                    channel.SendOnPartMessage(user);
                 }
             );
     }

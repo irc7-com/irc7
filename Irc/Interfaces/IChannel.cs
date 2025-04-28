@@ -31,6 +31,8 @@ public interface IChannel : IChatObject
     IChannel SendTopic(IUser user);
     IChannel SendTopic();
     IChannel SendNames(IUser user);
+    IChannel SendOnJoinMessage(IUser user);
+    IChannel SendOnPartMessage(IUser user);
     bool Allows(IUser user);
     EnumChannelAccessResult GetAccess(IUser user, string? key, bool isGoto = false);
     bool InviteMember(IUser user);
