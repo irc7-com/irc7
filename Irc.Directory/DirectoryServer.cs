@@ -22,6 +22,7 @@ public class DirectoryServer : Server
     {
         DisableGuestMode = true;
         DisableUserRegistration = true;
+        IsDirectoryServer = true;
 
         if (!string.IsNullOrEmpty(chatServerIp))
         {

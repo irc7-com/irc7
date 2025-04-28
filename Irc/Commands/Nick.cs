@@ -29,7 +29,7 @@ public class Nick : Command, ICommand
     }
 
     public static bool ValidateNickname(string nickname, bool guest = false, bool oper = false, bool preAuth = false,
-        bool preReg = false)
+        bool preReg = false, bool isDs = false)
     {
         var mask = Resources.PostAuthNicknameMask;
 
@@ -37,15 +37,20 @@ public class Nick : Command, ICommand
         else if (oper) mask = Resources.PostAuthOperNicknameMask;
         else if (guest) mask = Resources.PostAuthGuestNicknameMask;
 
-        return nickname.Length <= Resources.MaxFieldLen &&
-               RegularExpressions.Match(mask, nickname, true);
+        if (isDs) mask = Resources.DsNickname;
+
+        var isInLength = nickname.Length <= Resources.MaxFieldLen;
+        var isMatch = RegularExpressions.Match(mask, nickname, true);
+        var isValid = isInLength && isMatch;
+        return isValid;
     }
 
     public static bool HandlePreauthNicknameChange(IChatFrame chatFrame)
     {
         var nickname = chatFrame.ChatMessage.Parameters.First();
         // UTF8 / Guest / Normal / Admin/Sysop/Guide OK
-        if (!ValidateNickname(nickname, preAuth: true))
+        var isValid = ValidateNickname(nickname, preAuth: true, isDs: chatFrame.Server.IsDirectoryServer); 
+        if (!isValid)
         {
             chatFrame.User.Send(Raws.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
             return false;
@@ -61,7 +66,7 @@ public class Nick : Command, ICommand
         var guest = chatFrame.User.IsGuest();
         var oper = chatFrame.User.GetLevel() >= EnumUserAccessLevel.Guide;
 
-        if (!ValidateNickname(nickname, guest, oper, false, true))
+        if (!ValidateNickname(nickname, guest, oper, false, true, isDs: chatFrame.Server.IsDirectoryServer))
         {
             chatFrame.User.Send(Raws.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
             return false;
@@ -92,7 +97,7 @@ public class Nick : Command, ICommand
                 return false;
             }
 
-        if (!ValidateNickname(nickname, guest, oper))
+        if (!ValidateNickname(nickname, guest, oper, isDs: chatFrame.Server.IsDirectoryServer))
         {
             chatFrame.User.Send(Raws.IRCX_ERR_ERRONEOUSNICK_432(chatFrame.Server, chatFrame.User, nickname));
             return false;

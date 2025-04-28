@@ -32,6 +32,7 @@ public interface IServer: IChatObject
     string RemoteIp { set; get; }
     bool DisableGuestMode { set; get; }
     bool DisableUserRegistration { get; set; }
+    bool IsDirectoryServer { get; }
     new Guid Id { get; }
     new string ShortId { get; }
     new string Name { get; set; }
