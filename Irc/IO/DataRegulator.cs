@@ -1,4 +1,5 @@
-﻿using Irc.Interfaces;
+﻿using System.Collections.Concurrent;
+using Irc.Interfaces;
 
 namespace Irc.IO;
 
@@ -6,9 +7,9 @@ public class DataRegulator : IDataRegulator
 {
     private readonly int _incomingByteThreshold;
 
-    private readonly Queue<ChatMessage> _incomingQueue = new();
+    private readonly ConcurrentQueue<ChatMessage> _incomingQueue = new();
     private readonly int _outgoingByteThreshold;
-    private readonly Queue<string> _outgoingQueue = new();
+    private readonly ConcurrentQueue<string> _outgoingQueue = new();
     private int _incomingBytes;
     private bool _incomingThresholdExceeded;
     private int _outgoingBytes;
@@ -69,19 +70,26 @@ public class DataRegulator : IDataRegulator
     public ChatMessage? PeekIncoming()
     {
         if (_incomingQueue.Count <= 0) return null;
-        return _incomingQueue.Peek();
+        _incomingQueue.TryPeek(out var message);
+        if (message == null) return null;
+
+        return message;
     }
 
-    public ChatMessage PopIncoming()
+    public ChatMessage? PopIncoming()
     {
-        var message = _incomingQueue.Dequeue();
+        _incomingQueue.TryDequeue(out var message);
+        if (message == null) return null;
+
         _incomingBytes -= message.OriginalText.Length;
         return message;
     }
 
-    public string PopOutgoing()
+    public string? PopOutgoing()
     {
-        var message = _outgoingQueue.Dequeue();
+        _outgoingQueue.TryDequeue(out var message);
+        if (message == null) return null;
+
         _outgoingBytes -= message.Length;
         return message;
     }
