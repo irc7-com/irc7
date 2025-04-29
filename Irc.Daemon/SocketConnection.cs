@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
@@ -8,6 +9,9 @@ namespace Irc7d;
 
 public class SocketConnection : IConnection
 {
+    private static readonly ConcurrentBag<SocketAsyncEventArgs> _argsPool = new();
+    private static readonly ConcurrentBag<byte[]> _bufferPool = new();
+    private const int BufferSize = 512; // 1KB per buffer
     private readonly string _fullAddress = string.Empty;
     private readonly Socket _socket;
     private string _address = string.Empty;
@@ -87,12 +91,51 @@ public class SocketConnection : IConnection
 
     public void Accept()
     {
-        var recvAsync = new SocketAsyncEventArgs();
+        var recvAsync = GetSocketAsyncEventArgs();
         recvAsync.UserToken = GetId();
-        recvAsync.SetBuffer(new byte[_socket.SendBufferSize]);
+        //recvAsync.SetBuffer(new byte[_socket.SendBufferSize]);
         recvAsync.Completed += (sender, args) => { ReceiveData(args); };
         // If Sync receive from connect then process data
         if (!_socket.ReceiveAsync(recvAsync)) ReceiveData(recvAsync);
+    }
+    
+    private static SocketAsyncEventArgs GetSocketAsyncEventArgs()
+    {
+        if (!_argsPool.TryTake(out var args) && args?.LastOperation != SocketAsyncOperation.None)
+        {
+            args = new SocketAsyncEventArgs();
+            args.SetBuffer(GetBuffer(), 0, BufferSize);
+            return args;
+        }
+
+        var newArgs = new SocketAsyncEventArgs();
+        newArgs.SetBuffer(GetBuffer(), 0, BufferSize);
+        return newArgs;
+    }
+
+    private static void ReturnSocketAsyncEventArgs(SocketAsyncEventArgs args)
+    {
+        if (args.Buffer != null)
+        {
+            ReturnBuffer(args.Buffer);
+        }
+        args.SetBuffer(null, 0, 0);
+        args.Completed -= null;
+        _argsPool.Add(args);
+    }
+
+    private static byte[] GetBuffer()
+    {
+        if (!_bufferPool.TryTake(out var buffer))
+        {
+            buffer = new byte[BufferSize];
+        }
+        return buffer;
+    }
+
+    private static void ReturnBuffer(byte[] buffer)
+    {
+        _bufferPool.Add(buffer);
     }
 
     public bool TryOverrideRemoteAddress(string ip, string hostname)
@@ -169,7 +212,11 @@ public class SocketConnection : IConnection
         }
         finally
         {
-            if (!_socket.Connected) OnDisconnect?.Invoke(this, GetId());
+            if (!_socket.Connected)
+            {
+                OnDisconnect?.Invoke(this, GetId());
+                ReturnSocketAsyncEventArgs(socketAsyncEventArgs);
+            }
         }
     }
 }
