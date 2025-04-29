@@ -13,12 +13,23 @@ public class DirectoryServer : Server
     public readonly string ChatServerIp = string.Empty;
     public readonly string ChatServerPort = string.Empty;
 
-    public DirectoryServer(ISocketServer socketServer, ISecurityManager securityManager,
-        IFloodProtectionManager floodProtectionManager, IDataStore dataStore, IList<IChannel> channels,
-        ICredentialProvider? ntlmCredentialProvider = null, string? chatServerIp = null)
-        : base(socketServer, securityManager,
-            floodProtectionManager, dataStore, channels,
-            ntlmCredentialProvider)
+    public DirectoryServer(
+        ISocketServer socketServer,
+        ISecurityManager securityManager,
+        IFloodProtectionManager floodProtectionManager,
+        IDataStore dataStore,
+        IList<IChannel> channels,
+        ICredentialProvider? ntlmCredentialProvider = null,
+        string? chatServerIp = null
+    )
+        : base(
+            socketServer,
+            securityManager,
+            floodProtectionManager,
+            dataStore,
+            channels,
+            ntlmCredentialProvider
+        )
     {
         DisableGuestMode = true;
         DisableUserRegistration = true;
@@ -41,7 +52,7 @@ public class DirectoryServer : Server
         AddCommand(new UserCommand(), EnumProtocolType.IRC, "User");
         AddCommand(new Finds());
         AddCommand(new Prop());
-        AddCommand(new Create(true));
+        AddCommand(new Irc.Directory.Commands.Create(true));
         AddCommand(new Ping());
         AddCommand(new Pong());
         AddCommand(new Version());
