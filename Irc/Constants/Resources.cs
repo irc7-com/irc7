@@ -321,7 +321,7 @@ public static class Resources
     public static string IrcxChannelRegex = @"^%#[\x21-\x2B\x2D-\xFF]{1,200}$";
     public static string GuestNicknameMask = @"^>(?!(Sysop)|(Admin)|(Guide))[\x41-\xFF\-0-9]+$";
     public static string NicknameMask = @"^(?!(Sysop)|(Admin)|(Guide))[\x41-\xFF][\x41-\xFF\-0-9]*$";
-    public static string StandardNickname = @"^[\x41-\xFF][\x41-\xFF\-0-9]*$";
+    public static string DsNickname = @"[\x41-\xFF\-0-9]+$";
     public static string StandardUtf8Nickname = @"^'?[\x41-\xFF][\x41-\xFF\-0-9]*$";
     public static string AnyNickname = @"^>['?][\x41-\xFF][\x41-\xFF\-0-9]+$";
     public static string AnyUtf8Nickname = @"^(?!(Sysop)|(Admin)|(Guide))'?[\x41-\xFF][\x41-\xFF\-0-9]*$";

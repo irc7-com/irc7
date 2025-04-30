@@ -147,6 +147,7 @@ public class Server : ChatObject, IServer
     public string RemoteIp { set; get; } = string.Empty;
     public bool DisableGuestMode { set; get; }
     public bool DisableUserRegistration { get; set; }
+    public bool IsDirectoryServer { get; set; }
 
     public void SetMotd(string motd)
     {
