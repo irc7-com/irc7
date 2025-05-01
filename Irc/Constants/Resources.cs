@@ -164,6 +164,26 @@ public static class Resources
     public static string ChannelCategorySports = "SP";
     public static string ChannelCategoryUnlisted = "UL";
 
+    public static List<string> SupportedChannelCategories = new List<string>
+    {
+        ChannelCategoryTeens,
+        ChannelCategoryComputing,
+        ChannelCategoryEvents,
+        ChannelCategoryGeneral,
+        ChannelCategoryHealth,
+        ChannelCategoryCityChats,
+        ChannelCategoryEntertainment,
+        ChannelCategoryInterests,
+        ChannelCategoryLifestyles,
+        ChannelCategoryMusic,
+        ChannelCategoryPeers,
+        ChannelCategoryNews,
+        ChannelCategoryReligion,
+        ChannelCategoryRomance,
+        ChannelCategorySports,
+        ChannelCategoryUnlisted
+    };
+
     #endregion
 
     #region Channel Country & Language
@@ -174,6 +194,16 @@ public static class Resources
     public static string ChannelCountryLanguageENUK = "EN-UK";
     public static string ChannelCountryLanguageFRCA = "FR-CA";
     public static string ChannelCountryLanguageENAU = "EN-AU";
+
+    public static List<string> SupportedChannelCountryLanguages = new List<string>
+    {
+        ChannelCountryLanguageENUS,
+        ChannelCountryLanguageENCA,
+        ChannelCountryLanguageENGB,
+        ChannelCountryLanguageENUK,
+        ChannelCountryLanguageFRCA,
+        ChannelCountryLanguageENAU
+    };
 
     #endregion
 

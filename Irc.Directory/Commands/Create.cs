@@ -5,7 +5,7 @@ using Irc.Interfaces;
 
 namespace Irc.Directory.Commands;
 
-internal class Create : Command, ICommand
+public class Create : Command, ICommand
 {
     private readonly bool _isAds;
 
