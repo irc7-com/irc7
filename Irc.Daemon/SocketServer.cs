@@ -45,10 +45,15 @@ public class SocketServer : Socket, ISocketServer
         OnListen?.Invoke(this, this);
 
         var acceptAsync = new SocketAsyncEventArgs();
-        acceptAsync.Completed += (sender, args) => { AcceptLoop(args); };
+        acceptAsync.Completed += OnAcceptAsyncOnCompleted;
 
         // Get first socket
         AcceptAsync(acceptAsync);
+    }
+
+    private void OnAcceptAsyncOnCompleted(object? sender, SocketAsyncEventArgs args)
+    {
+        AcceptLoop(args);
     }
 
     public new void Close()
@@ -95,7 +100,7 @@ public class SocketServer : Socket, ISocketServer
         OnClientConnected?.Invoke(this, connection);
     }
 
-    private void ClientDisconnected(object? sender, BigInteger bigIP)
+    private void ClientDisconnected(object? sender, long bigIP)
     {
         if (!Sockets.ContainsKey(bigIP))
         {

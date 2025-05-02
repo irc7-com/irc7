@@ -23,6 +23,7 @@ internal class Program
 
     private static async Task<int> Main(string[] args)
     {
+        SocketConnection.InitializeSocketAsyncEventArgsPool(10000);
         Logging.Attach();
         var (rootCommand, optionsDictionary) = CreateRootCommand();
 

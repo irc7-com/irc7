@@ -19,7 +19,7 @@ public interface IUser
     IModeCollection Modes { get; }
     IUserProps Props { get; }
     bool Utf8 { get; set; }
-    IChatFrame GetNextFrame();
+    IChatFrame? GetNextFrame();
     void ChangeNickname(string newNick, bool utf8Prefix);
     void SetGuest(bool guest);
     void SetAway(IServer server, IUser user, string message);

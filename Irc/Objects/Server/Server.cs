@@ -557,6 +557,8 @@ public class Server : ChatObject, IServer
             Log.Trace($"Processing: {message.OriginalText}");
 
             var chatFrame = user.GetNextFrame();
+            if (chatFrame == null) return;
+
             if (!command.RegistrationNeeded(chatFrame) && command.ParametersAreValid(chatFrame))
                 try
                 {

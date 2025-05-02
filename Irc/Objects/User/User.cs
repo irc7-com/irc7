@@ -392,10 +392,13 @@ public class User : ChatObject, IUser
         return _modeOperations;
     }
 
-    public IChatFrame GetNextFrame()
+    public IChatFrame? GetNextFrame()
     {
         _commandSequence++;
         var message = _dataRegulator.PopIncoming();
+
+        if (message == null) return null;
+
         return new ChatFrame
         {
             SequenceId = _commandSequence,
