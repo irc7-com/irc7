@@ -27,6 +27,8 @@ public class Channel : ChatObject, IChannel
         Name = name;
         Props.Name.Value = name;
         Props.Creation.Value = Creation.ToString();
+
+        AccessListCleaner();
     }
 
     public string GetName()
@@ -448,6 +450,32 @@ public class Channel : ChatObject, IChannel
         }.Max();
 
         return accessPermissions;
+    }
+
+    
+    private Task AccessListCleaner()
+    {
+        _ = Task.Run(async () =>
+        {
+            while (true)
+            {
+                var accessList = Access.GetEntries();
+                foreach (var accessLevel in accessList.Keys)
+                {
+                    var entries = accessList[accessLevel];
+                    foreach (var entry in entries)
+                    {
+                        if (entry.Ttl.TotalSeconds <= 0)
+                        {
+                            Access.Delete(entry);
+                        }
+                    }
+                }
+                await Task.Delay(TimeSpan.FromMinutes(1));
+            }
+        });
+
+        return Task.CompletedTask;
     }
 
     protected EnumChannelAccessResult CheckOper(IUser user)
