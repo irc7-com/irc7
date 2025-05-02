@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using Irc.Helpers;
 using Irc.Interfaces;
+using NLog.Fluent;
 
 namespace Irc7d;
 
@@ -82,8 +83,21 @@ public class SocketConnection : IConnection
         if (!_socket.Connected) OnDisconnect?.Invoke(this, GetId());
 
         if (_socket.Connected)
-            if (!_socket.SendAsync(sendAsync)) // Report data is sent
-                OnSend?.Invoke(this, message.Substring(sendAsync.Offset, sendAsync.BytesTransferred));
+        {
+            try
+            {
+                if (!_socket.SendAsync(sendAsync)) // Report data is sent
+                    OnSend?.Invoke(this, message.Substring(sendAsync.Offset, sendAsync.BytesTransferred));
+            }
+            catch (ObjectDisposedException)
+            {
+                Log.Warn("Socket connection has been disposed.");
+            }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(this, ex);
+            }
+        }
     }
 
     public void Disconnect(string message = "")
@@ -143,9 +157,17 @@ public class SocketConnection : IConnection
         {
             ReturnBuffer(args.Buffer);
         }
-        args.SetBuffer(null, 0, 0);
-        args.Completed -= null;
-        ArgsPool.Add(args);
+
+        try
+        {
+            args.SetBuffer(null, 0, 0);
+            args.Completed -= null;
+            ArgsPool.Add(args);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("Error trying to reset SocketAsyncEventArgs");
+        }
     }
 
     private static byte[] GetBuffer() => BufferPool.Rent(BufferSize);
