@@ -15,7 +15,7 @@ public class Irc : Protocol, IProtocol
         AddCommand(new Ircx());
         AddCommand(new Prop());
         AddCommand(new Listx());
-        
+
         AddCommand(new Privmsg());
         AddCommand(new Notice());
         AddCommand(new Ping());
@@ -45,7 +45,7 @@ public class Irc : Protocol, IProtocol
         AddCommand(new Topic());
         AddCommand(new Invite());
         AddCommand(new WebIrc());
-        
+
         AddCommand(new global::Access());
         AddCommand(new Away());
         AddCommand(new Create());

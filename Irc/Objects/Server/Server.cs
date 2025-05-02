@@ -5,6 +5,7 @@ using Irc.Access.Server;
 using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
+using Irc.Infrastructure;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Modes;
@@ -147,6 +148,7 @@ public class Server : ChatObject, IServer
     public string RemoteIp { set; get; } = string.Empty;
     public bool DisableGuestMode { set; get; }
     public bool DisableUserRegistration { get; set; }
+    public bool IsDirectoryServer { get; set; }
 
     public void SetMotd(string motd)
     {
@@ -176,6 +178,7 @@ public class Server : ChatObject, IServer
 
     public void RemoveChannel(IChannel channel)
     {
+        InMemoryChannelRepository.Remove(channel.GetName());
         Channels.Remove(channel);
     }
 

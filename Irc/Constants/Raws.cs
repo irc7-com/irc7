@@ -723,6 +723,16 @@ public static class Raws
         return $":{server} 706 {user} :Channel name is not valid";
     }
 
+    public static string IRCX_RPL_FINDS_INVALIDMODE_706(IServer server, IUser user)
+    {
+        return $":{server} 706 {user} :Channel mode is not valid";
+    }
+
+    public static string IRCX_RPL_CREATE_INVALIDREGION_706(IServer server, IUser user)
+    {
+        return $":{server} 706 {user} :Region name is not valid";
+    }
+
     public static string IRCX_RPL_IRCX_800(IServer server, IUser user, int isircx, int ircxversion, int buffsize,
         string options)
     {

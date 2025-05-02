@@ -9,15 +9,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Remove="Operations\**"/>
-        <EmbeddedResource Remove="Operations\**"/>
-        <None Remove="Operations\**"/>
-        <None Remove="Logging\"/>
+        <Compile Remove="Operations\**" />
+        <EmbeddedResource Remove="Operations\**" />
+        <None Remove="Operations\**" />
+        <None Remove="Logging\" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Irc.Helpers\Irc.Helpers.csproj"/>
-        <ProjectReference Include="..\SSPI.NTLM\SSPI.NTLM.csproj"/>
+        <ProjectReference Include="..\Irc.Helpers\Irc.Helpers.csproj" />
+        <ProjectReference Include="..\SSPI.NTLM\SSPI.NTLM.csproj" />
     </ItemGroup>
 
 </Project>
