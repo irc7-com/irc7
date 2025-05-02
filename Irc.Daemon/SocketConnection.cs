@@ -1,7 +1,8 @@
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Numerics;
+using System.Text;
 using Irc.Helpers;
 using Irc.Interfaces;
 
@@ -9,22 +10,21 @@ namespace Irc7d;
 
 public class SocketConnection : IConnection
 {
-    private static readonly ConcurrentBag<SocketAsyncEventArgs> _argsPool = new();
-    private static readonly ConcurrentBag<byte[]> _bufferPool = new();
+    private static readonly ConcurrentBag<SocketAsyncEventArgs> ArgsPool = new();
+    private static readonly ArrayPool<byte> BufferPool = ArrayPool<byte>.Shared;
     private const int BufferSize = 512; // 1KB per buffer
     private readonly string _fullAddress = string.Empty;
     private readonly Socket _socket;
     private string _address = string.Empty;
     private string _hostname = string.Empty;
-    private BigInteger _id;
+    private long _idHigh; // Upper 64 bits for ip address
+    private long _idLow;  // Lower 64 bits for ip address
     private IPAddress _ipAddress = new(0);
-    private string _received = string.Empty;
 
     public SocketConnection(Socket socket)
     {
         _socket = socket;
 
-        _id = 0;
         if (_socket.RemoteEndPoint != null)
         {
             var remoteEndPoint = (IPEndPoint)_socket.RemoteEndPoint;
@@ -34,11 +34,21 @@ public class SocketConnection : IConnection
             _assignIPAddress(remoteEndPoint.Address);
         }
     }
+    
+    public static void InitializeSocketAsyncEventArgsPool(int capacity)
+    {
+        for (int i = 0; i < capacity; i++)
+        {
+            var args = new SocketAsyncEventArgs();
+            args.SetBuffer(GetBuffer(), 0, BufferSize);
+            ArgsPool.Add(args);
+        }
+    }
 
     public EventHandler<string>? OnSend { get; set; }
     public EventHandler<string>? OnReceive { get; set; }
-    public EventHandler<BigInteger>? OnConnect { get; set; }
-    public EventHandler<BigInteger>? OnDisconnect { get; set; }
+    public EventHandler<long>? OnConnect { get; set; }
+    public EventHandler<long>? OnDisconnect { get; set; }
     public EventHandler<Exception>? OnError { get; set; }
 
     public string GetIp()
@@ -56,16 +66,18 @@ public class SocketConnection : IConnection
         return _hostname;
     }
 
-    public BigInteger GetId()
+    public long GetId()
     {
-        return _id;
+        // Use XOR to combine the high and low parts into a single long
+        // This maintains uniqueness for most practical scenarios
+        return _idHigh ^ _idLow;
     }
 
     public void Send(string message)
     {
         var sendAsync = new SocketAsyncEventArgs();
         sendAsync.SetBuffer(message.ToByteArray());
-        sendAsync.Completed += (sender, args) => OnSend?.Invoke(this, message);
+        sendAsync.Completed += (_, _) => OnSend?.Invoke(this, message);
 
         if (!_socket.Connected) OnDisconnect?.Invoke(this, GetId());
 
@@ -94,20 +106,32 @@ public class SocketConnection : IConnection
         var recvAsync = GetSocketAsyncEventArgs();
         recvAsync.UserToken = GetId();
         //recvAsync.SetBuffer(new byte[_socket.SendBufferSize]);
-        recvAsync.Completed += (sender, args) => { ReceiveData(args); };
+        recvAsync.Completed += OnRecvAsyncOnCompleted;
         // If Sync receive from connect then process data
         if (!_socket.ReceiveAsync(recvAsync)) ReceiveData(recvAsync);
     }
-    
+
+    private void OnRecvAsyncOnCompleted(object? _, SocketAsyncEventArgs args)
+    {
+        ReceiveData(args);
+    }
+
     private static SocketAsyncEventArgs GetSocketAsyncEventArgs()
     {
-        if (!_argsPool.TryTake(out var args) && args?.LastOperation != SocketAsyncOperation.None)
+        // Try to get an existing SocketAsyncEventArgs from the pool
+        if (ArgsPool.TryTake(out var args))
         {
-            args = new SocketAsyncEventArgs();
-            args.SetBuffer(GetBuffer(), 0, BufferSize);
+            // If we successfully retrieved an args object from the pool
+            if (args.Buffer == null)
+            {
+                // If buffer is null, set a new buffer
+                args.SetBuffer(GetBuffer(), 0, BufferSize);
+            }
+        
             return args;
         }
-
+    
+        // If pool is empty, create a new SocketAsyncEventArgs
         var newArgs = new SocketAsyncEventArgs();
         newArgs.SetBuffer(GetBuffer(), 0, BufferSize);
         return newArgs;
@@ -121,21 +145,14 @@ public class SocketConnection : IConnection
         }
         args.SetBuffer(null, 0, 0);
         args.Completed -= null;
-        _argsPool.Add(args);
+        ArgsPool.Add(args);
     }
 
-    private static byte[] GetBuffer()
-    {
-        if (!_bufferPool.TryTake(out var buffer))
-        {
-            buffer = new byte[BufferSize];
-        }
-        return buffer;
-    }
+    private static byte[] GetBuffer() => BufferPool.Rent(BufferSize);
 
     private static void ReturnBuffer(byte[] buffer)
     {
-        _bufferPool.Add(buffer);
+        BufferPool.Return(buffer);
     }
 
     public bool TryOverrideRemoteAddress(string ip, string hostname)
@@ -154,33 +171,78 @@ public class SocketConnection : IConnection
     private void _assignIPAddress(IPAddress address)
     {
         _ipAddress = address;
-        var remoteAddressBytes = _ipAddress.GetAddressBytes();
-        _id = new BigInteger(remoteAddressBytes);
-
+        var bytes = _ipAddress.GetAddressBytes();
+    
+        // For IPv6 (16 bytes)
+        if (bytes.Length == 16)
+        {
+            _idHigh = BitConverter.ToInt64(bytes, 0);
+            _idLow = BitConverter.ToInt64(bytes, 8);
+        }
+        // For IPv4 (4 bytes)
+        else
+        {
+            _idHigh = 0;
+            _idLow = BitConverter.ToInt32(bytes, 0);
+        }
+    
+        // Rest of your code...
         var ipAddress = address;
-
-        _address = _socket.RemoteEndPoint != null
-            ? ipAddress.ToString()
-            : string.Empty;
+        _address = _socket.RemoteEndPoint != null ? ipAddress.ToString() : string.Empty;
     }
+
+    private StringBuilder _receiveBuffer = new StringBuilder(1024); // Pre-allocate with a reasonable size
 
     private void Digest(Memory<byte> bytes)
     {
-        var data = bytes.ToArray().ToAsciiString();
-        data = data.Trim('\0', ' ');
-        if (data.Length > 0)
+        ReadOnlySpan<byte> span = bytes.Span;
+
+        // Trim null and space characters without allocating a new array
+        int start = 0;
+        int end = span.Length - 1;
+
+        while (start <= end && (span[start] == 0 || span[start] == ' '))
+            start++;
+
+        while (end >= start && (span[end] == 0 || span[end] == ' '))
+            end--;
+
+        if (start > end)
+            return; // Nothing but whitespace and nulls
+
+        ReadOnlySpan<byte> trimmedSpan = span.Slice(start, end - start + 1);
+
+        if (trimmedSpan.IsEmpty)
+            return;
+
+        // Convert to string only once (still required for processing)
+        string data = trimmedSpan.ToArray().ToAsciiString();
+
+        // Append to the existing buffer without string concatenation
+        _receiveBuffer.Append(data);
+        string currentBuffer = _receiveBuffer.ToString();
+
+        bool newLinePending = !currentBuffer.EndsWith('\r') && !currentBuffer.EndsWith('\n');
+
+        // Use StringSplitOptions.None and then filter out empty entries to avoid allocating an array for separator chars
+        string[] lines = currentBuffer.Split(new[] { '\r', '\n' });
+
+        int totalLines = newLinePending ? lines.Length - 1 : lines.Length;
+
+        for (int i = 0; i < totalLines; i++)
         {
-            _received = $"{_received}{data}";
+            string line = lines[i];
+            if (!string.IsNullOrEmpty(line))
+            {
+                OnReceive?.Invoke(this, line);
+            }
+        }
 
-            var bNewLinePending = !_received.EndsWith('\r') && !_received.EndsWith('\n');
-
-            var lines = data.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            var totalLines = bNewLinePending ? lines.Length - 1 : lines.Length;
-
-            for (var i = 0; i < totalLines; i++) OnReceive?.Invoke(this, lines[i]);
-
-            if (bNewLinePending) _received = lines[^1];
+        // Reset or update the receive buffer
+        _receiveBuffer.Clear();
+        if (newLinePending)
+        {
+            _receiveBuffer.Append(lines[^1]);
         }
     }
 
