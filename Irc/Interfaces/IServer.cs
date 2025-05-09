@@ -3,7 +3,7 @@ using Irc.Objects;
 
 namespace Irc.Interfaces;
 
-public interface IServer: IChatObject
+public interface IServer : IChatObject
 {
     string Title { get; }
     DateTime CreationDate { get; }
@@ -43,6 +43,15 @@ public interface IServer: IChatObject
     void RemoveChannel(IChannel channel);
     IChannel CreateChannel(string name);
     IChannel CreateChannel(IUser creator, string name, string key);
+    IChannel CreateChannel(
+        IUser creator,
+        string name,
+        string key,
+        string locale,
+        string category,
+        EnumSubjectLevel? subjectLevel = EnumSubjectLevel.User,
+        EnumSubjectZone? subjectZone = null
+    );
     IUser CreateUser(IConnection connection);
     IList<IUser> GetUsers();
     IUser? GetUserByNickname(string nickname);
