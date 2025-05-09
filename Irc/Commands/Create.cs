@@ -73,8 +73,22 @@ public class Create : Command, ICommand
             OwnerKey = chatFrame.ChatMessage.Parameters[6],
             Unknown = unknownValue,
         };
+
+        var createdChannel = chatFrame.Server.CreateChannel(
+            chatFrame.User,
+            channel.ChannelName,
+            channel.OwnerKey,
+            channel.Region,
+            channel.Category
+        );
+
+        // Add the subject created by the server at creatin time
+        if (createdChannel?.Props?.Subject?.Value != null)
+        {
+            channel.Subject = createdChannel.Props.Subject.Value;
+        }
+
         InMemoryChannelRepository.Add(channel);
-        chatFrame.Server.CreateChannel(chatFrame.User, channel.ChannelName, channel.OwnerKey);
 
         chatFrame.User.Send(Raws.IRCX_RPL_FINDS_613(chatFrame.Server, chatFrame.User));
     }

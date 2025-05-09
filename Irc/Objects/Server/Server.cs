@@ -258,14 +258,31 @@ public class Server : ChatObject, IServer
 
     public virtual IChannel CreateChannel(IUser creator, string name, string key)
     {
-        var channel = CreateChannel(name);
-        var chanProps = (ChannelProps)channel.Props;
-        chanProps.Topic.Value = name;
-        chanProps.OwnerKey.Value = key;
-        channel.Modes.NoExtern.ModeValue = true;
-        channel.Modes.TopicOp.ModeValue = true;
-        channel.Modes.UserLimit.Value = 50;
+        var channel = GenerateBaseChannel(name, key);
         AddChannel(channel);
+        return channel;
+    }
+
+    public virtual IChannel CreateChannel(
+        IUser creator,
+        string name,
+        string key,
+        string region,
+        string category,
+        EnumSubjectLevel? subjectLevel = EnumSubjectLevel.User,
+        EnumSubjectZone? subjectZone = null
+    )
+    {
+        var channel = GenerateBaseChannel(name, key);
+        var chanProps = (ChannelProps)channel.Props;
+
+        // Additional properties
+        var realSubjectZone = subjectZone ?? EnumSubjectZone.ST;
+        chanProps.Subject.Value =
+            $"{(int)subjectLevel!}:-{realSubjectZone.Value}!{region}!{category}";
+
+        AddChannel(channel);
+
         return channel;
     }
 
@@ -572,6 +589,19 @@ public class Server : ChatObject, IServer
             // Check if user can register
             if (!chatFrame.User.IsRegistered()) Register.TryRegister(chatFrame);
         }
+    }
+
+    private IChannel GenerateBaseChannel(string name, string key)
+    {
+        var channel = CreateChannel(name);
+        var chanProps = (ChannelProps)channel.Props;
+        chanProps.Topic.Value = name;
+        chanProps.OwnerKey.Value = key;
+        channel.Modes.NoExtern.ModeValue = true;
+        channel.Modes.TopicOp.ModeValue = true;
+        channel.Modes.UserLimit.Value = 50;
+
+        return channel;
     }
 
     // IRCX 

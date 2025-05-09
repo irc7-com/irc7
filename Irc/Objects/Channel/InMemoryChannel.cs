@@ -12,5 +12,6 @@ public class InMemoryChannel
     public string Region { get; set; } = string.Empty;
     public string Language { get; set; } = string.Empty;
     public string OwnerKey { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
     public int Unknown { get; set; } = 0;
 }
