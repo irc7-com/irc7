@@ -26,7 +26,7 @@ internal class Invite : Command, ICommand
 
         if (targetUser == null)
         {
-            chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHNICK_401(chatFrame.Server, chatFrame.User, targetNickname));
+            chatFrame.User.Send(Raws.IRCX_ERR_NEEDMOREPARAMS_461(chatFrame.Server, chatFrame.User, GetName()));
             return;
         }
 
