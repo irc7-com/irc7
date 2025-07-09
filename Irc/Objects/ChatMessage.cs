@@ -108,17 +108,17 @@ public class ChatMessage : IChatMessage
 
             for (; index < parts.Length; index++)
             {
-                if (parts[index].StartsWith(':'))
-                {
-                    cursor++;
-                    Parameters.Add(trimmedText.Substring(cursor));
-                    break;
-                }
-
                 if (!string.IsNullOrWhiteSpace(parts[index]))
                 {
+                    if (parts[index].StartsWith(':'))
+                    {
+                        cursor++;
+                        Parameters.Add(trimmedText.Substring(cursor));
+                        break;
+                    }
+
                     Parameters.Add(parts[index]);
-                };
+                }
                 cursor += parts[index].Length + 1;
             }
         }
