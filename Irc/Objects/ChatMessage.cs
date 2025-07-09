@@ -115,7 +115,10 @@ public class ChatMessage : IChatMessage
                     break;
                 }
 
-                Parameters.Add(parts[index]);
+                if (!string.IsNullOrWhiteSpace(parts[index]))
+                {
+                    Parameters.Add(parts[index]);
+                };
                 cursor += parts[index].Length + 1;
             }
         }
