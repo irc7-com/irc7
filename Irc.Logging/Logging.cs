@@ -12,8 +12,8 @@ public class Logging
         var logfile = new FileTarget("logfile") { FileName = "irc7d.log" };
         var logconsole = new ConsoleTarget("logconsole");
 
-        config.AddRule(LogLevel.Trace, LogLevel.Fatal, logfile);
-        config.AddRule(LogLevel.Trace, LogLevel.Fatal, logconsole);
+        config.AddRule(LogLevel.Fatal, LogLevel.Fatal, logfile);
+        config.AddRule(LogLevel.Fatal, LogLevel.Fatal, logconsole);
 
         LogManager.Configuration = config;
     }

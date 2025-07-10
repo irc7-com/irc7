@@ -10,8 +10,8 @@ public interface IDataRegulator
     int GetOutgoingBytes();
     int PushIncoming(ChatMessage chatMessage);
     int PushOutgoing(string message);
-    ChatMessage PopIncoming();
+    ChatMessage? PopIncoming();
     ChatMessage? PeekIncoming();
-    string PopOutgoing();
+    string? PopOutgoing();
     void Purge();
 }

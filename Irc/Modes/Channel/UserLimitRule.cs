@@ -36,7 +36,7 @@ public class UserLimitRule : ModeRuleChannel, IModeRule
 
         if (!int.TryParse(parameter, out var limit)) return EnumIrcError.ERR_NEEDMOREPARAMS;
 
-        if (limit > 0 && (limit <= 100 || isAdministrator))
+        if (limit > 0 && (limit <= 100 || !isAdministrator))
         {
             channelModes.UserLimit.Value = limit;
             DispatchModeChange(source, target, true, limit.ToString());
