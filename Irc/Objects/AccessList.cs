@@ -7,6 +7,16 @@ public class AccessList : IAccessList
 {
     protected Dictionary<EnumAccessLevel, List<AccessEntry>> AccessEntries = new();
 
+    public void PruneExpired()
+    {
+        var now = DateTime.UtcNow;
+        AccessEntries
+            .ToList()
+            .ForEach(kvp =>
+                AccessEntries[kvp.Key] = kvp.Value.Where(entry => entry.Timeout == 0 || entry.Expiry > now).ToList()
+            );
+    }
+
     public EnumAccessError Clear(EnumUserAccessLevel userAccessLevel, EnumAccessLevel accessLevel)
     {
         var hasRemaining = false;
@@ -52,6 +62,7 @@ public class AccessList : IAccessList
 
     public List<AccessEntry>? Get(EnumAccessLevel accessLevel)
     {
+        PruneExpired();
         AccessEntries.TryGetValue(accessLevel, out var list);
         return list;
     }
@@ -66,6 +77,7 @@ public class AccessList : IAccessList
 
     public Dictionary<EnumAccessLevel, List<AccessEntry>> GetEntries()
     {
+        PruneExpired();
         return AccessEntries;
     }
 }
