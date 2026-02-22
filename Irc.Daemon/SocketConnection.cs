@@ -131,13 +131,14 @@ public class SocketConnection : IConnection
 
             var bNewLinePending = !_received.EndsWith('\r') && !_received.EndsWith('\n');
 
-            var lines = data.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = _received.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             var totalLines = bNewLinePending ? lines.Length - 1 : lines.Length;
 
             for (var i = 0; i < totalLines; i++) OnReceive?.Invoke(this, lines[i]);
 
             if (bNewLinePending) _received = lines[^1];
+            else _received = string.Empty;
         }
     }
 
