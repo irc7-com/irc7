@@ -408,6 +408,11 @@ public class Channel : ChatObject, IChannel
         var member = _members.Where(m => m.GetUser() == user).FirstOrDefault();
         if (member != null) _members.Remove(member);
         user.RemoveChannel(this);
+
+        if (_members.Count == 0)
+        {
+            user.Server.RemoveChannel(this);
+        }
     }
 
     public void SetName(string Name)
