@@ -14,14 +14,14 @@ public class SocketServer : Socket, ISocketServer
     public ConcurrentDictionary<BigInteger, ConcurrentBag<IConnection>> Sockets = new();
 
 
-    public SocketServer(IPAddress ip, int port, int backlog, int maxConnectionsPerIp, int buffSize) : base(
+    public SocketServer(IPAddress ip, int port, int backlog, int maxConnections, int maxConnectionsPerIp, int buffSize) : base(
         SocketType.Stream, ProtocolType.Tcp)
     {
         Ip = ip;
         Port = port;
         Backlog = backlog;
+        MaxConnections = maxConnections;
         MaxConnectionsPerIp = maxConnectionsPerIp;
-        BuffSize = buffSize;
         BuffSize = buffSize;
     }
 
@@ -34,7 +34,8 @@ public class SocketServer : Socket, ISocketServer
     public int Backlog { get; }
     public int MaxConnectionsPerIp { get; }
     public int BuffSize { get; }
-    public int CurrentConnections { get; } = 0;
+    public int MaxConnections { get; }
+    public int CurrentConnections { get; private set; } = 0;
 
     public new void Listen()
     {
@@ -76,6 +77,12 @@ public class SocketServer : Socket, ISocketServer
 
     public void Accept(IConnection connection)
     {
+        if (MaxConnections > 0 && CurrentConnections >= MaxConnections)
+        {
+            connection.Disconnect("Server is full");
+            return;
+        }
+
         if (Sockets.TryGetValue(connection.GetId(), out var existingBag) && MaxConnectionsPerIp > 0 && existingBag.Count >= MaxConnectionsPerIp)
         {
             connection.Disconnect(
@@ -90,6 +97,7 @@ public class SocketServer : Socket, ISocketServer
         Log.Info($"Current keys: {Sockets.Count} / Current sockets: {socketCollection.Count}");
 
         socketCollection.Add(connection);
+        CurrentConnections++;
         connection.Accept();
 
         OnClientConnected?.Invoke(this, connection);
@@ -106,6 +114,7 @@ public class SocketServer : Socket, ISocketServer
         var bag = Sockets[bigIP];
         bag.TryTake(out var connection);
 
+        CurrentConnections--;
         if (connection == null)
         {
             Log.Info(
