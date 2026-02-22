@@ -465,15 +465,16 @@ public class Server : ChatObject, IServer
     {
         if (_pendingNewUserQueue.Count > 0)
         {
+            var addedCount = 0;
             // add new pending users
-            foreach (var user in _pendingNewUserQueue)
+            while (_pendingNewUserQueue.TryDequeue(out var user))
             {
                 user.Props.Oid.Value = "0";
                 Users.Add(user);
+                addedCount++;
             }
 
-            Log.Debug($"Added {_pendingNewUserQueue.Count} users. Total Users = {Users.Count}");
-            _pendingNewUserQueue.Clear();
+            Log.Debug($"Added {addedCount} users. Total Users = {Users.Count}");
         }
     }
 
@@ -481,9 +482,10 @@ public class Server : ChatObject, IServer
     {
         if (_pendingRemoveUserQueue.Count > 0)
         {
+            var removedCount = 0;
             // remove pending to be removed users
 
-            foreach (var user in _pendingRemoveUserQueue)
+            while (_pendingRemoveUserQueue.TryDequeue(out var user))
             {
                 if (!Users.Remove(user))
                 {
@@ -493,10 +495,10 @@ public class Server : ChatObject, IServer
                 }
 
                 Quit.QuitChannels(user, "Connection reset by peer");
+                removedCount++;
             }
 
-            Log.Debug($"Removed {_pendingRemoveUserQueue.Count} users. Total Users = {Users.Count}");
-            _pendingRemoveUserQueue.Clear();
+            Log.Debug($"Removed {removedCount} users. Total Users = {Users.Count}");
         }
     }
 
