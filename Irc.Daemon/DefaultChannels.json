@@ -18,7 +18,7 @@
     "Modes": {
       "n": 1,
       "t": 1,
-      "l": 50
+      "l": 10000
     },
     "Props": {
       "OWNERKEY": "OWNERKEY",

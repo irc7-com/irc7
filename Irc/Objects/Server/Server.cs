@@ -32,6 +32,8 @@ public class Server : ChatObject, IServer
     private readonly PassportV4 _passport = new(string.Empty, string.Empty);
     private readonly ConcurrentQueue<IUser> _pendingNewUserQueue = new();
     private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
+    // Track IDs of users pending removal to avoid duplicate enqueues
+    private readonly ConcurrentDictionary<Guid, byte> _pendingRemoveUserSet = new();
     private readonly Task _processingTask;
     private readonly ISecurityManager _securityManager;
     private readonly ISocketServer _socketServer;
@@ -168,7 +170,11 @@ public class Server : ChatObject, IServer
 
     public void RemoveUser(IUser user)
     {
-        _pendingRemoveUserQueue.Enqueue(user);
+        // Prevent duplicate pending remove requests for the same user by tracking IDs
+        if (_pendingRemoveUserSet.TryAdd(user.Id, 0))
+        {
+            _pendingRemoveUserQueue.Enqueue(user);
+        }
     }
 
     public void AddChannel(IChannel channel)
@@ -488,13 +494,24 @@ public class Server : ChatObject, IServer
 
             while (_pendingRemoveUserQueue.TryDequeue(out var user))
             {
+                // Try to remove; if removal fails because the user is already gone, don't requeue endlessly
                 if (!Users.Remove(user))
                 {
+                    // If user already removed from Users collection, just ensure the id is removed from the pending set and skip
+                    if (!Users.Any(u => u.Id == user.Id))
+                    {
+                        _pendingRemoveUserSet.TryRemove(user.Id, out _);
+                        continue;
+                    }
+
                     Log.Error($"Failed to remove {user}. Requeueing");
+                    // Re-enqueue for retry. We keep the id in the set while retrying so duplicates won't be introduced.
                     _pendingRemoveUserQueue.Enqueue(user);
                     continue;
                 }
 
+                // Successful removal: clear the pending set entry and perform channel cleanup
+                _pendingRemoveUserSet.TryRemove(user.Id, out _);
                 Quit.QuitChannels(user, "Connection reset by peer");
                 removedCount++;
             }
@@ -594,3 +611,4 @@ public class Server : ChatObject, IServer
         return EnumChannelAccessResult.ERR_SECUREONLYCHAN;
     }
 }
+
