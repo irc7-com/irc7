@@ -129,6 +129,12 @@ public class SocketConnection : IConnection
         {
             _received = $"{_received}{data}";
 
+            if (_received.Length > 1024)
+            {
+                Disconnect("Line too long");
+                return;
+            }
+
             var bNewLinePending = !_received.EndsWith('\r') && !_received.EndsWith('\n');
 
             var lines = data.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
