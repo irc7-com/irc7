@@ -441,10 +441,11 @@ public class Server : ChatObject, IServer
 
                 if (user.GetDataRegulator().GetIncomingBytes() > 0)
                 {
-                    hasWork = true;
-                    backoffMs = 0;
-
-                    ProcessNextCommand(user);
+                    if (ProcessNextCommand(user))
+                    {
+                        hasWork = true;
+                        backoffMs = 0;
+                    }
                 }
 
                 ProcessNextModeOperation(user);
@@ -534,17 +535,17 @@ public class Server : ChatObject, IServer
         if (modeOperations.Count > 0) modeOperations.Dequeue().Execute();
     }
 
-    private void ProcessNextCommand(IUser user)
+    private bool ProcessNextCommand(IUser user)
     {
         var message = user.GetDataRegulator().PeekIncoming();
-        if (message == null) return;
+        if (message == null) return false;
 
         var command = message.GetCommand();
         if (command == null)
         {
             user.GetDataRegulator().PopIncoming();
             user.Send(Raws.IRCX_ERR_UNKNOWNCOMMAND_421(this, user, message.GetCommandName()));
-            return;
+            return true;
             // command not found
         }
 
@@ -571,7 +572,10 @@ public class Server : ChatObject, IServer
 
             // Check if user can register
             if (!chatFrame.User.IsRegistered()) Register.TryRegister(chatFrame);
+            return true;
         }
+
+        return false;
     }
 
     // IRCX 
