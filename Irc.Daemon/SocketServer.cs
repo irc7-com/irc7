@@ -76,7 +76,7 @@ public class SocketServer : Socket, ISocketServer
 
     public void Accept(IConnection connection)
     {
-        if (Sockets.ContainsKey(connection.GetId()))
+        if (Sockets.TryGetValue(connection.GetId(), out var existingBag) && MaxConnectionsPerIp > 0 && existingBag.Count >= MaxConnectionsPerIp)
         {
             connection.Disconnect(
                 "Too many connections"
