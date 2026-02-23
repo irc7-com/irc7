@@ -10,6 +10,7 @@ public interface ISocketServer
     int Port { get; }
     int Backlog { get; }
     int MaxConnectionsPerIp { get; }
+    int MaxConnections { get; }
     int CurrentConnections { get; }
     int BuffSize { get; }
     void Listen();

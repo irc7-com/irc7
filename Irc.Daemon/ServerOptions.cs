@@ -8,6 +8,7 @@ public class ServerOptions
     public int Backlog { get; set; }
     public int BufferSize { get; set; }
     public int MaxConnections { get; set; }
+    public int MaxConnectionsPerIp { get; set; }
     public string? Fqdn { get; set; }
     public string? ServerType { get; set; }
     public string? ChatServerIp { get; set; }
