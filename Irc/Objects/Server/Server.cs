@@ -32,6 +32,8 @@ public class Server : ChatObject, IServer
     private readonly PassportV4 _passport = new(string.Empty, string.Empty);
     private readonly ConcurrentQueue<IUser> _pendingNewUserQueue = new();
     private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
+    // Track IDs of users pending removal to avoid duplicate enqueues
+    private readonly ConcurrentDictionary<Guid, byte> _pendingRemoveUserSet = new();
     private readonly Task _processingTask;
     private readonly ISecurityManager _securityManager;
     private readonly ISocketServer _socketServer;
@@ -168,7 +170,11 @@ public class Server : ChatObject, IServer
 
     public void RemoveUser(IUser user)
     {
-        _pendingRemoveUserQueue.Enqueue(user);
+        // Prevent duplicate pending remove requests for the same user by tracking IDs
+        if (_pendingRemoveUserSet.TryAdd(user.Id, 0))
+        {
+            _pendingRemoveUserQueue.Enqueue(user);
+        }
     }
 
     public void AddChannel(IChannel channel)
@@ -431,8 +437,8 @@ public class Server : ChatObject, IServer
         {
             var hasWork = false;
 
-            RemovePendingUsers();
             AddPendingUsers();
+            RemovePendingUsers();
 
             // do stuff
             foreach (var user in Users)
@@ -441,10 +447,11 @@ public class Server : ChatObject, IServer
 
                 if (user.GetDataRegulator().GetIncomingBytes() > 0)
                 {
-                    hasWork = true;
-                    backoffMs = 0;
-
-                    ProcessNextCommand(user);
+                    if (ProcessNextCommand(user))
+                    {
+                        hasWork = true;
+                        backoffMs = 0;
+                    }
                 }
 
                 ProcessNextModeOperation(user);
@@ -465,15 +472,16 @@ public class Server : ChatObject, IServer
     {
         if (_pendingNewUserQueue.Count > 0)
         {
+            var addedCount = 0;
             // add new pending users
-            foreach (var user in _pendingNewUserQueue)
+            while (_pendingNewUserQueue.TryDequeue(out var user))
             {
                 user.Props.Oid.Value = "0";
                 Users.Add(user);
+                addedCount++;
             }
 
-            Log.Debug($"Added {_pendingNewUserQueue.Count} users. Total Users = {Users.Count}");
-            _pendingNewUserQueue.Clear();
+            Log.Debug($"Added {addedCount} users. Total Users = {Users.Count}");
         }
     }
 
@@ -481,22 +489,34 @@ public class Server : ChatObject, IServer
     {
         if (_pendingRemoveUserQueue.Count > 0)
         {
+            var removedCount = 0;
             // remove pending to be removed users
 
-            foreach (var user in _pendingRemoveUserQueue)
+            while (_pendingRemoveUserQueue.TryDequeue(out var user))
             {
+                // Try to remove; if removal fails because the user is already gone, don't requeue endlessly
                 if (!Users.Remove(user))
                 {
+                    // If user already removed from Users collection, just ensure the id is removed from the pending set and skip
+                    if (!Users.Any(u => u.Id == user.Id))
+                    {
+                        _pendingRemoveUserSet.TryRemove(user.Id, out _);
+                        continue;
+                    }
+
                     Log.Error($"Failed to remove {user}. Requeueing");
+                    // Re-enqueue for retry. We keep the id in the set while retrying so duplicates won't be introduced.
                     _pendingRemoveUserQueue.Enqueue(user);
                     continue;
                 }
 
+                // Successful removal: clear the pending set entry and perform channel cleanup
+                _pendingRemoveUserSet.TryRemove(user.Id, out _);
                 Quit.QuitChannels(user, "Connection reset by peer");
+                removedCount++;
             }
 
-            Log.Debug($"Removed {_pendingRemoveUserQueue.Count} users. Total Users = {Users.Count}");
-            _pendingRemoveUserQueue.Clear();
+            Log.Debug($"Removed {removedCount} users. Total Users = {Users.Count}");
         }
     }
 
@@ -534,17 +554,17 @@ public class Server : ChatObject, IServer
         if (modeOperations.Count > 0) modeOperations.Dequeue().Execute();
     }
 
-    private void ProcessNextCommand(IUser user)
+    private bool ProcessNextCommand(IUser user)
     {
         var message = user.GetDataRegulator().PeekIncoming();
-        if (message == null) return;
+        if (message == null) return false;
 
         var command = message.GetCommand();
         if (command == null)
         {
             user.GetDataRegulator().PopIncoming();
             user.Send(Raws.IRCX_ERR_UNKNOWNCOMMAND_421(this, user, message.GetCommandName()));
-            return;
+            return true;
             // command not found
         }
 
@@ -571,7 +591,10 @@ public class Server : ChatObject, IServer
 
             // Check if user can register
             if (!chatFrame.User.IsRegistered()) Register.TryRegister(chatFrame);
+            return true;
         }
+
+        return false;
     }
 
     // IRCX 
@@ -588,3 +611,4 @@ public class Server : ChatObject, IServer
         return EnumChannelAccessResult.ERR_SECUREONLYCHAN;
     }
 }
+

@@ -135,7 +135,7 @@ public class User : ChatObject, IUser
                 stringBuilder.Append("\r\n");
             }
 
-            Log.Info($"Sending[{_protocol.GetType().Name}/{Name}]: {stringBuilder}");
+            Log.Trace($"Sending[{_protocol.GetType().Name}/{Name}]: {stringBuilder}");
             _connection?.Send(stringBuilder.ToString());
         }
     }
@@ -145,7 +145,7 @@ public class User : ChatObject, IUser
         // Clean modes
         _modeOperations.Clear();
 
-        Log.Info($"Disconnecting[{_protocol.GetType().Name}/{Name}]: {message}");
+        Log.Trace($"Disconnecting[{_protocol.GetType().Name}/{Name}]: {message}");
         _connection?.Disconnect($"{message}\r\n");
     }
 
@@ -348,7 +348,7 @@ public class User : ChatObject, IUser
         {
             if (PingCount < Server.PingAttempts)
             {
-                Log.Debug($"Ping Count for {this} hit stage {PingCount + 1}");
+                Log.Trace($"Ping Count for {this} hit stage {PingCount + 1}");
                 PingCount++;
                 Send(Raws.RPL_PING(Server, this));
             }

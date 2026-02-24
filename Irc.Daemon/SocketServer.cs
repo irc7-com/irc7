@@ -11,17 +11,17 @@ public class SocketServer : Socket, ISocketServer
 {
     public static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    public ConcurrentDictionary<BigInteger, ConcurrentBag<IConnection>> Sockets = new();
+    public ConcurrentDictionary<BigInteger, ConcurrentDictionary<IConnection, byte>> Sockets = new();
 
 
-    public SocketServer(IPAddress ip, int port, int backlog, int maxConnectionsPerIp, int buffSize) : base(
+    public SocketServer(IPAddress ip, int port, int backlog, int maxConnections, int maxConnectionsPerIp, int buffSize) : base(
         SocketType.Stream, ProtocolType.Tcp)
     {
         Ip = ip;
         Port = port;
         Backlog = backlog;
+        MaxConnections = maxConnections;
         MaxConnectionsPerIp = maxConnectionsPerIp;
-        BuffSize = buffSize;
         BuffSize = buffSize;
     }
 
@@ -34,7 +34,8 @@ public class SocketServer : Socket, ISocketServer
     public int Backlog { get; }
     public int MaxConnectionsPerIp { get; }
     public int BuffSize { get; }
-    public int CurrentConnections { get; } = 0;
+    public int MaxConnections { get; }
+    public int CurrentConnections { get; private set; } = 0;
 
     public new void Listen()
     {
@@ -76,7 +77,13 @@ public class SocketServer : Socket, ISocketServer
 
     public void Accept(IConnection connection)
     {
-        if (Sockets.ContainsKey(connection.GetId()))
+        if (MaxConnections > 0 && CurrentConnections >= MaxConnections)
+        {
+            connection.Disconnect("Server is full");
+            return;
+        }
+
+        if (Sockets.TryGetValue(connection.GetId(), out var existingBag) && MaxConnectionsPerIp > 0 && existingBag.Count >= MaxConnectionsPerIp)
         {
             connection.Disconnect(
                 "Too many connections"
@@ -86,10 +93,11 @@ public class SocketServer : Socket, ISocketServer
 
         connection.OnDisconnect += ClientDisconnected;
 
-        var socketCollection = Sockets.GetOrAdd(connection.GetId(), new ConcurrentBag<IConnection>());
+        var socketCollection = Sockets.GetOrAdd(connection.GetId(), new ConcurrentDictionary<IConnection, byte>());
         Log.Info($"Current keys: {Sockets.Count} / Current sockets: {socketCollection.Count}");
 
-        socketCollection.Add(connection);
+        socketCollection.TryAdd(connection, 0);
+        CurrentConnections++;
         connection.Accept();
 
         OnClientConnected?.Invoke(this, connection);
@@ -97,20 +105,27 @@ public class SocketServer : Socket, ISocketServer
 
     private void ClientDisconnected(object? sender, BigInteger bigIP)
     {
-        if (!Sockets.ContainsKey(bigIP))
+        if (sender is not IConnection connection) return;
+
+        if (!Sockets.TryGetValue(bigIP, out var socketCollection))
         {
             Log.Error($"ClientDisconnected: Client {bigIP} is not in the sockets collection");
             return;
         }
 
-        var bag = Sockets[bigIP];
-        bag.TryTake(out var connection);
-
-        if (connection == null)
+        if (!socketCollection.TryRemove(connection, out _))
         {
             Log.Info(
-                $"{sender}[{bigIP}] has disconnected but failed to TryTake / total: {Sockets.Count} ");
+                $"{sender}[{bigIP}] has disconnected but failed to remove from collection / total: {Sockets.Count} ");
             return;
+        }
+
+        CurrentConnections--;
+
+        // Clean up empty dictionary
+        if (socketCollection.IsEmpty)
+        {
+            Sockets.TryRemove(bigIP, out _);
         }
 
         OnClientDisconnected?.Invoke(this, connection);
