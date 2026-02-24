@@ -11,7 +11,7 @@ public class SocketServer : Socket, ISocketServer
 {
     public static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    public ConcurrentDictionary<BigInteger, ConcurrentBag<IConnection>> Sockets = new();
+    public ConcurrentDictionary<BigInteger, ConcurrentDictionary<IConnection, byte>> Sockets = new();
 
 
     public SocketServer(IPAddress ip, int port, int backlog, int maxConnections, int maxConnectionsPerIp, int buffSize) : base(
@@ -93,10 +93,10 @@ public class SocketServer : Socket, ISocketServer
 
         connection.OnDisconnect += ClientDisconnected;
 
-        var socketCollection = Sockets.GetOrAdd(connection.GetId(), new ConcurrentBag<IConnection>());
+        var socketCollection = Sockets.GetOrAdd(connection.GetId(), new ConcurrentDictionary<IConnection, byte>());
         Log.Info($"Current keys: {Sockets.Count} / Current sockets: {socketCollection.Count}");
 
-        socketCollection.Add(connection);
+        socketCollection.TryAdd(connection, 0);
         CurrentConnections++;
         connection.Accept();
 
@@ -105,21 +105,27 @@ public class SocketServer : Socket, ISocketServer
 
     private void ClientDisconnected(object? sender, BigInteger bigIP)
     {
-        if (!Sockets.ContainsKey(bigIP))
+        if (sender is not IConnection connection) return;
+
+        if (!Sockets.TryGetValue(bigIP, out var socketCollection))
         {
             Log.Error($"ClientDisconnected: Client {bigIP} is not in the sockets collection");
             return;
         }
 
-        var bag = Sockets[bigIP];
-        bag.TryTake(out var connection);
-
-        CurrentConnections--;
-        if (connection == null)
+        if (!socketCollection.TryRemove(connection, out _))
         {
             Log.Info(
-                $"{sender}[{bigIP}] has disconnected but failed to TryTake / total: {Sockets.Count} ");
+                $"{sender}[{bigIP}] has disconnected but failed to remove from collection / total: {Sockets.Count} ");
             return;
+        }
+
+        CurrentConnections--;
+
+        // Clean up empty dictionary
+        if (socketCollection.IsEmpty)
+        {
+            Sockets.TryRemove(bigIP, out _);
         }
 
         OnClientDisconnected?.Invoke(this, connection);

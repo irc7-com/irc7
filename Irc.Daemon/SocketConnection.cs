@@ -61,13 +61,26 @@ public class SocketConnection : IConnection
     {
         var sendAsync = new SocketAsyncEventArgs();
         sendAsync.SetBuffer(message.ToByteArray());
-        sendAsync.Completed += (sender, args) => OnSend?.Invoke(this, message);
+        sendAsync.Completed += (sender, args) =>
+        {
+            OnSend?.Invoke(this, message);
+            args.Dispose();
+        };
 
         if (!_socket.Connected) OnDisconnect?.Invoke(this, GetId());
 
         if (_socket.Connected)
+        {
             if (!_socket.SendAsync(sendAsync)) // Report data is sent
+            {
                 OnSend?.Invoke(this, message.Substring(sendAsync.Offset, sendAsync.BytesTransferred));
+                sendAsync.Dispose();
+            }
+        }
+        else
+        {
+            sendAsync.Dispose();
+        }
     }
 
     public void Disconnect(string message = "")
@@ -85,14 +98,16 @@ public class SocketConnection : IConnection
         if (!_socket.Connected) OnDisconnect?.Invoke(this, GetId());
     }
 
+    private SocketAsyncEventArgs? _recvAsync;
+
     public void Accept()
     {
-        var recvAsync = new SocketAsyncEventArgs();
-        recvAsync.UserToken = GetId();
-        recvAsync.SetBuffer(new byte[_socket.SendBufferSize]);
-        recvAsync.Completed += (sender, args) => { ReceiveData(args); };
+        _recvAsync = new SocketAsyncEventArgs();
+        _recvAsync.UserToken = GetId();
+        _recvAsync.SetBuffer(new byte[4096]);
+        _recvAsync.Completed += (sender, args) => { ReceiveData(args); };
         // If Sync receive from connect then process data
-        if (!_socket.ReceiveAsync(recvAsync)) ReceiveData(recvAsync);
+        if (!_socket.ReceiveAsync(_recvAsync)) ReceiveData(_recvAsync);
     }
 
     public bool TryOverrideRemoteAddress(string ip, string hostname)
@@ -176,7 +191,12 @@ public class SocketConnection : IConnection
         }
         finally
         {
-            if (!_socket.Connected) OnDisconnect?.Invoke(this, GetId());
+            if (!_socket.Connected)
+            {
+                _recvAsync?.Dispose();
+                _recvAsync = null;
+                OnDisconnect?.Invoke(this, GetId());
+            }
         }
     }
 }

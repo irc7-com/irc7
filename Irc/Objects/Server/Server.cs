@@ -437,8 +437,8 @@ public class Server : ChatObject, IServer
         {
             var hasWork = false;
 
-            RemovePendingUsers();
             AddPendingUsers();
+            RemovePendingUsers();
 
             // do stuff
             foreach (var user in Users)
