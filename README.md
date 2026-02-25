@@ -3,7 +3,8 @@ IRC7 Project
 
 About:
 
-Created & Maintained by [@jyonxo](https://github.com/jyonxo) and [@realJoshByrnes](https://github.com/realJoshByrnes)
+Created by [@jyonxo](https://github.com/jyonxo) and [@realJoshByrnes](https://github.com/realJoshByrnes).
+Maintained by [@jyonxo](https://github.com/jyonxo), [@realJoshByrnes](https://github.com/realJoshByrnes) and [@joachimjusth](https://github.com/joachimjusth).
 msnld is hosted by @realJoshByrnes
 irc7 is hosted by SkyCrest
 

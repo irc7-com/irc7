@@ -1,0 +1,7 @@
+version: "3.9"
+
+services:
+  keydb:
+    image: eqalpha/keydb:latest
+    ports:
+      - "7001:6379"

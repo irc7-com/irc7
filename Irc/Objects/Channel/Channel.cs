@@ -29,6 +29,9 @@ public class Channel : ChatObject, IChannel
         Props.Creation.Value = Creation.ToString();
     }
 
+    public bool Store { get; set; } = false;
+    public DateTime? EmptySince { get; set; } = null;
+
     public string GetName()
     {
         return Name;
@@ -400,6 +403,7 @@ public class Channel : ChatObject, IChannel
 
         _members.Add(member);
         user.AddChannel(this, member);
+        EmptySince = null; // Channel is no longer empty
         return member;
     }
 
@@ -408,6 +412,11 @@ public class Channel : ChatObject, IChannel
         var member = _members.Where(m => m.GetUser() == user).FirstOrDefault();
         if (member != null) _members.Remove(member);
         user.RemoveChannel(this);
+
+        if (_members.Count == 0 && !Store)
+        {
+            EmptySince = DateTime.UtcNow;
+        }
     }
 
     public void SetName(string Name)

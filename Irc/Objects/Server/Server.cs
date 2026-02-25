@@ -37,6 +37,8 @@ public class Server : ChatObject, IServer
     private readonly Task _processingTask;
     private readonly ISecurityManager _securityManager;
     private readonly ISocketServer _socketServer;
+    private readonly Irc.Services.CacheManager _cacheManager;
+    private System.Timers.Timer? _heartbeatTimer;
 
     public IList<IChannel> Channels;
     public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
@@ -48,8 +50,10 @@ public class Server : ChatObject, IServer
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
         IList<IChannel> channels,
-        ICredentialProvider? credentialProvider = null)
+        ICredentialProvider? credentialProvider = null,
+        string? redisUrl = null)
     {
+        _cacheManager = new Irc.Services.CacheManager(redisUrl);
         Name = dataStore.Get("Name");
         Title = Name;
         _socketServer = socketServer;
@@ -119,6 +123,34 @@ public class Server : ChatObject, IServer
         _DataStore.Set("supported.user.modes", new UserModes().GetSupportedModes());
     }
 
+    public virtual void SetupHeartbeat()
+    {
+        if (_cacheManager.IsConnected && !IsDirectoryServer)
+        {
+            _heartbeatTimer = new System.Timers.Timer(10000); // 10 seconds
+            _heartbeatTimer.Elapsed += (s, e) => SendHeartbeat();
+            _heartbeatTimer.AutoReset = true;
+            _heartbeatTimer.Start();
+            SendHeartbeat(); // Send first heartbeat immediately
+        }
+    }
+
+    private void SendHeartbeat()
+    {
+        var fqdn = RemoteIp;
+        var port = _socketServer.Port;
+        var serverId = $"{fqdn}:{port}";
+        _cacheManager.RegisterServer(serverId, fqdn, port, Name, Users.Count);
+
+        // Update all active rooms to refresh their current state (users, topic, etc.)
+        foreach (var channel in Channels.ToList())
+        {
+            var category = channel.Props.GetProp("CATEGORY")?.Value ?? "UL";
+            var topic = channel.Props.Topic.Value ?? string.Empty;
+            _cacheManager.RegisterRoom(channel.GetName(), serverId, category, topic, channel.GetMembers().Count);
+        }
+    }
+
     public string[] SupportPackages { get; }
 
     public DateTime CreationDate => _DataStore.GetAs<DateTime>("creation");
@@ -151,6 +183,7 @@ public class Server : ChatObject, IServer
     public bool DisableGuestMode { set; get; }
     public bool DisableUserRegistration { get; set; }
     public bool IsDirectoryServer { get; set; }
+    public Irc.Services.CacheManager CacheManager => _cacheManager;
 
     public void SetMotd(string motd)
     {
@@ -180,12 +213,23 @@ public class Server : ChatObject, IServer
     public void AddChannel(IChannel channel)
     {
         Channels.Add(channel);
+        if (_cacheManager.IsConnected && !IsDirectoryServer)
+        {
+            var serverId = $"{RemoteIp}:{_socketServer.Port}";
+            var category = channel.Props.GetProp("CATEGORY")?.Value ?? "UL";
+            var topic = channel.Props.Topic.Value ?? string.Empty;
+            _cacheManager.RegisterRoom(channel.GetName(), serverId, category, topic, channel.GetMembers().Count);
+        }
     }
 
     public void RemoveChannel(IChannel channel)
     {
         InMemoryChannelRepository.Remove(channel.GetName());
         Channels.Remove(channel);
+        if (_cacheManager.IsConnected && !IsDirectoryServer)
+        {
+            _cacheManager.UnregisterRoom(channel.GetName());
+        }
     }
 
     public virtual IChannel CreateChannel(string name)
@@ -319,6 +363,19 @@ public class Server : ChatObject, IServer
 
     public void Shutdown()
     {
+        _heartbeatTimer?.Stop();
+        
+        if (_cacheManager.IsConnected && !IsDirectoryServer)
+        {
+            var serverId = $"{RemoteIp}:{_socketServer.Port}";
+            _cacheManager.UnregisterServer(serverId);
+            
+            foreach (var channel in Channels)
+            {
+                _cacheManager.UnregisterRoom(channel.GetName());
+            }
+        }
+
         _cancellationTokenSource.Cancel();
         _processingTask.Wait();
     }
@@ -430,6 +487,8 @@ public class Server : ChatObject, IServer
         if (anonymousConnections.HasValue) AnonymousConnections = anonymousConnections.Value;
     }
 
+    private DateTime _lastChannelCleanup = DateTime.UtcNow;
+
     private void Process()
     {
         var backoffMs = 0;
@@ -439,6 +498,22 @@ public class Server : ChatObject, IServer
 
             AddPendingUsers();
             RemovePendingUsers();
+
+            // Clean up empty channels that have been empty for > 5 minutes
+            if ((DateTime.UtcNow - _lastChannelCleanup).TotalSeconds >= 60)
+            {
+                _lastChannelCleanup = DateTime.UtcNow;
+                var emptyChannels = Channels.ToList().Where(c => 
+                    !c.Store && 
+                    c.GetMembers().Count == 0 && 
+                    c.EmptySince.HasValue && 
+                    (DateTime.UtcNow - c.EmptySince.Value).TotalMinutes >= 5).ToList();
+                
+                foreach (var emptyChannel in emptyChannels)
+                {
+                    RemoveChannel(emptyChannel);
+                }
+            }
 
             // do stuff
             foreach (var user in Users)

@@ -20,7 +20,8 @@ public class DirectoryServer : Server
         IDataStore dataStore,
         IList<IChannel> channels,
         ICredentialProvider? ntlmCredentialProvider = null,
-        string? chatServerIp = null
+        string? chatServerIp = null,
+        string? redisUrl = null
     )
         : base(
             socketServer,
@@ -28,7 +29,8 @@ public class DirectoryServer : Server
             floodProtectionManager,
             dataStore,
             channels,
-            ntlmCredentialProvider
+            ntlmCredentialProvider,
+            redisUrl
         )
     {
         DisableGuestMode = true;
