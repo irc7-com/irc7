@@ -227,6 +227,7 @@ public static class Resources
     public static string ChannelPropName = "NAME";
     public static string ChannelPropTopic = "TOPIC";
     public static string ChannelPropLag = "LAG";
+    public static string ChannelPropCategory = "CATEGORY";
     public static string ChannelPropLanguage = "LANGUAGE";
     public static string ChannelPropSubject = "SUBJECT";
     public static string ChannelPropMemberkey = "MEMBERKEY";

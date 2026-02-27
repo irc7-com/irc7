@@ -228,6 +228,12 @@ internal class Program
                 prop?.SetValue(keyValuePair.Value);
             }
 
+            if (!string.IsNullOrEmpty(defaultChannel.Category))
+            {
+                var categoryProp = channel.Props.GetProp("CATEGORY");
+                categoryProp?.SetValue(defaultChannel.Category);
+            }
+
             server.AddChannel(channel);
         }
     }

@@ -145,7 +145,8 @@ public class Server : ChatObject, IServer
         // Update all active rooms to refresh their current state (users, topic, etc.)
         foreach (var channel in Channels.ToList())
         {
-            var category = channel.Props.GetProp("CATEGORY")?.Value ?? "UL";
+            var categoryProp = channel.Props.GetProp("CATEGORY")?.Value;
+            var category = string.IsNullOrWhiteSpace(categoryProp) ? "UL" : categoryProp;
             var topic = channel.Props.Topic.Value ?? string.Empty;
             _cacheManager.RegisterRoom(channel.GetName(), serverId, category, topic, channel.GetMembers().Count);
         }
@@ -229,7 +230,8 @@ public class Server : ChatObject, IServer
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
             var serverId = $"{RemoteIp}:{_socketServer.Port}";
-            var category = channel.Props.GetProp("CATEGORY")?.Value ?? "UL";
+            var categoryProp = channel.Props.GetProp("CATEGORY")?.Value;
+            var category = string.IsNullOrWhiteSpace(categoryProp) ? "UL" : categoryProp;
             var topic = channel.Props.Topic.Value ?? string.Empty;
             
             var success = _cacheManager.RegisterRoom(channel.GetName(), serverId, category, topic, channel.GetMembers().Count);

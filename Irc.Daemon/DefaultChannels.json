@@ -10,7 +10,8 @@
     "Props": {
       "OWNERKEY": "OWNERKEY",
       "HOSTKEY": "HOSTKEY"
-    }
+    },
+    "Category": "GN"
   },
   {
     "Name": "Test",
