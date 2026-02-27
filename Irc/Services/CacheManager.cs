@@ -49,9 +49,9 @@ public class CacheManager
     }
 
     // Registers a room to a specific ACS
-    public void RegisterRoom(string roomName, string serverId, string category, string topic, int userCount)
+    public bool RegisterRoom(string roomName, string serverId, string category, string topic, int userCount)
     {
-        if (_db == null) return;
+        if (_db == null) return true;
 
         var payload = JsonSerializer.Serialize(new
         {
@@ -61,7 +61,32 @@ public class CacheManager
             UserCount = userCount
         });
 
-        _db.HashSet("acs:rooms", roomName, payload);
+        var script = @"
+            local exists = redis.call('HEXISTS', 'acs:rooms', ARGV[1])
+            if exists == 0 then
+                redis.call('HSET', 'acs:rooms', ARGV[1], ARGV[2])
+                return 1
+            else
+                local current = redis.call('HGET', 'acs:rooms', ARGV[1])
+                local decoded = cjson.decode(current)
+                if decoded.ServerId == ARGV[3] then
+                    redis.call('HSET', 'acs:rooms', ARGV[1], ARGV[2])
+                    return 1
+                end
+                return 0
+            end
+        ";
+
+        try 
+        {
+            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { roomName, payload, serverId });
+            return result == 1;
+        } 
+        catch (Exception ex) 
+        {
+            Console.WriteLine($"[CacheManager] Failed to run LUA script on Redis: {ex.Message}");
+            return false;
+        }
     }
 
     // Unregisters a room

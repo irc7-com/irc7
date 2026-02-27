@@ -39,10 +39,10 @@ public interface IServer: IChatObject
     Version ServerVersion { set; get; }
     void AddUser(IUser user);
     void RemoveUser(IUser user);
-    void AddChannel(IChannel channel);
+    bool AddChannel(IChannel channel);
     void RemoveChannel(IChannel channel);
-    IChannel CreateChannel(string name);
-    IChannel CreateChannel(IUser creator, string name, string key);
+    IChannel? CreateChannel(string name);
+    IChannel? CreateChannel(IUser creator, string name, string key);
     IUser CreateUser(IConnection connection);
     IList<IUser> GetUsers();
     IUser? GetUserByNickname(string nickname);
@@ -64,4 +64,5 @@ public interface IServer: IChatObject
     string[] GetMotd();
     void SetMotd(string motd);
     void ProcessCookie(IUser user, string name, string value);
+    bool IsChannelHostedElsewhere(string channelName, out string? existingServerId);
 }

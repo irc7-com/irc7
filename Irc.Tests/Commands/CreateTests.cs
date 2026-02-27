@@ -27,6 +27,8 @@ public class CreateTests
 
         _mockChatFrame.Setup(cf => cf.Server).Returns(_mockServer.Object);
         _mockChatFrame.Setup(cf => cf.User).Returns(_mockUser.Object);
+
+        _mockServer.Setup(s => s.CreateChannel(It.IsAny<IUser>(), It.IsAny<string>(), It.IsAny<string>())).Returns(new Mock<IChannel>().Object);
     }
 
     [Test]

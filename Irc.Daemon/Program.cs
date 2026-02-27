@@ -199,24 +199,23 @@ internal class Program
             JsonSerializer.Deserialize<List<DefaultChannel>>(File.ReadAllText("DefaultChannels.json"));
         if (defaultChannels == null) return;
 
-        var baseServer = server as Server;
-
         foreach (var defaultChannel in defaultChannels)
         {
             var name = $"%#{defaultChannel.Name}";
 
             // If we're an ACS and connected to Redis, check if another ACS already hosts this channel
-            if (baseServer != null && baseServer.CacheManager.IsConnected && !baseServer.IsDirectoryServer)
+            if (server.IsChannelHostedElsewhere(name, out var existingServerId))
             {
-                var existingServerId = baseServer.CacheManager.GetServerForRoom(name);
-                if (!string.IsNullOrEmpty(existingServerId))
-                {
-                    Log.Info($"Skipping default channel {name}, already hosted on {existingServerId}");
-                    continue;
-                }
+                Log.Info($"Skipping default channel {name}, already hosted on {existingServerId}");
+                continue;
             }
 
             var channel = server.CreateChannel(name);
+            if (channel == null)
+            {
+                Log.Info($"Skipping default channel {name}, could not create channel (maybe race condition?)");
+                continue;
+            }
             channel.Store = true;
 
             channel.Props.Topic.Value = defaultChannel.Topic;

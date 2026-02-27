@@ -70,6 +70,13 @@ public class Join : Command, ICommand
             {
                 isCreator = true;
                 channel = server.CreateChannel(user, channelName, key);
+                
+                if (channel == null)
+                {
+                    // Could not create channel (e.g. race condition / claimed by another server)
+                    user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
+                    continue;
+                }
             }
 
             if (channel.HasUser(user))

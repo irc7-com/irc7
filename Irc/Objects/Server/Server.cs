@@ -185,6 +185,20 @@ public class Server : ChatObject, IServer
     public bool IsDirectoryServer { get; set; }
     public Irc.Services.CacheManager CacheManager => _cacheManager;
 
+    public bool IsChannelHostedElsewhere(string channelName, out string? existingServerId)
+    {
+        existingServerId = null;
+        if (_cacheManager.IsConnected && !IsDirectoryServer)
+        {
+            existingServerId = _cacheManager.GetServerForRoom(channelName);
+            if (!string.IsNullOrEmpty(existingServerId))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void SetMotd(string motd)
     {
         var lines = motd.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
@@ -210,16 +224,20 @@ public class Server : ChatObject, IServer
         }
     }
 
-    public void AddChannel(IChannel channel)
+    public bool AddChannel(IChannel channel)
     {
-        Channels.Add(channel);
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
             var serverId = $"{RemoteIp}:{_socketServer.Port}";
             var category = channel.Props.GetProp("CATEGORY")?.Value ?? "UL";
             var topic = channel.Props.Topic.Value ?? string.Empty;
-            _cacheManager.RegisterRoom(channel.GetName(), serverId, category, topic, channel.GetMembers().Count);
+            
+            var success = _cacheManager.RegisterRoom(channel.GetName(), serverId, category, topic, channel.GetMembers().Count);
+            if (!success) return false;
         }
+        
+        Channels.Add(channel);
+        return true;
     }
 
     public void RemoveChannel(IChannel channel)
@@ -232,7 +250,7 @@ public class Server : ChatObject, IServer
         }
     }
 
-    public virtual IChannel CreateChannel(string name)
+    public virtual IChannel? CreateChannel(string name)
     {
         return new Channel.Channel(name);
     }
@@ -306,16 +324,20 @@ public class Server : ChatObject, IServer
         return _DataStore;
     }
 
-    public virtual IChannel CreateChannel(IUser creator, string name, string key)
+    public virtual IChannel? CreateChannel(IUser creator, string name, string key)
     {
         var channel = CreateChannel(name);
+        if (channel == null) return null;
+        
         var chanProps = (ChannelProps)channel.Props;
         chanProps.Topic.Value = name;
         chanProps.OwnerKey.Value = key;
         channel.Modes.NoExtern.ModeValue = true;
         channel.Modes.TopicOp.ModeValue = true;
         channel.Modes.UserLimit.Value = 50;
-        AddChannel(channel);
+        
+        if (!AddChannel(channel)) return null;
+        
         return channel;
     }
 

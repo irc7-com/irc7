@@ -22,33 +22,28 @@ internal class Finds : Command, ICommand
         string? ip = server.ChatServerIp;
         string? port = server.ChatServerPort;
 
-        if (server.CacheManager.IsConnected)
+        if (!server.CacheManager.IsConnected)
         {
-            var roomName = chatFrame.ChatMessage.Parameters.FirstOrDefault() ?? string.Empty;
-            
-            // Try to find if room exists
-            var existingServerId = server.CacheManager.GetServerForRoom(roomName);
-            Irc.Services.AcsServerInfo? targetServer = null;
-
-            if (!string.IsNullOrEmpty(existingServerId))
+            if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(port))
             {
-                targetServer = server.CacheManager.GetActiveServers()
-                    .FirstOrDefault(s => s.ServerId == existingServerId);
+                // Fallback or error if no servers available
+                chatFrame.User.Send(Irc.Constants.Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
+                return;
             }
 
-            // Load balance to server with least connections
-            if (targetServer == null)
-            {
-                targetServer = server.CacheManager.GetActiveServers()
-                    .OrderBy(s => s.UsersOnline)
-                    .FirstOrDefault();
-            }
+            chatFrame.User.Send(DirectoryRaws.RPL_FINDS_MSN(server, chatFrame.User, ip, port));
+            return;
+        }
 
-            if (targetServer != null)
-            {
-                ip = targetServer.Ip;
-                port = targetServer.Port.ToString();
-            }
+        var roomName = chatFrame.ChatMessage.Parameters.FirstOrDefault() ?? string.Empty;
+        
+        // Try to find if room exists or load balance to server with least connections
+        var targetServer = server.GetTargetServerForRoom(roomName);
+
+        if (targetServer != null)
+        {
+            ip = targetServer.Ip;
+            port = targetServer.Port.ToString();
         }
 
         if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(port))
