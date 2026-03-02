@@ -148,7 +148,26 @@ public class Server : ChatObject, IServer
             var categoryProp = channel.Props.GetProp("CATEGORY")?.Value;
             var category = string.IsNullOrWhiteSpace(categoryProp) ? "UL" : categoryProp;
             var topic = channel.Props.Topic.Value ?? string.Empty;
-            _cacheManager.RegisterRoom(channel.GetName(), serverId, category, topic, channel.GetMembers().Count);
+            var modes = channel.Modes.GetModeString();
+            var managed = modes.Contains('r');
+            var locale = channel.Props.GetProp("LOCALE")?.Value ?? string.Empty;
+            var language = channel.Props.Language.Value ?? string.Empty;
+            var currentUsers = channel.GetMembers().Count;
+            var maxUsers = channel.Modes.UserLimit.Value;
+            
+            _cacheManager.RegisterRoom(
+                channel.GetName(), 
+                serverId, 
+                category, 
+                channel.GetName(),
+                topic, 
+                modes, 
+                managed, 
+                locale, 
+                language, 
+                currentUsers, 
+                maxUsers
+            );
         }
     }
 
@@ -233,8 +252,26 @@ public class Server : ChatObject, IServer
             var categoryProp = channel.Props.GetProp("CATEGORY")?.Value;
             var category = string.IsNullOrWhiteSpace(categoryProp) ? "UL" : categoryProp;
             var topic = channel.Props.Topic.Value ?? string.Empty;
+            var modes = channel.Modes.GetModeString();
+            var managed = modes.Contains('r');
+            var locale = channel.Props.GetProp("LOCALE")?.Value ?? string.Empty;
+            var language = channel.Props.Language.Value ?? string.Empty;
+            var currentUsers = channel.GetMembers().Count;
+            var maxUsers = channel.Modes.UserLimit.Value;
             
-            var success = _cacheManager.RegisterRoom(channel.GetName(), serverId, category, topic, channel.GetMembers().Count);
+            var success = _cacheManager.RegisterRoom(
+                channel.GetName(), 
+                serverId, 
+                category, 
+                channel.GetName(),
+                topic, 
+                modes, 
+                managed, 
+                locale, 
+                language, 
+                currentUsers, 
+                maxUsers
+            );
             if (!success) return false;
         }
         

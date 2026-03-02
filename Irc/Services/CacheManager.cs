@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using StackExchange.Redis;
 
 namespace Irc.Services;
@@ -49,16 +50,22 @@ public class CacheManager
     }
 
     // Registers a room to a specific ACS
-    public bool RegisterRoom(string roomName, string serverId, string category, string topic, int userCount)
+    public bool RegisterRoom(string roomName, string serverId, string category, string name, string topic, string modes, bool managed, string locale, string language, int currentUsers, int maxUsers)
     {
         if (_db == null) return true;
 
-        var payload = JsonSerializer.Serialize(new
+        var payload = JsonSerializer.Serialize(new AcsRoomInfo
         {
             ServerId = serverId,
             Category = category,
+            Name = name,
             Topic = topic,
-            UserCount = userCount
+            Modes = modes,
+            Managed = managed,
+            Locale = locale,
+            Language = language,
+            CurrentUsers = currentUsers,
+            MaxUsers = maxUsers
         });
 
         var script = @"
@@ -69,7 +76,7 @@ public class CacheManager
             else
                 local current = redis.call('HGET', 'acs:rooms', ARGV[1])
                 local decoded = cjson.decode(current)
-                if decoded.ServerId == ARGV[3] then
+                if decoded.serverId == ARGV[3] then
                     redis.call('HSET', 'acs:rooms', ARGV[1], ARGV[2])
                     return 1
                 end
@@ -148,8 +155,33 @@ public class AcsServerInfo
 
 public class AcsRoomInfo
 {
+    [JsonPropertyName("serverId")]
     public string ServerId { get; set; } = string.Empty;
+
+    [JsonPropertyName("category")]
     public string Category { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("topic")]
     public string Topic { get; set; } = string.Empty;
-    public int UserCount { get; set; }
+
+    [JsonPropertyName("modes")]
+    public string Modes { get; set; } = string.Empty;
+
+    [JsonPropertyName("managed")]
+    public bool Managed { get; set; }
+
+    [JsonPropertyName("locale")]
+    public string Locale { get; set; } = string.Empty;
+
+    [JsonPropertyName("language")]
+    public string Language { get; set; } = string.Empty;
+
+    [JsonPropertyName("currentUsers")]
+    public int CurrentUsers { get; set; }
+
+    [JsonPropertyName("maxUsers")]
+    public int MaxUsers { get; set; }
 }
