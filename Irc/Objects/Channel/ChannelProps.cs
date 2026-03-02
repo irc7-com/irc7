@@ -93,6 +93,15 @@ internal class ChannelProps : PropCollection, IChannelProps
         true
     );
 
+    // The CATEGORY channel property is the current category of the channel.
+    public PropRule Category { get; } = new(
+        Resources.ChannelPropCategory, 
+        EnumChannelAccessLevel.ChatMember,
+        EnumChannelAccessLevel.ChatHost, 
+        Resources.GenericProps, 
+        string.Empty
+    );
+
     // The LANGUAGE channel property is the preferred language type. The LANGUAGE property is a string limited to 31 characters. 
     public PropRule Language { get; } = new(
         Resources.ChannelPropLanguage, 
@@ -233,6 +242,7 @@ internal class ChannelProps : PropCollection, IChannelProps
         AddProp(Oid);
         AddProp(Name);
         AddProp(Creation);
+        AddProp(Category);
         AddProp(Language);
         AddProp(OwnerKey);
         AddProp(HostKey);

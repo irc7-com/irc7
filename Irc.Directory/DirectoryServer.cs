@@ -13,6 +13,26 @@ public class DirectoryServer : Server
     public readonly string ChatServerIp = string.Empty;
     public readonly string ChatServerPort = string.Empty;
 
+    public Irc.Services.AcsServerInfo? GetTargetServerForRoom(string roomName)
+    {
+        if (!CacheManager.IsConnected) return null;
+
+        var activeServers = CacheManager.GetActiveServers().ToList();
+        var existingServerId = CacheManager.GetServerForRoom(roomName);
+        
+        Irc.Services.AcsServerInfo? targetServer = null;
+
+        if (!string.IsNullOrEmpty(existingServerId))
+        {
+            targetServer = activeServers.FirstOrDefault(s => s.ServerId == existingServerId);
+        }
+
+        // Load balance to server with least connections
+        targetServer ??= activeServers.OrderBy(s => s.UsersOnline).FirstOrDefault();
+
+        return targetServer;
+    }
+
     public DirectoryServer(
         ISocketServer socketServer,
         ISecurityManager securityManager,
@@ -20,7 +40,8 @@ public class DirectoryServer : Server
         IDataStore dataStore,
         IList<IChannel> channels,
         ICredentialProvider? ntlmCredentialProvider = null,
-        string? chatServerIp = null
+        string? chatServerIp = null,
+        string? redisUrl = null
     )
         : base(
             socketServer,
@@ -28,7 +49,8 @@ public class DirectoryServer : Server
             floodProtectionManager,
             dataStore,
             channels,
-            ntlmCredentialProvider
+            ntlmCredentialProvider,
+            redisUrl
         )
     {
         DisableGuestMode = true;

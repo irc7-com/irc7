@@ -73,9 +73,19 @@ public class Create : Command, ICommand
             OwnerKey = chatFrame.ChatMessage.Parameters[6],
             Unknown = unknownValue,
         };
+        
+        var createdChannel = chatFrame.Server.CreateChannel(chatFrame.User, channel.ChannelName, channel.OwnerKey);
+        
+        if (createdChannel == null)
+        {
+            // Another server claimed it first
+            chatFrame.User.Send(
+                Raws.IRCX_RPL_FINDS_CHANNELEXISTS_705(chatFrame.Server, chatFrame.User)
+            );
+            return;
+        }
+        
         InMemoryChannelRepository.Add(channel);
-        chatFrame.Server.CreateChannel(chatFrame.User, channel.ChannelName, channel.OwnerKey);
-
         chatFrame.User.Send(Raws.IRCX_RPL_FINDS_613(chatFrame.Server, chatFrame.User));
     }
 

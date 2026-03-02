@@ -9,6 +9,8 @@ public interface IChannel : IChatObject
     new IAccessList Access { get; }
     new IChannelModes Modes { get; }
     new IChannelProps Props { get; }
+    bool Store { get; set; }
+    DateTime? EmptySince { get; set; }
     string GetName();
     IChannelMember? GetMember(IUser user);
     IChannelMember? GetMemberByNickname(string nickname);

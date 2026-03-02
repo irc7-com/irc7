@@ -40,12 +40,17 @@ internal class Program
 
             var credentialProvider = await LoadCredentials();
 
-            _server = ConfigureServer(serverType, socketServer, credentialProvider, options.ChatServerIp);
+            _server = ConfigureServer(serverType, socketServer, credentialProvider, options.ChatServerIp, options.RedisUrl);
 
             _server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0);
             _server.RemoteIp = options.Fqdn ?? "localhost";
 
             InitializeDefaultChannels(_server, serverType);
+
+            if (_server is Server baseServer)
+            {
+                baseServer.SetupHeartbeat();
+            }
 
             _cancellationTokenSource = new CancellationTokenSource();
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
@@ -106,6 +111,9 @@ internal class Program
         var chatServerIpOption =
             new Option<string>(["-s", "--server"], "The Chat Server Ip and Port e.g. 127.0.0.1:6667")
                 { ArgumentHelpName = "server" };
+        var redisUrlOption =
+            new Option<string>(["-r", "--redis"], "The Redis/KeyDB connection string (optional, enables caching and ADS/ACS load balancing)")
+                { ArgumentHelpName = "redisurl" };
 
         var options = new Dictionary<string, Option>
         {
@@ -118,7 +126,8 @@ internal class Program
             { "maxConnectionsPerIp", maxConnectionsPerIpOption },
             { "fqdn", fqdnOption },
             { "serverType", serverTypeOption },
-            { "chatServerIp", chatServerIpOption }
+            { "chatServerIp", chatServerIpOption },
+            { "redisUrl", redisUrlOption }
         };
 
         foreach (var option in options.Values) rootCommand.AddOption(option);
@@ -139,12 +148,13 @@ internal class Program
             MaxConnectionsPerIp = context.ParseResult.GetValueForOption((Option<int>)optionsDict["maxConnectionsPerIp"]),
             Fqdn = context.ParseResult.GetValueForOption((Option<string>)optionsDict["fqdn"]),
             ServerType = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverType"]),
-            ChatServerIp = context.ParseResult.GetValueForOption((Option<string>)optionsDict["chatServerIp"])
+            ChatServerIp = context.ParseResult.GetValueForOption((Option<string>)optionsDict["chatServerIp"]),
+            RedisUrl = context.ParseResult.GetValueForOption((Option<string>)optionsDict["redisUrl"])
         };
     }
 
     private static Server ConfigureServer(IrcType serverType, SocketServer socketServer,
-        NtlmCredentials credentialProvider, string? chatServerIp)
+        NtlmCredentials credentialProvider, string? chatServerIp, string? redisUrl)
     {
         var floodProtectionManager = new FloodProtectionManager();
         var securityManager = new SecurityManager();
@@ -153,19 +163,19 @@ internal class Program
         return serverType switch
         {
             IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, securityManager,
-                floodProtectionManager, dataStoreServerConfig, channels, chatServerIp),
+                floodProtectionManager, dataStoreServerConfig, channels, chatServerIp, redisUrl),
             _ => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
-                channels, credentialProvider)
+                channels, credentialProvider, redisUrl)
         };
     }
 
     private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer,
         NtlmCredentials credentialProvider, SecurityManager securityManager,
         FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig, List<IChannel> channels,
-        string? chatServerIp)
+        string? chatServerIp, string? redisUrl)
     {
         var server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
-            channels, credentialProvider, chatServerIp);
+            channels, credentialProvider, chatServerIp, redisUrl);
 
         return server;
     }
@@ -192,7 +202,21 @@ internal class Program
         foreach (var defaultChannel in defaultChannels)
         {
             var name = $"%#{defaultChannel.Name}";
+
+            // If we're an ACS and connected to Redis, check if another ACS already hosts this channel
+            if (server.IsChannelHostedElsewhere(name, out var existingServerId))
+            {
+                Log.Info($"Skipping default channel {name}, already hosted on {existingServerId}");
+                continue;
+            }
+
             var channel = server.CreateChannel(name);
+            if (channel == null)
+            {
+                Log.Info($"Skipping default channel {name}, could not create channel (maybe race condition?)");
+                continue;
+            }
+            channel.Store = true;
 
             channel.Props.Topic.Value = defaultChannel.Topic;
             foreach (var keyValuePair in defaultChannel.Modes)
@@ -202,6 +226,12 @@ internal class Program
             {
                 var prop = channel.Props.GetProp(keyValuePair.Key);
                 prop?.SetValue(keyValuePair.Value);
+            }
+
+            if (!string.IsNullOrEmpty(defaultChannel.Category))
+            {
+                var categoryProp = channel.Props.GetProp("CATEGORY");
+                categoryProp?.SetValue(defaultChannel.Category);
             }
 
             server.AddChannel(channel);
@@ -224,7 +254,8 @@ internal class Program
             $"║ Server Type: {options.ServerType?.ToUpper()}",
             $"║ FQDN: {options.Fqdn}",
             $"║ Buffer Size: {options.BufferSize} bytes",
-            $"║ Backlog Size: {options.Backlog}"
+            $"║ Backlog Size: {options.Backlog}",
+            $"║ Redis URL: {options.RedisUrl}"
         };
         if (!string.IsNullOrEmpty(options.ChatServerIp)) infoLines.Add($"║ Chat Server Ip: {options.ChatServerIp}");
 
