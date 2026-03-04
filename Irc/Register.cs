@@ -78,15 +78,40 @@ public static class Register
 
     public static bool ConnectionIsPermitted(IServer server, IUser user)
     {
-        // TODO: Add check for anonymous connection count
         if (!server.AnonymousConnections && user.IsAnon())
         {
             user.Disconnect(Raws.IRCX_CLOSINGLINK(server, user, "001", "No Authorization"));
             return false;
         }
 
-        // TODO: Add check for guest connection count
-        // TODO: Add check for authenticated connection count
+        var users = server.GetUsers();
+        if (user.IsAnon())
+        {
+            var anonCount = users.Count(u => u.IsAnon());
+            if (server.MaxAnonymousConnections > 0 && anonCount >= server.MaxAnonymousConnections)
+            {
+                user.Disconnect(Raws.IRCX_CLOSINGLINK(server, user, "001", "Too many anonymous connections"));
+                return false;
+            }
+        }
+        else if (user.IsGuest())
+        {
+            var guestCount = users.Count(u => u.IsGuest());
+            if (server.MaxGuestConnections > 0 && guestCount >= server.MaxGuestConnections)
+            {
+                user.Disconnect(Raws.IRCX_CLOSINGLINK(server, user, "001", "Too many guest connections"));
+                return false;
+            }
+        }
+        else if (user.IsAuthenticated())
+        {
+            var authCount = users.Count(u => u.IsAuthenticated());
+            if (server.MaxAuthenticatedConnections > 0 && authCount >= server.MaxAuthenticatedConnections)
+            {
+                user.Disconnect(Raws.IRCX_CLOSINGLINK(server, user, "001", "Too many authenticated connections"));
+                return false;
+            }
+        }
 
         return true;
     }

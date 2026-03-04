@@ -13,7 +13,7 @@ public class Logging
         var logconsole = new ConsoleTarget("logconsole");
 
         config.AddRule(LogLevel.Trace, LogLevel.Fatal, logfile);
-        config.AddRule(LogLevel.Trace, LogLevel.Fatal, logconsole);
+        config.AddRule(LogLevel.Debug, LogLevel.Fatal, logconsole);
 
         LogManager.Configuration = config;
     }

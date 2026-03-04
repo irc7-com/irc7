@@ -34,7 +34,7 @@ internal class Program
 
             Enum.TryParse<IrcType>(options.ServerType, true, out var serverType);
 
-            var socketServer = new SocketServer(ip, options.BindPort, options.Backlog, options.MaxConnections,
+            var socketServer = new SocketServer(ip, options.BindPort, options.Backlog, options.MaxConnections, options.MaxConnectionsPerIp,
                 options.BufferSize);
             socketServer.OnListen += (_, __) => DisplayStartupInfo(options, ip);
 
@@ -86,10 +86,17 @@ internal class Program
         var bufferSizeOption = new Option<int>(["-z", "--buffer"], "The incoming buffer size in bytes (default 512)")
             { ArgumentHelpName = "buffersize" };
         bufferSizeOption.SetDefaultValue(512);
-        var maxConnectionsPerIpOption =
-            new Option<int>(["-m", "--maxConn"], "The maximum connections per IP that can connect (default 128)")
+        
+        var maxConnectionsOption =
+            new Option<int>(["-m", "--maxConn"], "The maximum overall connections that can connect (default 1000)")
                 { ArgumentHelpName = "maxconnections" };
+        maxConnectionsOption.SetDefaultValue(1000);
+        
+        var maxConnectionsPerIpOption =
+            new Option<int>(["-mip", "--maxConnPerIp"], "The maximum connections per IP that can connect (default 128)")
+                { ArgumentHelpName = "maxconnectionsperip" };
         maxConnectionsPerIpOption.SetDefaultValue(128);
+        
         var fqdnOption = new Option<string>(["-f", "--fqdn"], "The FQDN of the machine (default localhost)")
             { ArgumentHelpName = "fqdn" };
         fqdnOption.SetDefaultValue("localhost");
@@ -107,7 +114,8 @@ internal class Program
             { "bindPort", bindPortOption },
             { "backlog", backlogOption },
             { "bufferSize", bufferSizeOption },
-            { "maxConnections", maxConnectionsPerIpOption },
+            { "maxConnections", maxConnectionsOption },
+            { "maxConnectionsPerIp", maxConnectionsPerIpOption },
             { "fqdn", fqdnOption },
             { "serverType", serverTypeOption },
             { "chatServerIp", chatServerIpOption }
@@ -128,6 +136,7 @@ internal class Program
             Backlog = context.ParseResult.GetValueForOption((Option<int>)optionsDict["backlog"]),
             BufferSize = context.ParseResult.GetValueForOption((Option<int>)optionsDict["bufferSize"]),
             MaxConnections = context.ParseResult.GetValueForOption((Option<int>)optionsDict["maxConnections"]),
+            MaxConnectionsPerIp = context.ParseResult.GetValueForOption((Option<int>)optionsDict["maxConnectionsPerIp"]),
             Fqdn = context.ParseResult.GetValueForOption((Option<string>)optionsDict["fqdn"]),
             ServerType = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverType"]),
             ChatServerIp = context.ParseResult.GetValueForOption((Option<string>)optionsDict["chatServerIp"])
@@ -211,6 +220,7 @@ internal class Program
             $"║ Listening on IP: {ip}",
             $"║ Port: {options.BindPort}",
             $"║ Max Connections: {options.MaxConnections}",
+            $"║ Max Connections Per IP: {options.MaxConnectionsPerIp}",
             $"║ Server Type: {options.ServerType?.ToUpper()}",
             $"║ FQDN: {options.Fqdn}",
             $"║ Buffer Size: {options.BufferSize} bytes",
