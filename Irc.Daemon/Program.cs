@@ -211,7 +211,7 @@ internal class Program
     private static void DisplayStartupInfo(ServerOptions options, IPAddress ip)
     {
         Console.WriteLine("╔════════════════════════════════════════╗");
-        Console.WriteLine("║            IRC7 Server Info            ║");
+        Console.WriteLine("║            IRC7test Server Info            ║");
         Console.WriteLine("╠════════════════════════════════════════╣");
 
         var infoLines = new List<string>
