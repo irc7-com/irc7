@@ -26,7 +26,7 @@ jobs:
       run: dotnet test --no-build --verbosity normal
 
   image:
-
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
 
     steps:
