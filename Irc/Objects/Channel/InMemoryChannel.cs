@@ -4,7 +4,9 @@ namespace Irc.Objects.Channel;
 
 public class InMemoryChannel
 {
+    public string Type { get; set; } = "CHANNEL";
     public Guid Id { get; private set; } = Guid.NewGuid();
+    public string ServerName { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public string ChannelName { get; set; } = string.Empty;
     public string ChannelTopic { get; set; } = string.Empty;

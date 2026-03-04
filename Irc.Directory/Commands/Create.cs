@@ -1,4 +1,6 @@
-﻿using Irc.Commands;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
@@ -60,10 +62,12 @@ public class Create : Command, ICommand
 
         var ip = targetServer.Ip;
         var port = targetServer.Port;
+        
+        inMemoryChannel.ServerName = targetServer.Name;
 
         server.CacheManager.Subscriber.Publish(
             "service",
-            $":{targetServer.Name} {chatFrame.ChatMessage.OriginalText}"
+            JsonSerializer.Serialize(inMemoryChannel)
         );
         chatFrame.User.Send(DirectoryRaws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
     }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
+using System.Text.Json;
 using Irc.Access;
 using Irc.Access.Server;
 using Irc.Commands;
@@ -99,24 +100,13 @@ public class Server : ChatObject, IServer
         {
             if (payload.HasValue)
             {
-                var message = new ChatMessage(Protocols[EnumProtocolType.IRC8], payload.ToString());
-                Console.WriteLine($"Received service message from Redis: {message.OriginalText}");
+                var inMemoryChannel = JsonSerializer.Deserialize<InMemoryChannel>(payload.ToString());
+                Console.WriteLine($"Received service message from Redis: {payload.ToString()}");
                 
-                if (message.GetPrefix == Name)
+                if (inMemoryChannel.ServerName == Name)
                 {
-                    if (message.GetCommandName() == "CREATE")
+                    if (inMemoryChannel.Type == "CHANNEL")
                     {
-                        var inMemoryChannel = new InMemoryChannel
-                        {
-                            Category = message.Parameters[0],
-                            ChannelName = message.Parameters[1],
-                            ChannelTopic = message.Parameters[2],
-                            Modes = message.Parameters[3],
-                            Region = message.Parameters[4],
-                            Language = message.Parameters[5],
-                            OwnerKey = message.Parameters[6],
-                            Unknown = 0,
-                        };
                         var newChannel = CreateChannel(inMemoryChannel.ChannelName, inMemoryChannel.ChannelTopic, inMemoryChannel.OwnerKey);
                         if (newChannel == null)
                         {
