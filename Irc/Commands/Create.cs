@@ -19,7 +19,7 @@ public class Create : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
-        if (!IsAllowedCategory(chatFrame.ChatMessage.Parameters[0]))
+        if (!Channel.IsAllowedCategory(chatFrame.ChatMessage.Parameters[0]))
         {
             chatFrame.User.Send(
                 Raws.IRCX_RPL_FINDS_NOSUCHCAT_701(chatFrame.Server, chatFrame.User)
@@ -35,7 +35,7 @@ public class Create : Command, ICommand
             return;
         }
 
-        if (!IsModeSupported(chatFrame.Server, chatFrame.ChatMessage.Parameters[3]))
+        if (!Channel.IsModeSupported(chatFrame.Server, chatFrame.ChatMessage.Parameters[3]))
         {
             chatFrame.User.Send(
                 Raws.IRCX_RPL_FINDS_INVALIDMODE_706(chatFrame.Server, chatFrame.User)
@@ -43,7 +43,7 @@ public class Create : Command, ICommand
             return;
         }
 
-        if (!IsAllowedRegion(chatFrame.ChatMessage.Parameters[4]))
+        if (!Channel.IsAllowedRegion(chatFrame.ChatMessage.Parameters[4]))
         {
             chatFrame.User.Send(
                 Raws.IRCX_RPL_CREATE_INVALIDREGION_706(chatFrame.Server, chatFrame.User)
@@ -74,7 +74,7 @@ public class Create : Command, ICommand
             Unknown = unknownValue,
         };
         
-        var createdChannel = chatFrame.Server.CreateChannel(chatFrame.User, channel.ChannelName, channel.OwnerKey);
+        var createdChannel = chatFrame.Server.CreateChannel(channel.ChannelName, channel.ChannelTopic, channel.OwnerKey);
         
         if (createdChannel == null)
         {
@@ -89,29 +89,7 @@ public class Create : Command, ICommand
         chatFrame.User.Send(Raws.IRCX_RPL_FINDS_613(chatFrame.Server, chatFrame.User));
     }
 
-    private bool IsAllowedCategory(string category) =>
-        Resources.SupportedChannelCategories.Contains(category);
 
-    private bool IsAllowedRegion(string region) =>
-        Resources.SupportedChannelCountryLanguages.Contains(region);
-
-    private bool IsModeSupported(IServer server, string modes)
-    {
-        if (modes != "-")
-        {
-            var supportedModes = server.GetSupportedChannelModes().ToCharArray().ToList();
-            var inputModes = modes.ToCharArray().ToList();
-            foreach (var mode in inputModes)
-            {
-                if (mode != 'l' && !supportedModes.Contains(mode))
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
 }
 
 // /CREATE GN %#test %An\bamazing\btopic - EN-US 1 62269 0

@@ -104,7 +104,7 @@ public class SocketConnection : IConnection
     {
         _recvAsync = new SocketAsyncEventArgs();
         _recvAsync.UserToken = GetId();
-        _recvAsync.SetBuffer(new byte[4096]);
+        _recvAsync.SetBuffer(new byte[1024]);
         _recvAsync.Completed += (sender, args) => { ReceiveData(args); };
         // If Sync receive from connect then process data
         if (!_socket.ReceiveAsync(_recvAsync)) ReceiveData(_recvAsync);

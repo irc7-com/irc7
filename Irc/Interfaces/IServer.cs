@@ -42,7 +42,7 @@ public interface IServer: IChatObject
     bool AddChannel(IChannel channel);
     void RemoveChannel(IChannel channel);
     IChannel? CreateChannel(string name);
-    IChannel? CreateChannel(IUser creator, string name, string key);
+    IChannel? CreateChannel(string name, string topic, string key);
     IUser CreateUser(IConnection connection);
     IList<IUser> GetUsers();
     IUser? GetUserByNickname(string nickname);

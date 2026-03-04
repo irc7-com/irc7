@@ -69,7 +69,7 @@ public class Join : Command, ICommand
             if (channel == null)
             {
                 isCreator = true;
-                channel = server.CreateChannel(user, channelName, key);
+                channel = server.CreateChannel(channelName, channelName, key);
                 
                 if (channel == null)
                 {

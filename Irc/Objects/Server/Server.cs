@@ -53,7 +53,6 @@ public class Server : ChatObject, IServer
         ICredentialProvider? credentialProvider = null,
         string? redisUrl = null)
     {
-        _cacheManager = new Irc.Services.CacheManager(redisUrl);
         Name = dataStore.Get("Name");
         Title = Name;
         _socketServer = socketServer;
@@ -61,6 +60,8 @@ public class Server : ChatObject, IServer
         _floodProtectionManager = floodProtectionManager;
         _DataStore = dataStore;
         Channels = channels;
+        
+        _cacheManager = new Irc.Services.CacheManager(redisUrl);
         _processingTask = new Task(Process);
         _processingTask.Start();
 
@@ -92,6 +93,41 @@ public class Server : ChatObject, IServer
         AddProtocol(EnumProtocolType.IRC6, new Irc6());
         AddProtocol(EnumProtocolType.IRC7, new Irc7());
         AddProtocol(EnumProtocolType.IRC8, new Irc8());
+        
+        Console.WriteLine("Subscribing to service channel in Redis");
+        _cacheManager.Subscriber.Subscribe("service", (channel, payload) =>
+        {
+            if (payload.HasValue)
+            {
+                var message = new ChatMessage(Protocols[EnumProtocolType.IRC8], payload.ToString());
+                Console.WriteLine($"Received service message from Redis: {message.OriginalText}");
+                
+                if (message.GetPrefix == Name)
+                {
+                    if (message.GetCommandName() == "CREATE")
+                    {
+                        var inMemoryChannel = new InMemoryChannel
+                        {
+                            Category = message.Parameters[0],
+                            ChannelName = message.Parameters[1],
+                            ChannelTopic = message.Parameters[2],
+                            Modes = message.Parameters[3],
+                            Region = message.Parameters[4],
+                            Language = message.Parameters[5],
+                            OwnerKey = message.Parameters[6],
+                            Unknown = 0,
+                        };
+                        var newChannel = CreateChannel(inMemoryChannel.ChannelName, inMemoryChannel.ChannelTopic, inMemoryChannel.OwnerKey);
+                        if (newChannel == null)
+                        {
+                            Console.WriteLine($"Could not register channel {inMemoryChannel.ChannelName} in Redis");
+                            return;
+                        }
+                        Console.WriteLine($"Registered Channel {inMemoryChannel.ChannelName} in Redis");
+                    }
+                }
+            }
+        });
         
         socketServer.OnClientConnecting += (sender, connection) =>
         {
@@ -363,13 +399,14 @@ public class Server : ChatObject, IServer
         return _DataStore;
     }
 
-    public virtual IChannel? CreateChannel(IUser creator, string name, string key)
+    // TODO: Work out creator
+    public virtual IChannel? CreateChannel(string name, string topic, string key)
     {
         var channel = CreateChannel(name);
         if (channel == null) return null;
         
         var chanProps = (ChannelProps)channel.Props;
-        chanProps.Topic.Value = name;
+        chanProps.Topic.Value = topic;
         chanProps.OwnerKey.Value = key;
         channel.Modes.NoExtern.ModeValue = true;
         channel.Modes.TopicOp.ModeValue = true;

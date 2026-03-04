@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Irc.Objects.Channel;
 using StackExchange.Redis;
 
 namespace Irc.Services;
@@ -8,6 +9,7 @@ public class CacheManager
 {
     private readonly ConnectionMultiplexer? _redis;
     private readonly IDatabase? _db;
+    public readonly ISubscriber Subscriber;
 
     public CacheManager(string? redisUrl)
     {
@@ -17,6 +19,7 @@ public class CacheManager
         {
             _redis = ConnectionMultiplexer.Connect(redisUrl);
             _db = _redis.GetDatabase();
+            Subscriber = _redis.GetSubscriber();
         }
         catch (Exception ex)
         {
@@ -47,6 +50,27 @@ public class CacheManager
     public void UnregisterServer(string serverId)
     {
         _db?.KeyDelete($"acs:server:{serverId}");
+    }
+
+    public bool RegisterRoom(InMemoryChannel inMemoryChannel, string serverId)
+    {
+        return RegisterRoom(
+            roomName: inMemoryChannel.ChannelName,
+            serverId: serverId,
+            category: inMemoryChannel.Category,
+            // Not sure what this is since we have roomName
+            name: inMemoryChannel.ChannelName,
+            topic: inMemoryChannel.ChannelTopic,
+            modes: inMemoryChannel.Modes,
+            // Need to sort out the below better
+            managed: inMemoryChannel.Modes.Contains('r'),
+            locale: inMemoryChannel.Region,
+            language: inMemoryChannel.Language,
+            // Current users would always be 0 here as we are registering a room
+            currentUsers: 0,
+            // Need to sort this out better
+            maxUsers: 50
+        );
     }
 
     // Registers a room to a specific ACS
@@ -86,7 +110,7 @@ public class CacheManager
 
         try 
         {
-            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { roomName, payload, serverId });
+            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { roomName.ToUpper(), payload, serverId });
             return result == 1;
         } 
         catch (Exception ex) 
@@ -107,7 +131,7 @@ public class CacheManager
     {
         if (_db == null) return null;
         
-        var value = _db.HashGet("acs:rooms", roomName);
+        var value = _db.HashGet("acs:rooms", roomName.ToUpper());
         if (value.HasValue)
         {
             var roomInfo = JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());

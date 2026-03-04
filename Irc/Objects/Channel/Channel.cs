@@ -496,4 +496,28 @@ public class Channel : ChatObject, IChannel
         if (GetMembers().Count >= userLimit) return EnumChannelAccessResult.ERR_CHANNELISFULL;
         return EnumChannelAccessResult.NONE;
     }
+    
+    public static bool IsAllowedCategory(string category) =>
+        Resources.SupportedChannelCategories.Contains(category);
+
+    public static bool IsAllowedRegion(string region) =>
+        Resources.SupportedChannelCountryLanguages.Contains(region);
+
+    public static bool IsModeSupported(IServer server, string modes)
+    {
+        if (modes != "-")
+        {
+            var supportedModes = server.GetSupportedChannelModes().ToCharArray().ToList();
+            var inputModes = modes.ToCharArray().ToList();
+            foreach (var mode in inputModes)
+            {
+                if (mode != 'l' && !supportedModes.Contains(mode))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }

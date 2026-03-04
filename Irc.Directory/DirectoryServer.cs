@@ -1,4 +1,5 @@
-﻿using Irc.Commands;
+﻿using System.Globalization;
+using Irc.Commands;
 using Irc.Directory.Commands;
 using Irc.Enumerations;
 using Irc.Interfaces;
@@ -11,7 +12,7 @@ namespace Irc.Directory;
 public class DirectoryServer : Server
 {
     public readonly string ChatServerIp = string.Empty;
-    public readonly string ChatServerPort = string.Empty;
+    public readonly int ChatServerPort;
 
     public Irc.Services.AcsServerInfo? GetTargetServerForRoom(string roomName)
     {
@@ -63,7 +64,10 @@ public class DirectoryServer : Server
             if (parts.Length > 0)
                 ChatServerIp = parts[0];
             if (parts.Length > 1)
-                ChatServerPort = parts[1];
+                int.TryParse(parts[1], out ChatServerPort);
+            
+            // If port was omitted assume 6667
+            if (ChatServerPort == 0) ChatServerPort = 6667;
         }
 
         FlushCommands();
@@ -75,7 +79,7 @@ public class DirectoryServer : Server
         AddCommand(new UserCommand(), EnumProtocolType.IRC, "User");
         AddCommand(new Finds());
         AddCommand(new Prop());
-        AddCommand(new Irc.Directory.Commands.Create(true));
+        AddCommand(new Irc.Directory.Commands.Create());
         AddCommand(new Ping());
         AddCommand(new Pong());
         AddCommand(new Version());
