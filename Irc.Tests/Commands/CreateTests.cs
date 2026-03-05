@@ -1,4 +1,5 @@
 using System;
+using Irc.Commands;
 using Irc.Infrastructure;
 using Irc.Interfaces;
 using Irc.Objects.Channel;

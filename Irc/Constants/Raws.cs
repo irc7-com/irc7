@@ -666,6 +666,11 @@ public static class Raws
     {
         return $":{server} 557 {user} {channel} :Only secure users may join channel.";
     }
+    
+    public static string RPL_FINDS_MSN(IServer server, IUser user, string ip, string port)
+    {
+        return $":{server} 613 {user} :{ip} {port}";
+    }
 
     public static string IRCX_RPL_FINDS_613(IServer server, IUser user)
     {
@@ -728,9 +733,29 @@ public static class Raws
         return $":{server} 706 {user} :Channel mode is not valid";
     }
 
-    public static string IRCX_RPL_CREATE_INVALIDREGION_706(IServer server, IUser user)
+    public static string IRCX_RPL_FINDS_INVALIDLIMIT_706(IServer server, IUser user)
     {
-        return $":{server} 706 {user} :Region name is not valid";
+        return $":{server} 706 {user} :Channel limit is not valid";
+    }
+    
+    public static string IRCX_RPL_CREATE_INVALIDLOCALE_706(IServer server, IUser user)
+    {
+        return $":{server} 706 {user} :Locale parameter is not valid";
+    }
+    
+    public static string IRCX_RPL_CREATE_INVALIDLANGUAGE_706(IServer server, IUser user)
+    {
+        return $":{server} 706 {user} :Language parameter is not valid";
+    }
+    
+    public static string IRCX_RPL_CREATE_INVALIDKEY_706(IServer server, IUser user)
+    {
+        return $":{server} 706 {user} :Key parameter is not valid";
+    }
+    
+    public static string IRCX_RPL_CREATE_BADLYFORMED_706(IServer server, IUser user)
+    {
+        return $":{server} 706 {user} :Badly formed parameters";
     }
 
     public static string IRCX_RPL_IRCX_800(IServer server, IUser user, int isircx, int ircxversion, int buffsize,

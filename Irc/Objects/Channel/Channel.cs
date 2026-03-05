@@ -2,8 +2,10 @@
 using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
+using Irc.Helpers;
 using Irc.Interfaces;
 using Irc.Modes;
+using Irc.Modes.Channel.Member;
 
 namespace Irc.Objects.Channel;
 
@@ -27,6 +29,70 @@ public class Channel : ChatObject, IChannel
         Name = name;
         Props.Name.Value = name;
         Props.Creation.Value = Creation.ToString();
+    }
+
+    /*
+       a AuthOnly
+       e Clone
+       p Private
+       h Hidden
+       s Secret
+       m Moderated
+       w NoWhisper
+       d Cloneable
+       x Auditorium
+     */
+    private static char[] supportedChannelModes =
+    [
+        Resources.ChannelModeNoExtern,
+        Resources.ChannelModeTopicOp,
+        Resources.ChannelModeAuthOnly,
+        Resources.ChannelModeClone,
+        Resources.ChannelModeCloneable,
+        Resources.ChannelModePrivate,
+        Resources.ChannelModeHidden,
+        Resources.ChannelModeSecret,
+        Resources.ChannelModeModerated,
+        Resources.ChannelModeNoWhisper,
+        Resources.ChannelModeNoGuestWhisper,
+        Resources.ChannelModeAuditorium
+    ]; 
+    public static IChannel FromInMemoryChannel(InMemoryChannel inMemoryChannel)
+    {
+        // Set name
+        var channel = new Channel(inMemoryChannel.ChannelName);
+        
+        // Set topic
+        channel.UpdateTopic(inMemoryChannel.ChannelTopic);
+        
+        // Set modes block
+        foreach (char c in inMemoryChannel.Modes)
+        {
+            if (!supportedChannelModes.Contains(c)) continue;
+            if (channel.Modes.HasMode(c)) channel.Modes.SetModeValue(c, 1);
+        }
+        
+        // Set user limit
+        channel.Modes.SetModeValue(Resources.ChannelModeUserLimit, inMemoryChannel.UserLimit);
+        
+        // Set category
+        channel.Props.Category.Value = inMemoryChannel.Category;
+        
+        // Set locale
+        // 1:+ST!EN-US!AV
+        // 1:+ST 1:ST 1:-ST -- No idea
+        channel.Props.Subject.Value = $"1:ST:{inMemoryChannel.Locale}:{inMemoryChannel.Category}";
+        
+        // Set language
+        channel.Props.Language.Value = inMemoryChannel.Language.ToString();
+        
+        // Set ownerkey
+        channel.Props.OwnerKey.Value = inMemoryChannel.OwnerKey;
+        
+        // Set hostkey
+        channel.Props.HostKey.Value = inMemoryChannel.HostKey;
+        
+        return channel;
     }
 
     public bool Store { get; set; } = false;
@@ -500,8 +566,13 @@ public class Channel : ChatObject, IChannel
     public static bool IsAllowedCategory(string category) =>
         Resources.SupportedChannelCategories.Contains(category);
 
-    public static bool IsAllowedRegion(string region) =>
+    public static bool IsAllowedLocale(string region) =>
         Resources.SupportedChannelCountryLanguages.Contains(region);
+
+    // A value from 1 to 24 as per apollo docs
+    public static bool IsAllowedLanguage(int language) => language >= 1 && language <= 24;
+    
+    public static bool IsSupportedKey(string key) => key.Length <= 31;
 
     public static bool IsModeSupported(IServer server, string modes)
     {

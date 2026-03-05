@@ -96,26 +96,11 @@ public class Server : ChatObject, IServer
         AddProtocol(EnumProtocolType.IRC8, new Irc8());
         
         Console.WriteLine("Subscribing to service channel in Redis");
-        _cacheManager.Subscriber.Subscribe("service", (channel, payload) =>
+        _cacheManager.Subscriber.Subscribe(Resources.PubSubServiceChannels, (channel, payload) =>
         {
             if (payload.HasValue)
             {
-                var inMemoryChannel = JsonSerializer.Deserialize<InMemoryChannel>(payload.ToString());
-                Console.WriteLine($"Received service message from Redis: {payload.ToString()}");
-                
-                if (inMemoryChannel.ServerName == Name)
-                {
-                    if (inMemoryChannel.Type == "CHANNEL")
-                    {
-                        var newChannel = CreateChannel(inMemoryChannel.ChannelName, inMemoryChannel.ChannelTopic, inMemoryChannel.OwnerKey);
-                        if (newChannel == null)
-                        {
-                            Console.WriteLine($"Could not register channel {inMemoryChannel.ChannelName} in Redis");
-                            return;
-                        }
-                        Console.WriteLine($"Registered Channel {inMemoryChannel.ChannelName} in Redis");
-                    }
-                }
+                ServerHandlers.HandleChannelPubSub(this, payload.ToString());
             }
         });
         

@@ -64,8 +64,8 @@ public class CacheManager
             modes: inMemoryChannel.Modes,
             // Need to sort out the below better
             managed: inMemoryChannel.Modes.Contains('r'),
-            locale: inMemoryChannel.Region,
-            language: inMemoryChannel.Language,
+            locale: inMemoryChannel.Locale,
+            language: inMemoryChannel.Language.ToString(),
             // Current users would always be 0 here as we are registering a room
             currentUsers: 0,
             // Need to sort this out better

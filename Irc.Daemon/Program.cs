@@ -4,6 +4,7 @@ using System.Net;
 using System.Reflection;
 using System.Text.Json;
 using Irc.Directory;
+using Irc.Helpers;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Logging;
@@ -201,7 +202,7 @@ internal class Program
 
         foreach (var defaultChannel in defaultChannels)
         {
-            var name = $"%#{defaultChannel.Name}";
+            var name = $"%#{defaultChannel.Name.ToEscape()}";
 
             // If we're an ACS and connected to Redis, check if another ACS already hosts this channel
             if (server.IsChannelHostedElsewhere(name, out var existingServerId))
@@ -218,7 +219,7 @@ internal class Program
             }
             channel.Store = true;
 
-            channel.Props.Topic.Value = defaultChannel.Topic;
+            channel.Props.Topic.Value = $"%{defaultChannel.Topic.ToEscape()}";
             foreach (var keyValuePair in defaultChannel.Modes)
                 channel.Modes.SetModeValue(keyValuePair.Key, keyValuePair.Value);
 

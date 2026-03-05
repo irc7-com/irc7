@@ -1,4 +1,5 @@
 ﻿using Irc.Commands;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 
@@ -31,7 +32,7 @@ internal class Finds : Command, ICommand
                 return;
             }
 
-            chatFrame.User.Send(DirectoryRaws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
+            chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
             return;
         }
 
@@ -53,6 +54,6 @@ internal class Finds : Command, ICommand
             return;
         }
 
-        chatFrame.User.Send(DirectoryRaws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
+        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
     }
 }

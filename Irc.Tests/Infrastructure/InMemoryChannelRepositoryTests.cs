@@ -15,10 +15,10 @@ public class InMemoryChannelRepositoryTests
             ChannelName = "testChannel",
             ChannelTopic = "Test Channel",
             Modes = "-",
-            Region = "EN-US",
-            Language = "1",
+            Locale = "EN-US",
+            Language = 1,
             OwnerKey = "1234",
-            Unknown = 0,
+            LRSID = 0,
         };
 
         // Act

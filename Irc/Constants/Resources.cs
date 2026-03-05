@@ -115,6 +115,12 @@ public static class Resources
         TimeZone = TimeZone.Substring(TimeZone.LastIndexOf(' ') + 1);
         return time.ToString("\"\"MMM d yyyy\" at \"HH:mm:ss ") + TimeZone;
     }
+    
+    #region "Service Redis Channels"
+    
+    public static string PubSubServiceChannels = "Service.Channels";
+    
+    #endregion
 
     #region "Config"
 
