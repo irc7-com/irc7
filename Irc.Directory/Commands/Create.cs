@@ -1,18 +1,28 @@
-﻿using Irc.Commands;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Objects.Channel;
 
 namespace Irc.Directory.Commands;
 
 public class Create : Command, ICommand
 {
-    private readonly bool _isAds;
-
-    public Create(bool isAds = false)
+    public Create()
     {
-        _requiredMinimumParameters = 1;
-        _isAds = isAds;
+        // IRC3
+        // CREATE <catcode> <channel> <topic> <mode> <locale> <hostkey> <ownerkey>
+        // IRC4, IRC5
+        //  CREATE <catcode> <channel> <topic> <mode> <locale> <language> <hostkey> <ownerkey>
+        // IRC7+
+        // CREATE <category> <channel> <topic> <mode> <locale> <language>
+        // <ownerkey> <radio station> [hostkey]
+        // The radio station was obsoleted and hence is 0 (assumption)
+        
+        // CREATE CP %#channel %topic ntl 50 EN-US 1 ownerkey 0
+        _requiredMinimumParameters = 9;
     }
 
     public new EnumCommandDataType GetDataType()
@@ -20,12 +30,71 @@ public class Create : Command, ICommand
         return EnumCommandDataType.None;
     }
 
+    private void HandleLocalCreate(IChatFrame chatFrame)
+    {
+        var server = (DirectoryServer)chatFrame.Server;
+        string ip = server.ChatServerIp;
+        int port = server.ChatServerPort;
+
+        // Not connected to redis so send parameterized ACS
+        if (string.IsNullOrEmpty(ip) || port == 0)
+        {
+            // Fallback or error if no servers available
+            chatFrame.User.Send(Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
+            return;
+        }
+
+        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
+    }
+
+    private void HandleRemoteCreate(IChatFrame chatFrame, InMemoryChannel inMemoryChannel)
+    {
+        var server = (DirectoryServer)chatFrame.Server;
+        var serverId = server.CacheManager.GetServerForRoom(inMemoryChannel.ChannelName);
+        if (!string.IsNullOrWhiteSpace(serverId))
+        {
+            // Channel already exists
+            chatFrame.User.Send(Raws.IRCX_RPL_FINDS_CHANNELEXISTS_705(server, chatFrame.User));
+            return;
+        }
+
+        // Try to find if room exists or load balance to server with least connections
+        var targetServer = server.GetTargetServerForRoom(inMemoryChannel.ChannelName);
+        if (targetServer == null || 
+            (string.IsNullOrWhiteSpace(targetServer.Ip) || targetServer.Port == 0)
+           )
+        {
+            // Fallback or error if no server available
+            chatFrame.User.Send(Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
+            return;
+        }
+
+        var ip = targetServer.Ip;
+        var port = targetServer.Port;
+        
+        inMemoryChannel.ServerName = targetServer.Name;
+
+        server.CacheManager.Subscriber.Publish(
+            Resources.PubSubServiceChannels,
+            JsonSerializer.Serialize(inMemoryChannel)
+        );
+        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
+    }
+
     public new void Execute(IChatFrame chatFrame)
     {
-        var messageToSend = Raws.IRCX_RPL_FINDS_613(chatFrame.Server, chatFrame.User);
-        if (_isAds)
-            messageToSend = DirectoryRaws.RPL_FINDS_MSN((DirectoryServer)chatFrame.Server, chatFrame.User);
-
-        chatFrame.User.Send(messageToSend);
+        var server = (DirectoryServer)chatFrame.Server;
+        if (!server.CacheManager.IsConnected)
+        {
+            // When not connected to PubSub
+            // At the moment this is just a dumb return of 613
+            HandleLocalCreate(chatFrame);
+            return;
+        }
+        
+        var channel = global::Irc.Commands.Create.ProcessCreateRequest(chatFrame);
+        
+        // Handle via PubSub
+        if (channel != null) HandleRemoteCreate(chatFrame, channel);
     }
 }

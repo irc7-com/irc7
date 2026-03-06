@@ -115,6 +115,12 @@ public static class Resources
         TimeZone = TimeZone.Substring(TimeZone.LastIndexOf(' ') + 1);
         return time.ToString("\"\"MMM d yyyy\" at \"HH:mm:ss ") + TimeZone;
     }
+    
+    #region "Service Redis Channels"
+    
+    public static string PubSubServiceChannels = "Service.Channels";
+    
+    #endregion
 
     #region "Config"
 
@@ -227,6 +233,7 @@ public static class Resources
     public static string ChannelPropName = "NAME";
     public static string ChannelPropTopic = "TOPIC";
     public static string ChannelPropLag = "LAG";
+    public static string ChannelPropCategory = "CATEGORY";
     public static string ChannelPropLanguage = "LANGUAGE";
     public static string ChannelPropSubject = "SUBJECT";
     public static string ChannelPropMemberkey = "MEMBERKEY";

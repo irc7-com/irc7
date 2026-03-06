@@ -20,4 +20,8 @@
         <ProjectReference Include="..\SSPI.NTLM\SSPI.NTLM.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="StackExchange.Redis" Version="2.11.3" />
+    </ItemGroup>
+
 </Project>

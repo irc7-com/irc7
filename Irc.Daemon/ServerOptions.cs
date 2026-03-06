@@ -12,4 +12,5 @@ public class ServerOptions
     public string? Fqdn { get; set; }
     public string? ServerType { get; set; }
     public string? ChatServerIp { get; set; }
+    public string? RedisUrl { get; set; }
 }

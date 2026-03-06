@@ -1,8 +1,12 @@
 {
   "profiles": {
-    "Irc7d": {
+    "irc7-ads": {
       "commandName": "Project",
-      "commandLineArgs": "-t ACS -f metal"
+      "commandLineArgs": "-t ADS -f metal -p 6668 -r localhost:6379"
+    },
+    "irc7-acs": {
+      "commandName": "Project",
+      "commandLineArgs": "-t ACS -f metal -r localhost:6379"
     }
   }
 }

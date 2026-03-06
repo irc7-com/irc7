@@ -1,6 +1,6 @@
 [
   {
-    "Name": "The\\bLobby",
+    "Name": "The Lobby",
     "Topic": "Welcome to The Lobby",
     "Modes": {
       "n": 1,
@@ -10,7 +10,8 @@
     "Props": {
       "OWNERKEY": "OWNERKEY",
       "HOSTKEY": "HOSTKEY"
-    }
+    },
+    "Category": "GN"
   },
   {
     "Name": "Test",
@@ -41,8 +42,8 @@
     }
   },
   {
-    "Name": "Subscribers",
-    "Topic": "Subscribers",
+    "Name": "My Channel, especially fun!",
+    "Topic": "Welcome to My Channel, especially fun!",
     "Modes": {
       "n": 1,
       "t": 1,

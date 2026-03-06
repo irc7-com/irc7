@@ -7,6 +7,7 @@ public interface IChannelProps : IPropCollection
     PropRule Oid { get; }
     PropRule Name { get; }
     PropRule Creation { get; }
+    PropRule Category { get; }
     PropRule Language { get; }
     PropRule OwnerKey { get; }
     PropRule HostKey { get; }
