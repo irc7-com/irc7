@@ -40,6 +40,8 @@ public class InMemoryChannelRepositoryTests
         var channel1 = new InMemoryChannel { ChannelName = "testChannel1" };
         var channel2 = new InMemoryChannel { ChannelName = "testChannel2" };
 
+        var initialCount = InMemoryChannelRepository.GetAllChannels().Count();
+
         InMemoryChannelRepository.Add(channel1);
         InMemoryChannelRepository.Add(channel2);
 
@@ -47,7 +49,7 @@ public class InMemoryChannelRepositoryTests
         var channels = InMemoryChannelRepository.GetAllChannels();
 
         // Assert
-        Assert.That(channels.ToList(), Has.Count.EqualTo(2));
+        Assert.That(channels.ToList(), Has.Count.EqualTo(initialCount + 2));
         Assert.That(channels, Does.Contain(channel1));
         Assert.That(channels, Does.Contain(channel2));
 
