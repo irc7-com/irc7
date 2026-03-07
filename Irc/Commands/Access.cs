@@ -213,6 +213,13 @@ internal class Access : Command, ICommand
 
     private void ListAccess(IChatFrame chatFrame, IChatObject targetObject)
     {
+        // If not at least host then no access
+        if (!targetObject.Access.CanModifyAccessLevel((IChatObject)chatFrame.User, targetObject, EnumAccessLevel.HOST))
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User, targetObject));
+            return;
+        }
+        
         chatFrame.User.Send(Raws.IRCX_RPL_ACCESSSTART_803(chatFrame.Server, chatFrame.User, targetObject));
 
         // TODO: Some entries were not listed due to level restriction
