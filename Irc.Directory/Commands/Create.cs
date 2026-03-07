@@ -13,16 +13,20 @@ public class Create : Command, ICommand
     public Create()
     {
         // IRC3
-        // CREATE <catcode> <channel> <topic> <mode> <locale> <hostkey> <ownerkey>
+        // CREATE <catcode> <channel> <topic> <mode> [limit] <locale> <hostkey> <ownerkey>
         // IRC4, IRC5
-        //  CREATE <catcode> <channel> <topic> <mode> <locale> <language> <hostkey> <ownerkey>
+        //  CREATE <catcode> <channel> <topic> <mode> [limit] <locale> <language> <hostkey> <ownerkey>
         // IRC7+
-        // CREATE <category> <channel> <topic> <mode> <locale> <language>
+        // CREATE <category> <channel> <topic> <mode> [limit] <locale> <language>
         // <ownerkey> <radio station> [hostkey]
         // The radio station was obsoleted and hence is 0 (assumption)
         
+        // Limit is only considered when 'l' exists in <mode>
+        // Hostkey is optional
+        
         // CREATE CP %#channel %topic ntl 50 EN-US 1 ownerkey 0
-        _requiredMinimumParameters = 9;
+        // CREATE UL %#unknown - - EN-US 1 ownerkey 0
+        _requiredMinimumParameters = 8;
     }
 
     public new EnumCommandDataType GetDataType()
