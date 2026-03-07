@@ -897,9 +897,9 @@ public static class Raws
         return $":{server} 902 {user} :Badly formed parameters";
     }
 
-    public static string IRCX_ERR_BADLEVEL_903(IServer server, IUser user, string level)
+    public static string IRCX_ERR_BADLEVEL_903(IServer server, IUser user, IChatObject targetObject)
     {
-        return $":{server} 903 {user} %s :Bad level";
+        return $":{server} 903 {user} {targetObject} :Bad level";
     }
 
     public static string IRCX_ERR_BADPROPERTY_905(IServer server, IUser user, string property)

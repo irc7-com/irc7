@@ -96,7 +96,7 @@ public class Server : ChatObject, IServer
         AddProtocol(EnumProtocolType.IRC8, new Irc8());
         
         Console.WriteLine("Subscribing to service channel in Redis");
-        _cacheManager.Subscriber.Subscribe(Resources.PubSubServiceChannels, (channel, payload) =>
+        _cacheManager.Subscriber.Subscribe(ServerHandlers.ChannelPubSub, (channel, payload) =>
         {
             if (payload.HasValue)
             {
@@ -150,7 +150,7 @@ public class Server : ChatObject, IServer
     {
         var fqdn = RemoteIp;
         var port = _socketServer.Port;
-        var serverId = $"{fqdn}:{port}";
+        var serverId = Name;
         _cacheManager.RegisterServer(serverId, fqdn, port, Name, Users.Count);
 
         // Update all active rooms to refresh their current state (users, topic, etc.)
@@ -222,7 +222,7 @@ public class Server : ChatObject, IServer
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
             existingServerId = _cacheManager.GetServerForRoom(channelName);
-            if (!string.IsNullOrEmpty(existingServerId))
+            if (!string.IsNullOrEmpty(existingServerId) && existingServerId != Name)
             {
                 return true;
             }
@@ -259,7 +259,8 @@ public class Server : ChatObject, IServer
     {
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
-            var serverId = $"{RemoteIp}:{_socketServer.Port}";
+            var serverId = Name;
+            // var serverId = $"{RemoteIp}:{_socketServer.Port}";
             var categoryProp = channel.Props.GetProp("CATEGORY")?.Value;
             var category = string.IsNullOrWhiteSpace(categoryProp) ? "UL" : categoryProp;
             var topic = channel.Props.Topic.Value ?? string.Empty;

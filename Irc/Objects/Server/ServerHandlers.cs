@@ -1,12 +1,16 @@
 using System.Text.Json;
+using Irc.Constants;
 using Irc.Objects.Channel;
 using NLog;
+using StackExchange.Redis;
 
 namespace Irc.Objects.Server;
 
 public static class ServerHandlers
 {
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+    
+    public static RedisChannel ChannelPubSub = new RedisChannel(Resources.PubSubServiceChannels, RedisChannel.PatternMode.Literal); 
     
     public static void HandleChannelPubSub(Server server, string payload)
     {
