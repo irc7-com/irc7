@@ -80,4 +80,18 @@ public class AccessList : IAccessList
         PruneExpired();
         return AccessEntries;
     }
+    
+    public virtual bool CanAdd(IChatObject source,
+        IChatObject target,
+        EnumAccessLevel accessLevel)
+    {
+        return false;
+    }
+
+    public virtual bool CanModify(IChatObject source,
+        IChatObject target,
+        AccessEntry entry)
+    {
+        return false;
+    }
 }

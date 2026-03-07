@@ -9,6 +9,16 @@ using Irc.Objects.User;
 
 internal class Access : Command, ICommand
 {
+    /*
+       ACCESS <object> <LIST|ADD|DELETE|CLEAR> <level> <mask> [<timeout> [:<reason>]]
+     
+       Syntax 1: ACCESS <object> LIST
+          
+       Syntax 2: ACCESS <object> ADD|DELETE <level> <mask>
+       [<timeout> [:<reason>]]
+          
+       Syntax 3: ACCESS <object> CLEAR [<level>]
+     */
     public Access() : base(1)
     {
     }
@@ -39,13 +49,6 @@ internal class Access : Command, ICommand
             return;
         }
 
-        if (!CanModify(chatFrame, targetObject))
-        {
-            chatFrame.User.Send(Raws.IRCX_ERR_SECURITY_908(chatFrame.Server, chatFrame.User));
-            // No permissions
-            return;
-        }
-
         switch (accessCommand)
         {
             case AccessCommand.LIST:
@@ -69,28 +72,6 @@ internal class Access : Command, ICommand
                 break;
             }
         }
-    }
-
-    // TODO: The below should be offloaded to the respective Access class
-    private bool CanModify(IChatFrame chatFrame, IChatObject targetObject)
-    {
-        if (targetObject is Server && !chatFrame.User.IsAdministrator())
-            // No Access
-            return false;
-
-        if (targetObject is User && targetObject != chatFrame.User)
-            // No Access
-            return false;
-
-        if (targetObject is Channel)
-        {
-            var channel = (IChannel)targetObject;
-            var member = channel.GetMember(chatFrame.User);
-
-            if (member == null || (!member.Operator.ModeValue && !member.Owner.ModeValue)) return false;
-        }
-
-        return true;
     }
 
     private void ClearAccess(IChatFrame chatFrame, IChatObject targetObject)
@@ -135,18 +116,31 @@ internal class Access : Command, ICommand
             return;
         }
 
-        // TODO: Channel Access Level check
-
         var mask = parameters[1];
-        var entry = new AccessEntry(mask, chatFrame.User.GetLevel(), accessLevel, mask, 0, string.Empty);
-        var accessError = targetObject.Access.Delete(entry);
+        
+        // Get access
+        var accessEntry = targetObject.Access.Get(accessLevel, mask);
+        if (accessEntry == null)
+        {
+            // No such access entry
+            chatFrame.User.Send(Raws.IRCX_ERR_MISACCESS_915(chatFrame.Server, chatFrame.User));
+        }
+        
+        var canModify = targetObject.Access.CanModify((IChatObject)chatFrame.User, targetObject, accessEntry);
+        if (!canModify)
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User, targetObject));
+            return;
+        }
+        
+        var accessError = targetObject.Access.Delete(accessEntry);
 
         if (accessError == EnumAccessError.IRCERR_NOACCESS)
             chatFrame.User.Send(Raws.IRCX_ERR_DUPACCESS_914(chatFrame.Server, chatFrame.User));
         else if (accessError == EnumAccessError.SUCCESS)
             // RPL Access Add
             chatFrame.User.Send(Raws.IRCX_RPL_ACCESSDELETE_802(chatFrame.Server, chatFrame.User, targetObject,
-                entry.EntryLevel.ToString(), entry.Mask, entry.Timeout, entry.EntryAddress, entry.Reason));
+                accessEntry.AccessLevel.ToString(), accessEntry.Mask, accessEntry.Timeout, accessEntry.EntryAddress, accessEntry.Reason));
     }
 
     private void AddAccess(IChatFrame chatFrame, IChatObject targetObject)
@@ -166,7 +160,11 @@ internal class Access : Command, ICommand
             return;
         }
 
-        // TODO: Channel Access Level check
+        if (!targetObject.Access.CanAdd((IChatObject)chatFrame.User, targetObject, accessLevel))
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User, targetObject));
+            return;
+        }
 
         var mask = parameters[1];
         var timeout = 0;
@@ -185,6 +183,10 @@ internal class Access : Command, ICommand
 
         if (accessError == EnumAccessError.IRCERR_DUPACCESS)
             chatFrame.User.Send(Raws.IRCX_ERR_DUPACCESS_914(chatFrame.Server, chatFrame.User));
+        if (accessError == EnumAccessError.IRCERR_BADLEVEL)
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, parameters[0]));
+        }
         else if (accessError == EnumAccessError.SUCCESS)
             // RPL Access Add
             chatFrame.User.Send(Raws.IRCX_RPL_ACCESSADD_801(chatFrame.Server, chatFrame.User, targetObject,

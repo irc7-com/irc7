@@ -899,7 +899,7 @@ public static class Raws
 
     public static string IRCX_ERR_BADLEVEL_903(IServer server, IUser user, string level)
     {
-        return $":{server} 903 {user} %s :Bad level";
+        return $":{server} 903 {user} {level} :Bad level";
     }
 
     public static string IRCX_ERR_BADPROPERTY_905(IServer server, IUser user, string property)

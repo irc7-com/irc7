@@ -12,4 +12,12 @@ public interface IAccessList
     List<AccessEntry>? Get(EnumAccessLevel accessLevel);
     AccessEntry? Get(EnumAccessLevel accessLevel, string mask);
     Dictionary<EnumAccessLevel, List<AccessEntry>> GetEntries();
+
+    public bool CanAdd(IChatObject source,
+        IChatObject target,
+        EnumAccessLevel accessLevel);
+
+    public bool CanModify(IChatObject source,
+        IChatObject target,
+        AccessEntry entry);
 }
