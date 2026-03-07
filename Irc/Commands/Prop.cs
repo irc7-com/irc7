@@ -116,8 +116,7 @@ public class Prop : Command, ICommand
                             var ircError = prop.EvaluateSet((IChatObject)chatFrame.User, chatObject, propValue);
                             if (ircError == EnumIrcError.ERR_NOPERMS)
                             {
-                                chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User,
-                                    chatObject));
+                                chatFrame.User.Send(Raws.IRCX_ERR_SECURITY_908(chatFrame.Server, chatFrame.User));
                                 return;
                             }
 
@@ -138,8 +137,7 @@ public class Prop : Command, ICommand
                         }
                         else
                         {
-                            chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User,
-                                chatObject));
+                            chatFrame.User.Send(Raws.IRCX_ERR_SECURITY_908(chatFrame.Server, chatFrame.User));
                         }
                     }
                     else

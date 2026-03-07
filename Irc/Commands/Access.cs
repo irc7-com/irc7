@@ -41,7 +41,7 @@ internal class Access : Command, ICommand
 
         if (!CanModify(chatFrame, targetObject))
         {
-            chatFrame.User.Send(Raws.IRCX_ERR_SECURITY_908(chatFrame.Server, chatFrame.User));
+            chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User, targetObject));
             // No permissions
             return;
         }
