@@ -14,14 +14,14 @@ public class UserAccess : AccessList
         };
     }
     
-    public override bool CanAdd(IChatObject source,
+    public override bool CanModifyAccessLevel(IChatObject source,
         IChatObject target,
         EnumAccessLevel accessLevel)
     {
         return source == target;
     }
     
-    public override bool CanModify(IChatObject source,
+    public override bool CanModifyAccessEntry(IChatObject source,
         IChatObject target,
         AccessEntry entry)
     {

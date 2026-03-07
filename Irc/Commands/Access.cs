@@ -83,19 +83,36 @@ internal class Access : Command, ICommand
             if (!Enum.TryParse(parameters[0], true, out accessLevel))
             {
                 // Bad level
-                chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, parameters[0]));
+                chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, targetObject));
                 return;
             }
 
-        var accessResult = targetObject.Access.Clear(chatFrame.User.GetLevel(), accessLevel);
+        if (accessLevel != EnumAccessLevel.All)
+        {
+            var canModify = targetObject.Access.CanModifyAccessLevel((IChatObject)chatFrame.User, targetObject, accessLevel);
+            if (!canModify)
+            {
+                chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, targetObject));
+                return;
+            }
+        }
+        
+        var accessResult = targetObject.Access.Clear(
+            (IChatObject)chatFrame.User, targetObject, chatFrame.User.GetLevel(), accessLevel);
+        
         if (accessResult == EnumAccessError.IRCERR_INCOMPLETE)
         {
             // Some entries were not cleared due to ...
+            chatFrame.User.Send(Raws.IRCX_ERR_ACCESSNOTCLEAR_922(chatFrame.Server, chatFrame.User));
         }
-        else
+        else if (accessResult == EnumAccessError.SUCCESS)
         {
             chatFrame.User.Send(Raws.IRCX_RPL_ACCESSCLEAR_820(chatFrame.Server, chatFrame.User, targetObject,
                 accessLevel));
+        }
+        else
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User, targetObject));
         }
     }
 
@@ -112,7 +129,7 @@ internal class Access : Command, ICommand
         if (!Enum.TryParse<EnumAccessLevel>(parameters[0], true, out var accessLevel))
         {
             // Bad level
-            chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, parameters[0]));
+            chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, targetObject));
             return;
         }
 
@@ -124,9 +141,10 @@ internal class Access : Command, ICommand
         {
             // No such access entry
             chatFrame.User.Send(Raws.IRCX_ERR_MISACCESS_915(chatFrame.Server, chatFrame.User));
+            return;
         }
         
-        var canModify = targetObject.Access.CanModify((IChatObject)chatFrame.User, targetObject, accessEntry);
+        var canModify = targetObject.Access.CanModifyAccessEntry((IChatObject)chatFrame.User, targetObject, accessEntry);
         if (!canModify)
         {
             chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User, targetObject));
@@ -156,11 +174,11 @@ internal class Access : Command, ICommand
         if (!Enum.TryParse<EnumAccessLevel>(parameters[0], true, out var accessLevel))
         {
             // Bad level
-            chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, parameters[0]));
+            chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, targetObject));
             return;
         }
 
-        if (!targetObject.Access.CanAdd((IChatObject)chatFrame.User, targetObject, accessLevel))
+        if (!targetObject.Access.CanModifyAccessLevel((IChatObject)chatFrame.User, targetObject, accessLevel))
         {
             chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User, targetObject));
             return;
@@ -185,7 +203,7 @@ internal class Access : Command, ICommand
             chatFrame.User.Send(Raws.IRCX_ERR_DUPACCESS_914(chatFrame.Server, chatFrame.User));
         if (accessError == EnumAccessError.IRCERR_BADLEVEL)
         {
-            chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, parameters[0]));
+            chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, targetObject));
         }
         else if (accessError == EnumAccessError.SUCCESS)
             // RPL Access Add

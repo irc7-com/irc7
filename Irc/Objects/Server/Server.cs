@@ -96,7 +96,7 @@ public class Server : ChatObject, IServer
         AddProtocol(EnumProtocolType.IRC8, new Irc8());
         
         Console.WriteLine("Subscribing to service channel in Redis");
-        _cacheManager.Subscriber.Subscribe(Resources.PubSubServiceChannels, (channel, payload) =>
+        _cacheManager.Subscriber.Subscribe(ServerHandlers.ChannelPubSub, (channel, payload) =>
         {
             if (payload.HasValue)
             {

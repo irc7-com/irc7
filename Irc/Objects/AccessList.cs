@@ -17,7 +17,11 @@ public class AccessList : IAccessList
             );
     }
 
-    public EnumAccessError Clear(EnumUserAccessLevel userAccessLevel, EnumAccessLevel accessLevel)
+    public virtual EnumAccessError Clear(
+        IChatObject source,
+        IChatObject target,
+        EnumUserAccessLevel userAccessLevel, 
+        EnumAccessLevel accessLevel)
     {
         var hasRemaining = false;
         AccessEntries
@@ -81,14 +85,14 @@ public class AccessList : IAccessList
         return AccessEntries;
     }
     
-    public virtual bool CanAdd(IChatObject source,
+    public virtual bool CanModifyAccessLevel(IChatObject source,
         IChatObject target,
         EnumAccessLevel accessLevel)
     {
         return false;
     }
 
-    public virtual bool CanModify(IChatObject source,
+    public virtual bool CanModifyAccessEntry(IChatObject source,
         IChatObject target,
         AccessEntry entry)
     {

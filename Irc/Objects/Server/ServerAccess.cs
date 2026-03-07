@@ -17,11 +17,11 @@ public class ServerAccess : AccessList
         };
     }
     
-    public override bool CanAdd(IChatObject source,
+    public override bool CanModifyAccessLevel(IChatObject source,
         IChatObject target,
         EnumAccessLevel accessLevel) => source is IUser && ((IUser)source).GetLevel() >= EnumUserAccessLevel.Administrator;
     
-    public override bool CanModify(IChatObject source,
+    public override bool CanModifyAccessEntry(IChatObject source,
         IChatObject target,
         AccessEntry entry) => source is IUser && ((IUser)source).GetLevel() >= EnumUserAccessLevel.Administrator;
 }

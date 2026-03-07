@@ -16,6 +16,36 @@ public class ChannelAccess : AccessList
             { EnumAccessLevel.DENY, new List<AccessEntry>() }
         };
     }
+    
+    public override EnumAccessError Clear(
+        IChatObject source,
+        IChatObject target,
+        EnumUserAccessLevel userAccessLevel, 
+        EnumAccessLevel accessLevel)
+    {
+        var user = (IUser)source;
+        var member = ((IChannel)target).GetMember(user);
+        if (member == null) return EnumAccessError.IRCERR_NOACCESS;
+        
+        var hasRemaining = false;
+        AccessEntries
+            .Where(kvp => accessLevel == EnumAccessLevel.All || kvp.Key == accessLevel)
+            .ToList()
+            .ForEach(
+                kvp =>
+                {
+                    AccessEntries[kvp.Key] = kvp.Value.Where(accessEntry => 
+                        accessEntry.EntryLevel > userAccessLevel ||
+                        (accessLevel >= EnumAccessLevel.OWNER && member.GetLevel() < EnumChannelAccessLevel.ChatOwner)
+                        )
+                        .ToList();
+                    if (AccessEntries[kvp.Key].Count > 0) hasRemaining = true;
+                }
+            );
+
+        if (hasRemaining) return EnumAccessError.IRCERR_INCOMPLETE;
+        return EnumAccessError.SUCCESS;
+    }
 
     private bool CheckChannelAccess(
         IChatObject source, 
@@ -50,14 +80,14 @@ public class ChannelAccess : AccessList
                !(accessLevel == EnumAccessLevel.OWNER && memberLevel < EnumChannelAccessLevel.ChatOwner);
     }
 
-    public override bool CanAdd(IChatObject source,
+    public override bool CanModifyAccessLevel(IChatObject source,
         IChatObject target,
         EnumAccessLevel accessLevel)
     {
         return CheckChannelAccess(source, target, accessLevel, EnumUserAccessLevel.None);
     }
     
-    public override bool CanModify(IChatObject source,
+    public override bool CanModifyAccessEntry(IChatObject source,
         IChatObject target,
         AccessEntry entry)
     {
