@@ -78,6 +78,12 @@ public class Create : Command, ICommand
         
         inMemoryChannel.ServerName = targetServer.Name;
 
+        if (server.CacheManager.Subscriber == null)
+        {
+            Console.WriteLine("[Create] Skipping remote channel creation notification: Redis subscriber is not available.");
+            return;
+        }
+        
         server.CacheManager.Subscriber.Publish(
             Resources.PubSubServiceChannels,
             JsonSerializer.Serialize(inMemoryChannel)

@@ -95,14 +95,17 @@ public class Server : ChatObject, IServer
         AddProtocol(EnumProtocolType.IRC7, new Irc7());
         AddProtocol(EnumProtocolType.IRC8, new Irc8());
         
-        Console.WriteLine("Subscribing to service channel in Redis");
-        _cacheManager.Subscriber.Subscribe(ServerHandlers.ChannelPubSub, (channel, payload) =>
+        if (_cacheManager.Subscriber != null)
         {
-            if (payload.HasValue)
+            Console.WriteLine("Subscribing to service channel in Redis");
+            _cacheManager.Subscriber.Subscribe(ServerHandlers.ChannelPubSub, (channel, payload) =>
             {
-                ServerHandlers.HandleChannelPubSub(this, payload.ToString());
-            }
-        });
+                if (payload.HasValue)
+                {
+                    ServerHandlers.HandleChannelPubSub(this, payload.ToString());
+                }
+            });
+        }
         
         socketServer.OnClientConnecting += (sender, connection) =>
         {

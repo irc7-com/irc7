@@ -9,7 +9,7 @@ public class CacheManager
 {
     private readonly ConnectionMultiplexer? _redis;
     private readonly IDatabase? _db;
-    public readonly ISubscriber Subscriber;
+    public readonly ISubscriber? Subscriber;
 
     public CacheManager(string? redisUrl)
     {
