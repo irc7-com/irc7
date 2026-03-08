@@ -73,8 +73,8 @@ public class Join : Command, ICommand
                     user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
                     continue;
                 }
-
-                channel = server.CreateChannel(channelName);
+                
+                channel = server.CreateChannel(channelName, channelName, string.Empty);
                 if (channel == null)
                 {
                     user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
