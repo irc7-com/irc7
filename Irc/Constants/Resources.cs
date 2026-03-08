@@ -144,6 +144,7 @@ public static class Resources
     public static string ConfigMaxGuestConnections = "MaxGuestConnections";
     public static string ConfigBasicAuthentication = "BasicAuthentication";
     public static string ConfigAnonymousConnections = "AnonymousConnections";
+    public static string ConfigJoinOnCreate = "JoinOnCreate";
     public static string ConfigAdminInfo1 = "AdminInfo1";
     public static string ConfigAdminInfo2 = "AdminInfo2";
     public static string ConfigAdminInfo3 = "AdminInfo3";

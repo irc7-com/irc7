@@ -207,6 +207,7 @@ public class Server : ChatObject, IServer
     public int MaxGuestConnections { get; } = 1000;
     public bool BasicAuthentication { get; private set; } = true;
     public bool AnonymousConnections { get; private set; } = true;
+    public bool JoinOnCreate { get; private set; } = false;
     public int NetInvisibleCount { get; } = 0;
     public int NetServerCount { get; } = 0;
     public int NetUserCount { get; } = 0;
@@ -550,6 +551,7 @@ public class Server : ChatObject, IServer
         var maxAnonymousConnections = _DataStore.GetAs<int?>(Resources.ConfigMaxAnonymousConnections);
         var basicAuthentication = _DataStore.GetAs<bool?>(Resources.ConfigBasicAuthentication);
         var anonymousConnections = _DataStore.GetAs<bool?>(Resources.ConfigAnonymousConnections);
+        var joinOnCreate = _DataStore.GetAs<bool?>(Resources.ConfigJoinOnCreate);
 
         if (!string.IsNullOrWhiteSpace(title)) Title = title;
         if (maxInputBytes > 0) MaxInputBytes = maxInputBytes;
@@ -562,6 +564,7 @@ public class Server : ChatObject, IServer
         if (maxAnonymousConnections.HasValue) MaxAnonymousConnections = maxAnonymousConnections.Value;
         if (basicAuthentication.HasValue) BasicAuthentication = basicAuthentication.Value;
         if (anonymousConnections.HasValue) AnonymousConnections = anonymousConnections.Value;
+        if (joinOnCreate.HasValue) JoinOnCreate = joinOnCreate.Value;
     }
 
     private DateTime _lastChannelCleanup = DateTime.UtcNow;

@@ -66,11 +66,22 @@ public class Join : Command, ICommand
             var channel = server
                 .GetChannelByName(channelName);
             
-            // TODO: Add JoinOnCreate setting and implement here
             if (channel == null)
             {
-                user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
-                continue;
+                if (!server.JoinOnCreate)
+                {
+                    user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
+                    continue;
+                }
+                
+                channel = server.CreateChannel(channelName, channelName, string.Empty);
+                if (channel == null)
+                {
+                    user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, channelName));
+                    continue;
+                }
+
+                isCreator = true;
             }
 
             if (channel.HasUser(user))

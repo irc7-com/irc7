@@ -23,6 +23,7 @@ public interface IServer: IChatObject
     int MaxGuestConnections { get; }
     bool BasicAuthentication { get; }
     bool AnonymousConnections { get; }
+    bool JoinOnCreate { get; }
     int NetInvisibleCount { get; }
     int NetServerCount { get; }
     int NetUserCount { get; }

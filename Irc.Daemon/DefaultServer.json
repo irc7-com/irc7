@@ -19,6 +19,7 @@
   "MaxGuestConnections": "1000",
   "BasicAuthentication": "true",
   "AnonymousConnections": "true",
+  "JoinOnCreate": "false",
   "AdminInfo1": "Your Admin is",
   "AdminInfo2": "amazing",
   "AdminInfo3": "example@domain.com"
