@@ -12,6 +12,6 @@ internal class Data : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
-        chatFrame.User.Send(Raws.IRCX_ERR_NOTIMPLEMENTED(chatFrame.Server, chatFrame.User, nameof(Access)));
+        chatFrame.User.Send(Raws.IRCX_ERR_NOTIMPLEMENTED(chatFrame.Server, chatFrame.User, nameof(Data)));
     }
 }

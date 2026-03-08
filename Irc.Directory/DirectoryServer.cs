@@ -73,7 +73,6 @@ public class DirectoryServer : Server
         FlushCommands();
         AddCommand(new Ircvers());
         AddCommand(new Auth());
-        AddCommand(new AuthX());
         AddCommand(new Pass());
         AddCommand(new Nick());
         AddCommand(new UserCommand(), EnumProtocolType.IRC, "User");
