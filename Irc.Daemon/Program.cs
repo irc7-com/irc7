@@ -50,6 +50,7 @@ internal class Program
 
             if (_server is Server baseServer)
             {
+                baseServer.RecoverChannels();
                 baseServer.SetupHeartbeat();
             }
 

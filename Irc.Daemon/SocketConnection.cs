@@ -59,6 +59,7 @@ public class SocketConnection : IConnection
 
     public void Send(string message)
     {
+        // Console.WriteLine($"Sending to {GetIpAndPort()}: {message}");
         var sendAsync = new SocketAsyncEventArgs();
         sendAsync.SetBuffer(message.ToByteArray());
         sendAsync.Completed += (sender, args) =>

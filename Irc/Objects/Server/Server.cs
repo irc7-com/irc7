@@ -95,16 +95,13 @@ public class Server : ChatObject, IServer
         AddProtocol(EnumProtocolType.IRC7, new Irc7());
         AddProtocol(EnumProtocolType.IRC8, new Irc8());
         
-        if (_cacheManager.Subscriber != null)
+        if (_cacheManager.IsConnected)
         {
-            Console.WriteLine("Subscribing to service channel in Redis");
-            _cacheManager.Subscriber.Subscribe(ServerHandlers.ChannelPubSub, (channel, payload) =>
+            Console.WriteLine("Starting stream consumer for service channels");
+            _cacheManager.StartConsumingEvents(Name, (payload) => 
             {
-                if (payload.HasValue)
-                {
-                    ServerHandlers.HandleChannelPubSub(this, payload.ToString());
-                }
-            });
+                ServerHandlers.HandleChannelPubSub(this, payload);
+            }, _cancellationTokenSource.Token);
         }
         
         socketServer.OnClientConnecting += (sender, connection) =>
@@ -117,7 +114,7 @@ public class Server : ChatObject, IServer
             connection.OnConnect += (o, integer) => { Log.Info("Connect"); };
             connection.OnReceive += (o, s) =>
             {
-                //Console.WriteLine("OnRecv:" + s);
+                // Console.WriteLine("OnRecv:" + s);
             };
             connection.OnDisconnect += (o, integer) => RemoveUser(user);
             connection.Accept();
@@ -149,6 +146,28 @@ public class Server : ChatObject, IServer
         }
     }
 
+    public void RecoverChannels()
+    {
+        if (_cacheManager.IsConnected && !IsDirectoryServer)
+        {
+            var serverId = Name;
+            var rooms = _cacheManager.GetRoomsForServer(serverId);
+            foreach (var room in rooms)
+            {
+                var inMemoryChannel = room.ToInMemoryChannel();
+                if (string.IsNullOrWhiteSpace(inMemoryChannel.ChannelName)) continue;
+
+                if (GetChannelByName(inMemoryChannel.ChannelName) == null)
+                {
+                    var channel = Channel.Channel.FromInMemoryChannel(inMemoryChannel);
+                    channel.Store = room.Managed;
+                    Channels.Add(channel);
+                    Log.Info($"Recovered channel {inMemoryChannel.ChannelName}");
+                }
+            }
+        }
+    }
+
     private void SendHeartbeat()
     {
         var fqdn = RemoteIp;
@@ -169,7 +188,7 @@ public class Server : ChatObject, IServer
             var currentUsers = channel.GetMembers().Count;
             var maxUsers = channel.Modes.UserLimit.Value;
             
-            _cacheManager.RegisterRoom(
+            var success = _cacheManager.RegisterRoom(
                 channel.GetName(), 
                 serverId, 
                 category, 
@@ -182,7 +201,34 @@ public class Server : ChatObject, IServer
                 currentUsers, 
                 maxUsers
             );
+
+            if (!success)
+            {
+                ConsolidateDuplicateChannel(channel);
+            }
         }
+    }
+
+    private void ConsolidateDuplicateChannel(IChannel channel)
+    {
+        Log.Info($"Duplicate channel detected: {channel.GetName()}. Attempting to redirect users.");
+        var ownerId = _cacheManager.GetServerForRoom(channel.GetName());
+        if (ownerId == null) return;
+        
+        var ownerInfo = _cacheManager.GetActiveServers().FirstOrDefault(s => s.ServerId == ownerId);
+        if (ownerInfo == null) return;
+
+        var members = channel.GetMembers().ToList();
+        
+        RemoveChannel(channel);
+
+        Task.Run(async () => {
+            foreach (var member in members)
+            {
+                member.GetUser().Send(Raws.IRCX_RPL_REGROUP_934(this, member.GetUser(), channel));
+                await Task.Delay(50);
+            }
+        });
     }
 
     public string[] SupportPackages { get; }

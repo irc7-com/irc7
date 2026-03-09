@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using Irc.Objects.Channel;
 using StackExchange.Redis;
 
@@ -103,6 +104,13 @@ public class CacheManager
                 if decoded.serverId == ARGV[3] then
                     redis.call('HSET', 'acs:rooms', ARGV[1], ARGV[2])
                     return 1
+                else
+                    local server_key = 'acs:server:' .. decoded.serverId
+                    local server_exists = redis.call('EXISTS', server_key)
+                    if server_exists == 0 then
+                        redis.call('HSET', 'acs:rooms', ARGV[1], ARGV[2])
+                        return 1
+                    end
                 end
                 return 0
             end
@@ -140,6 +148,24 @@ public class CacheManager
         return null;
     }
 
+    public IEnumerable<AcsRoomInfo> GetRoomsForServer(string serverId)
+    {
+        if (_db == null) yield break;
+
+        var entries = _db.HashGetAll("acs:rooms");
+        foreach (var entry in entries)
+        {
+            if (entry.Value.HasValue)
+            {
+                var roomInfo = JsonSerializer.Deserialize<AcsRoomInfo>(entry.Value.ToString());
+                if (roomInfo != null && roomInfo.ServerId == serverId)
+                {
+                    yield return roomInfo;
+                }
+            }
+        }
+    }
+
     // Gets all active ACS servers
     public IEnumerable<AcsServerInfo> GetActiveServers()
     {
@@ -165,6 +191,76 @@ public class CacheManager
                 }
             }
         }
+    }
+
+    public void PublishChannelCreate(string payload)
+    {
+        if (_db == null) return;
+        try
+        {
+            _db.StreamAdd("acs:events:channels", "payload", payload);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CacheManager] Failed to publish channel create: {ex.Message}");
+        }
+    }
+
+    public void StartConsumingEvents(string serverId, Action<string> onMessageReceived, CancellationToken cancellationToken = default)
+    {
+        if (_db == null) return;
+        var streamName = "acs:events:channels";
+        var groupName = "acs_group";
+
+        try
+        {
+            if (!_db.KeyExists(streamName) || 
+                (_db.StreamGroupInfo(streamName).All(g => g.Name != groupName)))
+            {
+                _db.StreamCreateConsumerGroup(streamName, groupName, "0-0", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CacheManager] Failed to create consumer group: {ex.Message}");
+        }
+
+        Task.Run(async () =>
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var result = await _db.StreamReadGroupAsync(streamName, groupName, serverId, ">", 1);
+                    
+                    if (result != null && result.Any())
+                    {
+                        foreach (var streamEntry in result)
+                        {
+                            var payload = streamEntry.Values.FirstOrDefault(v => v.Name == "payload").Value;
+                            if (payload.HasValue)
+                            {
+                                onMessageReceived(payload.ToString());
+                            }
+                            await _db.StreamAcknowledgeAsync(streamName, groupName, streamEntry.Id);
+                        }
+                    }
+                    else
+                    {
+                        await Task.Delay(500, cancellationToken); // Polling interval
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[CacheManager] Stream read error: {ex.Message}");
+                    await Task.Delay(2000, cancellationToken);
+                }
+            }
+        }, cancellationToken);
     }
 }
 
@@ -208,4 +304,25 @@ public class AcsRoomInfo
 
     [JsonPropertyName("maxUsers")]
     public int MaxUsers { get; set; }
+
+    public InMemoryChannel ToInMemoryChannel()
+    {
+        var language = 1;
+        if (!string.IsNullOrWhiteSpace(Language) && int.TryParse(Language, out var parsedLanguage))
+        {
+            language = parsedLanguage;
+        }
+
+        return new InMemoryChannel
+        {
+            ServerName = ServerId,
+            Category = Category,
+            ChannelName = Name,
+            ChannelTopic = Topic,
+            Modes = Modes,
+            UserLimit = MaxUsers > 0 ? MaxUsers : 50,
+            Locale = Locale,
+            Language = language
+        };
+    }
 }
