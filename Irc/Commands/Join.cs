@@ -100,6 +100,10 @@ public class Join : Command, ICommand
                 {
                     if (TryJoinOrCreateClone(server, user, channel, key))
                         continue;
+
+                    // All 99 clone slots are full – inform the client the channel is full.
+                    user.Send(Raws.IRCX_ERR_CHANNELISFULL_471(server, user, channel));
+                    continue;
                 }
 
                 SendJoinError(server, channel, user, channelAccessResult);

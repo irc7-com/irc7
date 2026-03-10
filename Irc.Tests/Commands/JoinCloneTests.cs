@@ -177,6 +177,47 @@ public class JoinCloneTests
     }
 
     /// <summary>
+    /// When a CLONEABLE channel is full and all 99 clone slots are also full,
+    /// the user should receive ERR_CHANNELISFULL (471).
+    /// </summary>
+    [Test]
+    public void JoinCloneableFullChannel_AllCloneSlotsFull_SendsChannelIsFullError()
+    {
+        // Arrange: parent is full
+        var parent = new Channel("%#c");
+        parent.Modes.Cloneable.ModeValue = true;
+        parent.Modes.UserLimit.Value = 1;
+
+        var parentUser = CreateMockUser("ParentUser", "pu", "host0");
+        parent.Join(parentUser.Object);
+        _serverChannels.Add(parent);
+
+        // Arrange: all 99 clone slots exist and are full
+        for (var i = 1; i <= 99; i++)
+        {
+            var clone = new Channel($"%#c{i}");
+            clone.Modes.Clone.ModeValue = true;
+            clone.Modes.UserLimit.Value = 1;
+            var cloneUser = CreateMockUser($"User{i}", $"u{i}", $"h{i}");
+            clone.Join(cloneUser.Object);
+            _serverChannels.Add(clone);
+        }
+
+        var channelCountBefore = _serverChannels.Count;
+
+        // Act
+        Join.JoinChannels(_mockServer.Object, _mockUser.Object, new List<string> { "%#c" }, string.Empty);
+
+        // Assert: ERR_CHANNELISFULL (471) was sent
+        Assert.That(_sentMessages.Any(m => m.Contains("471")), Is.True,
+            "ERR_CHANNELISFULL (471) should be sent when all 99 clone slots are full.");
+
+        // Assert: no new channel was created
+        Assert.That(_serverChannels.Count, Is.EqualTo(channelCountBefore),
+            "No new channel should be created when all 99 clone slots are full.");
+    }
+
+    /// <summary>
     /// When a channel is full but does NOT have the CLONEABLE mode, the user should receive
     /// ERR_CHANNELISFULL without any clone being created.
     /// </summary>
