@@ -1090,6 +1090,13 @@ public static class Raws
     {
         return $":{user.GetAddress()} EQUESTION {channel} {nickname} {channel} :{message}";
     }
+
+    // IRCX CLONE message (draft-pfenning-irc-extensions-04 section 6.2)
+    // Informs hosts and owners in a CLONEABLE channel that a new CLONE channel was created.
+    public static string RPL_CLONE(IServer server, IChannel parent, IChannel clone)
+    {
+        return $":{server} CLONE {parent} {clone}";
+    }
 }
 
 // DIRECTORY SERVER SPECIFIC

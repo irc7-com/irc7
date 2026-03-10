@@ -93,6 +93,15 @@ public class Join : Command, ICommand
             var channelAccessResult = channel.GetAccess(user, key);
             if (channelAccessResult < EnumChannelAccessResult.SUCCESS_GUEST)
             {
+                // Per draft-pfenning-irc-extensions-04 section 8.1.16:
+                // When a CLONEABLE channel is full, redirect the user to a clone channel.
+                if (channelAccessResult == EnumChannelAccessResult.ERR_CHANNELISFULL &&
+                    channel.Modes.Cloneable.ModeValue)
+                {
+                    if (TryJoinOrCreateClone(server, user, channel, key))
+                        continue;
+                }
+
                 SendJoinError(server, channel, user, channelAccessResult);
                 continue;
             }
@@ -102,6 +111,117 @@ public class Join : Command, ICommand
                 .SendNames(user)
                 .SendOnJoinMessage(user);
         }
+    }
+
+    /// <summary>
+    /// Attempts to join the user to an existing non-full clone of the parent channel, or creates
+    /// a new clone channel (suffix 1-99) if no suitable clone exists.
+    /// Returns true if the user was successfully joined to a clone, false otherwise.
+    /// </summary>
+    private static bool TryJoinOrCreateClone(IServer server, IUser user, IChannel parent, string key)
+    {
+        for (var suffix = 1; suffix <= 99; suffix++)
+        {
+            var cloneName = parent.GetName() + suffix;
+            var existingClone = server.GetChannelByName(cloneName);
+
+            if (existingClone != null)
+            {
+                if (existingClone.HasUser(user))
+                {
+                    user.Send(Raws.IRCX_ERR_ALREADYONCHANNEL_927(server, user, existingClone));
+                    return true;
+                }
+
+                var cloneAccess = existingClone.GetAccess(user, key);
+                if (cloneAccess == EnumChannelAccessResult.ERR_CHANNELISFULL)
+                    continue; // this clone is full, try the next suffix
+
+                if (cloneAccess < EnumChannelAccessResult.SUCCESS_GUEST)
+                {
+                    SendJoinError(server, existingClone, user, cloneAccess);
+                    return true;
+                }
+
+                existingClone.Join(user, cloneAccess)
+                    .SendTopic(user)
+                    .SendNames(user)
+                    .SendOnJoinMessage(user);
+                return true;
+            }
+
+            // No channel exists with this clone name – create a new one.
+            var cloneChannel = CreateCloneChannel(server, parent, cloneName);
+            if (cloneChannel == null)
+                continue;
+
+            // Notify hosts and owners in the parent channel that a new clone was created.
+            parent.Send(Raws.RPL_CLONE(server, parent, cloneChannel), EnumChannelAccessLevel.ChatHost);
+
+            cloneChannel.Join(user, EnumChannelAccessResult.SUCCESS_GUEST)
+                .SendTopic(user)
+                .SendNames(user)
+                .SendOnJoinMessage(user);
+            return true;
+        }
+
+        return false; // all 99 clone slots are full
+    }
+
+    /// <summary>
+    /// Creates a clone channel from a parent CLONEABLE channel, inheriting its modes and properties.
+    /// The clone channel will have the CLONE mode (+e) set and CLONEABLE (+d) will not be inherited.
+    /// </summary>
+    private static IChannel? CreateCloneChannel(IServer server, IChannel parent, string cloneName)
+    {
+        var clone = server.CreateChannel(cloneName);
+        if (clone == null) return null;
+
+        // Inherit boolean modes from parent (excluding CLONEABLE; set CLONE instead)
+        var parentModes = parent.Modes;
+        clone.Modes.NoExtern.ModeValue = parentModes.NoExtern.ModeValue;
+        clone.Modes.TopicOp.ModeValue = parentModes.TopicOp.ModeValue;
+        clone.Modes.Private.ModeValue = parentModes.Private.ModeValue;
+        clone.Modes.Secret.ModeValue = parentModes.Secret.ModeValue;
+        clone.Modes.Hidden.ModeValue = parentModes.Hidden.ModeValue;
+        clone.Modes.InviteOnly.ModeValue = parentModes.InviteOnly.ModeValue;
+        clone.Modes.Moderated.ModeValue = parentModes.Moderated.ModeValue;
+        clone.Modes.NoWhisper.ModeValue = parentModes.NoWhisper.ModeValue;
+        clone.Modes.NoGuestWhisper.ModeValue = parentModes.NoGuestWhisper.ModeValue;
+        clone.Modes.Auditorium.ModeValue = parentModes.Auditorium.ModeValue;
+        clone.Modes.AuthOnly.ModeValue = parentModes.AuthOnly.ModeValue;
+        clone.Modes.Registered.ModeValue = parentModes.Registered.ModeValue;
+        clone.Modes.Knock.ModeValue = parentModes.Knock.ModeValue;
+
+        // Inherit user limit from parent
+        clone.Modes.UserLimit.Value = parentModes.UserLimit.Value;
+
+        // Inherit key from parent
+        if (parentModes.Key.ModeValue)
+        {
+            clone.Modes.Key.ModeValue = true;
+            clone.Modes.Keypass = parentModes.Keypass;
+        }
+
+        // Set CLONE mode to indicate this channel was created by the server as a clone
+        clone.Modes.Clone.ModeValue = true;
+
+        // Inherit props from parent
+        var parentProps = parent.Props;
+        var cloneProps = clone.Props;
+        cloneProps.Topic.Value = parentProps.Topic.Value;
+        cloneProps.Category.Value = parentProps.Category.Value;
+        cloneProps.Language.Value = parentProps.Language.Value;
+        cloneProps.Subject.Value = parentProps.Subject.Value;
+        cloneProps.OwnerKey.Value = parentProps.OwnerKey.Value;
+        cloneProps.HostKey.Value = parentProps.HostKey.Value;
+        cloneProps.MemberKey.Value = parentProps.MemberKey.Value;
+        cloneProps.Onjoin.Value = parentProps.Onjoin.Value;
+        cloneProps.Onpart.Value = parentProps.Onpart.Value;
+
+        if (!server.AddChannel(clone)) return null;
+
+        return clone;
     }
 
     public static void SendJoinError(IServer server, IChannel channel, IUser user, EnumChannelAccessResult result)
