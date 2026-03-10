@@ -1,4 +1,4 @@
-﻿namespace Irc7d;
+﻿﻿namespace Irc7d;
 
 public class ServerOptions
 {
@@ -13,4 +13,5 @@ public class ServerOptions
     public string? ServerType { get; set; }
     public string? ChatServerIp { get; set; }
     public string? RedisUrl { get; set; }
+    public string? ServerName { get; set; }
 }

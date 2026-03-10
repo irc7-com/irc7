@@ -95,7 +95,7 @@ public class Server : ChatObject, IServer
         AddProtocol(EnumProtocolType.IRC7, new Irc7());
         AddProtocol(EnumProtocolType.IRC8, new Irc8());
         
-        if (_cacheManager.IsConnected)
+        if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
             Console.WriteLine("Starting stream consumer for service channels");
             _cacheManager.StartConsumingEvents(Name, (payload) => 

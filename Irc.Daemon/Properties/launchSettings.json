@@ -6,7 +6,11 @@
     },
     "irc7-acs": {
       "commandName": "Project",
-      "commandLineArgs": "-t ACS -f metal -r localhost:6379"
+      "commandLineArgs": "-t ACS -f metal -r localhost:6379 -n TK2CHATCHATA01"
+    },
+    "irc7-acs2": {
+      "commandName": "Project",
+      "commandLineArgs": "-t ACS -f metal -p 6669 -r localhost:6379 -n TK2CHATCHATA02"
     }
   }
 }
