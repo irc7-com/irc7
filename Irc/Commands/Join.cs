@@ -120,13 +120,17 @@ public class Join : Command, ICommand
     /// <summary>
     /// Attempts to join the user to an existing non-full clone of the parent channel, or creates
     /// a new clone channel (suffix 1-99) if no suitable clone exists.
+    /// The first slot tried is the parent channel itself (no numeric suffix); subsequent slots
+    /// use numeric suffixes 1-99 (e.g. #chat, #chat1, #chat2, ..., #chat99).
     /// Returns true if the user was successfully joined to a clone, false otherwise.
     /// </summary>
     private static bool TryJoinOrCreateClone(IServer server, IUser user, IChannel parent, string key)
     {
-        for (var suffix = 1; suffix <= 99; suffix++)
+        // i=0  → no suffix (the parent channel itself is the first slot; it will be full, so we skip it)
+        // i=1–99 → numeric suffixes 1–99 (the actual numbered clone channels)
+        for (var i = 0; i <= 99; i++)
         {
-            var cloneName = parent.GetName() + suffix;
+            var cloneName = i == 0 ? parent.GetName() : parent.GetName() + i;
             var existingClone = server.GetChannelByName(cloneName);
 
             if (existingClone != null)
