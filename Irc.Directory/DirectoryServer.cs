@@ -39,7 +39,25 @@ public class DirectoryServer : Server
                     
                     if (CacheManager.Subscriber != null)
                     {
-                        CacheManager.PublishChannelCreate(System.Text.Json.JsonSerializer.Serialize(inMemoryChannel));
+                        CacheManager.PublishChannelCreate(targetServer.ServerId, System.Text.Json.JsonSerializer.Serialize(inMemoryChannel));
+                        
+                        // Update the room immediately in Redis so we don't cause an infinite failover loop 
+                        // for concurrent requests while the ACS is booting up the room.
+                        CacheManager.RegisterRoom(
+                            roomName: roomInfo.Name,
+                            serverId: targetServer.ServerId,
+                            category: roomInfo.Category,
+                            name: roomInfo.Name,
+                            topic: roomInfo.Topic,
+                            modes: roomInfo.Modes,
+                            managed: roomInfo.Managed,
+                            locale: roomInfo.Locale,
+                            language: roomInfo.Language,
+                            currentUsers: roomInfo.CurrentUsers,
+                            maxUsers: roomInfo.MaxUsers,
+                            ownerKey: roomInfo.OwnerKey,
+                            hostKey: roomInfo.HostKey
+                        );
                     }
                 }
             }

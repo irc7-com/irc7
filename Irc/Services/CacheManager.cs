@@ -44,7 +44,7 @@ public class CacheManager
         });
 
         // Use a 30-second TTL
-        _db.StringSet($"acs:server:{serverId}", payload, TimeSpan.FromSeconds(30));
+        _db.StringSet($"acs:server:{serverId}", payload, TimeSpan.FromSeconds(10));
     }
 
     // Unregisters the ACS server
@@ -209,12 +209,12 @@ public class CacheManager
         }
     }
 
-    public void PublishChannelCreate(string payload)
+    public void PublishChannelCreate(string serverId, string payload)
     {
         if (_db == null) return;
         try
         {
-            _db.StreamAdd("acs:events:channels", "payload", payload);
+            _db.StreamAdd($"acs:events:channels:{serverId}", "payload", payload);
         }
         catch (Exception ex)
         {
@@ -225,7 +225,7 @@ public class CacheManager
     public void StartConsumingEvents(string serverId, Action<string> onMessageReceived, CancellationToken cancellationToken = default)
     {
         if (_db == null) return;
-        var streamName = "acs:events:channels";
+        var streamName = $"acs:events:channels:{serverId}";
         var groupName = "acs_group";
 
         try
@@ -259,6 +259,7 @@ public class CacheManager
                                 onMessageReceived(payload.ToString());
                             }
                             await _db.StreamAcknowledgeAsync(streamName, groupName, streamEntry.Id);
+                            await _db.StreamDeleteAsync(streamName, new[] { streamEntry.Id });
                         }
                     }
                     else
