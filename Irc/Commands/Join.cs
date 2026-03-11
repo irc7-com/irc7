@@ -120,19 +120,22 @@ public class Join : Command, ICommand
     }
 
     /// <summary>
-    /// Attempts to join the user to an existing non-full clone of the parent channel, or creates
-    /// a new clone channel (suffix 1-99) if no suitable clone exists.
-    /// The first slot tried is the parent channel itself (no numeric suffix); subsequent slots
-    /// use numeric suffixes 1-99 (e.g. #chat, #chat1, #chat2, ..., #chat99).
-    /// Returns true if the user was successfully joined to a clone, false otherwise.
+    /// Attempts to join the user to the current active clone channel of the parent, or creates
+    /// a new clone channel (suffix 1-99) when the active clone is full.
+    /// The active clone index is tracked in <see cref="CloneableRule.NextCloneIndex"/> so that
+    /// repeated join attempts start directly at the known active clone rather than scanning
+    /// all 99 slots from scratch every time.
+    /// Returns true if the user was successfully joined to a clone, false if all 99 slots are full.
     /// </summary>
     private static bool TryJoinOrCreateClone(IServer server, IUser user, IChannel parent, string key)
     {
-        // i=0  → no suffix (the parent channel itself is the first slot; it will be full, so we skip it)
-        // i=1–99 → numeric suffixes 1–99 (the actual numbered clone channels)
-        for (var i = 0; i <= 99; i++)
+        var cloneable = parent.Modes.Cloneable;
+
+        // Walk forward from the current active clone index (1–99).
+        // In the common case only 1-2 lookups are needed.
+        while (cloneable.NextCloneIndex <= 99)
         {
-            var cloneName = i == 0 ? parent.GetName() : parent.GetName() + i;
+            var cloneName = parent.GetName() + cloneable.NextCloneIndex;
             var existingClone = server.GetChannelByName(cloneName);
 
             if (existingClone != null)
@@ -145,7 +148,11 @@ public class Join : Command, ICommand
 
                 var cloneAccess = existingClone.GetAccess(user, key);
                 if (cloneAccess == EnumChannelAccessResult.ERR_CHANNELISFULL)
-                    continue; // this clone is full, try the next suffix
+                {
+                    // This clone is full; advance to the next slot and try again.
+                    cloneable.NextCloneIndex++;
+                    continue;
+                }
 
                 if (cloneAccess < EnumChannelAccessResult.SUCCESS_GUEST)
                 {
@@ -163,7 +170,10 @@ public class Join : Command, ICommand
             // No channel exists with this clone name – create a new one.
             var cloneChannel = CreateCloneChannel(server, parent, cloneName);
             if (cloneChannel == null)
+            {
+                cloneable.NextCloneIndex++;
                 continue;
+            }
 
             // Notify hosts and owners in the parent channel that a new clone was created.
             parent.Send(Raws.RPL_CLONE(server, parent, cloneChannel), EnumChannelAccessLevel.ChatHost);

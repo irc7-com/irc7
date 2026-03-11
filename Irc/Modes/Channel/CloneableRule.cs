@@ -9,6 +9,13 @@ public class CloneableRule : ModeRuleChannel, IModeRule
     {
     }
 
+    /// <summary>
+    /// Tracks the numeric suffix of the current active clone channel (1–99).
+    /// Starts at 1 (first clone) and advances only when the current clone becomes full.
+    /// This avoids scanning all 99 slots on every join attempt.
+    /// </summary>
+    public int NextCloneIndex { get; set; } = 1;
+
     public new EnumIrcError Evaluate(IChatObject source, IChatObject target, bool flag, string parameter)
     {
         // Per draft-pfenning-irc-extensions-04 section 8.1.16:
