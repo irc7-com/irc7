@@ -24,6 +24,12 @@ public static class ServerHandlers
                 
         if (inMemoryChannel.ServerName == server.Name)
         {
+            if (server.GetChannelByName(inMemoryChannel.ChannelName) != null)
+            {
+                Log.Info($"Channel {inMemoryChannel.ChannelName} already exists in memory. Skipping creation from PubSub.");
+                return;
+            }
+
             var channel = Channel.Channel.FromInMemoryChannel(inMemoryChannel);
             if (!server.AddChannel(channel))
             {

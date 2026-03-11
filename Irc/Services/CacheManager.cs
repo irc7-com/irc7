@@ -148,6 +148,18 @@ public class CacheManager
         return null;
     }
 
+    public AcsRoomInfo? GetRoomInfo(string roomName)
+    {
+        if (_db == null) return null;
+        
+        var value = _db.HashGet("acs:rooms", roomName.ToUpper());
+        if (value.HasValue)
+        {
+            return JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());
+        }
+        return null;
+    }
+
     public IEnumerable<AcsRoomInfo> GetRoomsForServer(string serverId)
     {
         if (_db == null) yield break;

@@ -19,17 +19,36 @@ public class DirectoryServer : Server
         if (!CacheManager.IsConnected) return null;
 
         var activeServers = CacheManager.GetActiveServers().ToList();
-        var existingServerId = CacheManager.GetServerForRoom(roomName);
+        var roomInfo = CacheManager.GetRoomInfo(roomName);
         
         Irc.Services.AcsServerInfo? targetServer = null;
 
-        if (!string.IsNullOrEmpty(existingServerId))
+        if (roomInfo != null && !string.IsNullOrEmpty(roomInfo.ServerId))
         {
-            targetServer = activeServers.FirstOrDefault(s => s.ServerId == existingServerId);
+            targetServer = activeServers.FirstOrDefault(s => s.ServerId == roomInfo.ServerId);
+            
+            // Failover condition: Room exists in Redis but its assigned server is dead
+            if (targetServer == null)
+            {
+                targetServer = activeServers.OrderBy(s => s.UsersOnline).FirstOrDefault();
+                if (targetServer != null)
+                {
+                    // Clone the room to the new server via PubSub
+                    var inMemoryChannel = roomInfo.ToInMemoryChannel();
+                    inMemoryChannel.ServerName = targetServer.Name;
+                    
+                    if (CacheManager.Subscriber != null)
+                    {
+                        CacheManager.PublishChannelCreate(System.Text.Json.JsonSerializer.Serialize(inMemoryChannel));
+                    }
+                }
+            }
         }
-
-        // Load balance to server with least connections
-        targetServer ??= activeServers.OrderBy(s => s.UsersOnline).FirstOrDefault();
+        else
+        {
+            // Room does not exist, load balance to server with least connections
+            targetServer = activeServers.OrderBy(s => s.UsersOnline).FirstOrDefault();
+        }
 
         return targetServer;
     }
