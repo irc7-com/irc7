@@ -7,11 +7,37 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Devolutions.Sspi" Version="2026.3.6" />
+        <ProjectReference Include="..\Irc.Helpers\Irc.Helpers.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Irc.Helpers\Irc.Helpers.csproj" />
+      <!--
+        ExcludeAssets="build" prevents the package's .targets file from being imported.
+        That .targets file uses <NativeReference> on macOS which triggers the ResolveNativeReference
+        task — a task that only exists in .NET Framework MSBuild and causes MSB4803 on .NET Core.
+        We manually copy the correct native library below instead.
+      -->
+      <PackageReference Include="Devolutions.Sspi" Version="2026.3.6" ExcludeAssets="build" />
+    </ItemGroup>
+
+    <!-- Manually copy the native library so P/Invoke can find it at runtime -->
+    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+      <None Include="$(NuGetPackageRoot)devolutions.sspi/2026.3.6/runtimes/osx-universal/native/libDevolutionsSspi.dylib">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <Link>libDevolutionsSspi.dylib</Link>
+      </None>
+    </ItemGroup>
+    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+      <None Include="$(NuGetPackageRoot)devolutions.sspi/2026.3.6/runtimes/linux-x64/native/libDevolutionsSspi.so">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <Link>libDevolutionsSspi.so</Link>
+      </None>
+    </ItemGroup>
+    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+      <None Include="$(NuGetPackageRoot)devolutions.sspi/2026.3.6/runtimes/win-x64/native/DevolutionsSspi.dll">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <Link>DevolutionsSspi.dll</Link>
+      </None>
     </ItemGroup>
 
 </Project>
