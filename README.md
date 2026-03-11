@@ -19,7 +19,7 @@ IRC7 targets **.NET 10** and is built using **GitHub Actions**. See the [workflo
 
 IRC7 is based on a mixture of the following specifications and data gathered during the time MSN Chat was operational:
 
-- [RFC 1459 — Internet Relay Chat Protocol](docs/rfc1459.txt)
-- [draft-pfenning-irc-extensions-04 — IRCX Extensions](docs/draft-pfenning-irc-extensions-04.txt)
+- **RFC 1459 — Internet Relay Chat Protocol**: [original](https://www.rfc-editor.org/rfc/rfc1459.txt) · [local copy](docs/rfc1459.md)
+- **draft-pfenning-irc-extensions-04 — IRCX Extensions**: [original](https://www.ietf.org/archive/id/draft-pfenning-irc-extensions-04.txt) · [local copy](docs/draft-pfenning-irc-extensions-04.md)
 
 Canonical copies of these documents are stored in the [`docs/`](docs/) directory for reference.
