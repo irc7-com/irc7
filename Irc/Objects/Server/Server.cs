@@ -95,15 +95,6 @@ public class Server : ChatObject, IServer
         AddProtocol(EnumProtocolType.IRC7, new Irc7());
         AddProtocol(EnumProtocolType.IRC8, new Irc8());
         
-        if (_cacheManager.IsConnected && !IsDirectoryServer)
-        {
-            Console.WriteLine("Starting stream consumer for service channels");
-            _cacheManager.StartConsumingEvents(Name, (payload) => 
-            {
-                ServerHandlers.HandleChannelPubSub(this, payload);
-            }, _cancellationTokenSource.Token);
-        }
-        
         socketServer.OnClientConnecting += (sender, connection) =>
         {
             // TODO: Need to pass a Interfaced factory in to create the appropriate user
@@ -138,7 +129,13 @@ public class Server : ChatObject, IServer
     {
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
-            _heartbeatTimer = new System.Timers.Timer(10000); // 10 seconds
+            Console.WriteLine($"[Server] Subscribing to PubSub channel for server: {Name}");
+            _cacheManager.StartConsumingEvents(Name, (payload) => 
+            {
+                ServerHandlers.HandleChannelPubSub(this, payload);
+            }, _cancellationTokenSource.Token);
+
+            _heartbeatTimer = new System.Timers.Timer(5000); // 5 seconds
             _heartbeatTimer.Elapsed += (s, e) => SendHeartbeat();
             _heartbeatTimer.AutoReset = true;
             _heartbeatTimer.Start();
