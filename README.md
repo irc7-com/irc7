@@ -1,33 +1,31 @@
 # IRC7
-IRC7 Project
 
-About:
+[![.NET](https://github.com/irc7-com/irc7/actions/workflows/dotnet.yml/badge.svg)](https://github.com/irc7-com/irc7/actions/workflows/dotnet.yml)
 
-Created by [@jyonxo](https://github.com/jyonxo) and [@realJoshByrnes](https://github.com/realJoshByrnes).
-Maintained by [@jyonxo](https://github.com/jyonxo), [@realJoshByrnes](https://github.com/realJoshByrnes) and [@joachimjusth](https://github.com/joachimjusth).
-msnld is hosted by @realJoshByrnes
-irc7 is hosted by SkyCrest
+An IRC server inspired by MSN Chat, implementing IRC and IRCX protocols. Created by [@jyonxo](https://github.com/jyonxo) and [@realJoshByrnes](https://github.com/realJoshByrnes).
 
-This is the final iteration of a series of projects that began a few years before the close of MSN. The project has been contributed mainly by [@jyonxo](https://github.com/jyonxo) and [@realJoshByrnes](https://github.com/realJoshByrnes). The idea was to have a server that closely mimics what MSN Chat used to provide.
+## Maintainers
 
-The project was initially created as a C# .NET Service but had undergone multiple iterations, it finally found its way to .NET Core which has gained a lot of traction in the industry and has multiple platform support so this can be targetted for Windows, Linux, MacOS etc.
+<table>
+  <tbody><tr>
+    <td><a href="https://github.com/jyonxo"><img src="https://avatars.githubusercontent.com/u/20768067?s=120&v=4"><br><sub><b>jyonxo</b></sub></a></td>
+    <td><a href="https://github.com/realJoshByrnes"><img src="https://avatars.githubusercontent.com/u/204185?s=120&v=4"><br><sub><b>realJoshByrnes</b></sub></a></td>
+    <td><a href="https://github.com/joachimjusth"><img src="https://avatars.githubusercontent.com/u/3322377?s=120&v=4"><br><sub><b>joachimjusth</b></sub></a></td>
+    <td><a href="https://github.com/ricardodevries"><img src="https://avatars.githubusercontent.com/u/78354174?s=120&v=4"><br><sub><b>ricardodevries</b></sub></a></td>
+  </tr>
+</tbody></table>
 
-The server is loosely based on a mixture of the following RFCs:
+The current implementation of IRC7 is hosted by **SkyCrest**.
 
-[RFC 1459](https://datatracker.ietf.org/doc/html/rfc1459)
+## Build
 
-[draft-pfenning-irc-extensions-04](https://datatracker.ietf.org/doc/html/draft-pfenning-irc-extensions-04)
+IRC7 targets **.NET 10** and is built using **GitHub Actions**. See the [workflow](.github/workflows/dotnet.yml) for details.
 
-Also our own data gathered during the time MSN Chat was operational, including eXonytes Realm & other sources
+## Documentation
 
-Current project state:
+IRC7 is based on a mixture of the following specifications and data gathered during the time MSN Chat was operational:
 
-IRC7 uses .NET Core 6.0 and is compiled in VS 2022
+- **RFC 1459 — Internet Relay Chat Protocol**: [original](https://www.rfc-editor.org/rfc/rfc1459.txt) · [local copy](docs/rfc1459.txt)
+- **draft-pfenning-irc-extensions-04 — IRCX Extensions**: [original](https://www.ietf.org/archive/id/draft-pfenning-irc-extensions-04.txt) · [local copy](docs/draft-pfenning-irc-extensions-04.txt)
 
-Apologies as this is currently in early development so:
-- Codebase is rough
-- Not enough commenting
-- Parts need re-writing/optimization
-- Still WIP
-
-Anyone who would like to help work on this projects please hit either of us up [@jyonxo](https://github.com/jyonxo) and [@realJoshByrnes](https://github.com/realJoshByrnes)
+Canonical copies of these documents are stored in the [`docs/`](docs/) directory for reference.
