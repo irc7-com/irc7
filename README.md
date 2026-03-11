@@ -15,6 +15,8 @@ An IRC server inspired by MSN Chat, implementing IRC and IRCX protocols. Created
   </tr>
 </tbody></table>
 
+The current implementation of IRC7 is hosted by **SkyCrest**.
+
 ## Build
 
 IRC7 targets **.NET 10** and is built using **GitHub Actions**. See the [workflow](.github/workflows/dotnet.yml) for details.
@@ -27,5 +29,3 @@ IRC7 is based on a mixture of the following specifications and data gathered dur
 - **draft-pfenning-irc-extensions-04 — IRCX Extensions**: [original](https://www.ietf.org/archive/id/draft-pfenning-irc-extensions-04.txt) · [local copy](docs/draft-pfenning-irc-extensions-04.txt)
 
 Canonical copies of these documents are stored in the [`docs/`](docs/) directory for reference.
-
-The current implementation of IRC7 is hosted by **SkyCrest**.
