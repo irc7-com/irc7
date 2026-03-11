@@ -21,6 +21,6 @@ public class BotRule : ModeRule, IModeRule
             return EnumIrcError.OK;
         }
 
-        return EnumIrcError.ERR_NOSUCHCHANNEL;
+        return EnumIrcError.ERR_CANNOTSETFOROTHER;
     }
 }
