@@ -211,10 +211,12 @@ public class CacheManager
 
     public void PublishChannelCreate(string serverId, string payload)
     {
-        if (_db == null) return;
+        if (Subscriber == null) return;
         try
         {
-            _db.StreamAdd($"acs:events:channels:{serverId}", "payload", payload);
+            var channelName = new RedisChannel($"acs:events:channels:{serverId}", RedisChannel.PatternMode.Literal);
+            Console.WriteLine($"[CacheManager] Publishing to PubSub channel {channelName}");
+            Subscriber.Publish(channelName, payload);
         }
         catch (Exception ex)
         {
@@ -224,60 +226,35 @@ public class CacheManager
 
     public void StartConsumingEvents(string serverId, Action<string> onMessageReceived, CancellationToken cancellationToken = default)
     {
-        if (_db == null) return;
-        var streamName = $"acs:events:channels:{serverId}";
-        var groupName = "acs_group";
+        if (Subscriber == null) return;
+        var channelName = new RedisChannel($"acs:events:channels:{serverId}", RedisChannel.PatternMode.Literal);
+
+        Console.WriteLine($"[CacheManager] Subscribing to PubSub channel {channelName}");
 
         try
         {
-            if (!_db.KeyExists(streamName) || 
-                (_db.StreamGroupInfo(streamName).All(g => g.Name != groupName)))
+            Subscriber.Subscribe(channelName, (channel, value) =>
             {
-                _db.StreamCreateConsumerGroup(streamName, groupName, "0-0", true);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[CacheManager] Failed to create consumer group: {ex.Message}");
-        }
+                if (value.HasValue)
+                {
+                    Console.WriteLine($"[CacheManager] Received event on {channelName}");
+                    onMessageReceived(value.ToString());
+                }
+            });
 
-        Task.Run(async () =>
-        {
-            while (!cancellationToken.IsCancellationRequested)
+            cancellationToken.Register(() =>
             {
                 try
                 {
-                    var result = await _db.StreamReadGroupAsync(streamName, groupName, serverId, ">", 1);
-                    
-                    if (result != null && result.Any())
-                    {
-                        foreach (var streamEntry in result)
-                        {
-                            var payload = streamEntry.Values.FirstOrDefault(v => v.Name == "payload").Value;
-                            if (payload.HasValue)
-                            {
-                                onMessageReceived(payload.ToString());
-                            }
-                            await _db.StreamAcknowledgeAsync(streamName, groupName, streamEntry.Id);
-                            await _db.StreamDeleteAsync(streamName, new[] { streamEntry.Id });
-                        }
-                    }
-                    else
-                    {
-                        await Task.Delay(500, cancellationToken); // Polling interval
-                    }
+                    Subscriber.Unsubscribe(channelName);
                 }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[CacheManager] Stream read error: {ex.Message}");
-                    await Task.Delay(2000, cancellationToken);
-                }
-            }
-        }, cancellationToken);
+                catch { }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CacheManager] Failed to subscribe to channel: {ex.Message}");
+        }
     }
 }
 
