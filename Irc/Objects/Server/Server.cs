@@ -187,6 +187,8 @@ public class Server : ChatObject, IServer
             var language = channel.Props.Language.Value ?? string.Empty;
             var currentUsers = channel.GetMembers().Count;
             var maxUsers = channel.Modes.UserLimit.Value;
+            var ownerKey = channel.Props.GetProp("OWNERKEY")?.Value ?? string.Empty;
+            var hostKey = channel.Props.GetProp("HOSTKEY")?.Value ?? string.Empty;
             
             var success = _cacheManager.RegisterRoom(
                 channel.GetName(), 
@@ -199,7 +201,9 @@ public class Server : ChatObject, IServer
                 locale, 
                 language, 
                 currentUsers, 
-                maxUsers
+                maxUsers,
+                ownerKey,
+                hostKey
             );
 
             if (!success)
@@ -320,6 +324,8 @@ public class Server : ChatObject, IServer
             var language = channel.Props.Language.Value ?? string.Empty;
             var currentUsers = channel.GetMembers().Count;
             var maxUsers = channel.Modes.UserLimit.Value;
+            var ownerKey = channel.Props.GetProp("OWNERKEY")?.Value ?? string.Empty;
+            var hostKey = channel.Props.GetProp("HOSTKEY")?.Value ?? string.Empty;
             
             var success = _cacheManager.RegisterRoom(
                 channel.GetName(), 
@@ -332,7 +338,9 @@ public class Server : ChatObject, IServer
                 locale, 
                 language, 
                 currentUsers, 
-                maxUsers
+                maxUsers,
+                ownerKey,
+                hostKey
             );
             if (!success) return false;
         }

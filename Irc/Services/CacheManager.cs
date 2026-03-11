@@ -70,12 +70,14 @@ public class CacheManager
             // Current users would always be 0 here as we are registering a room
             currentUsers: 0,
             // Need to sort this out better
-            maxUsers: 50
+            maxUsers: 50,
+            ownerKey: inMemoryChannel.OwnerKey,
+            hostKey: inMemoryChannel.HostKey
         );
     }
 
     // Registers a room to a specific ACS
-    public bool RegisterRoom(string roomName, string serverId, string category, string name, string topic, string modes, bool managed, string locale, string language, int currentUsers, int maxUsers)
+    public bool RegisterRoom(string roomName, string serverId, string category, string name, string topic, string modes, bool managed, string locale, string language, int currentUsers, int maxUsers, string ownerKey = "", string hostKey = "")
     {
         if (_db == null) return true;
 
@@ -90,7 +92,9 @@ public class CacheManager
             Locale = locale,
             Language = language,
             CurrentUsers = currentUsers,
-            MaxUsers = maxUsers
+            MaxUsers = maxUsers,
+            OwnerKey = ownerKey,
+            HostKey = hostKey
         });
 
         var script = @"
@@ -317,6 +321,12 @@ public class AcsRoomInfo
     [JsonPropertyName("maxUsers")]
     public int MaxUsers { get; set; }
 
+    [JsonPropertyName("ownerKey")]
+    public string OwnerKey { get; set; } = string.Empty;
+
+    [JsonPropertyName("hostKey")]
+    public string HostKey { get; set; } = string.Empty;
+
     public InMemoryChannel ToInMemoryChannel()
     {
         var language = 1;
@@ -334,7 +344,9 @@ public class AcsRoomInfo
             Modes = Modes,
             UserLimit = MaxUsers > 0 ? MaxUsers : 50,
             Locale = Locale,
-            Language = language
+            Language = language,
+            OwnerKey = OwnerKey,
+            HostKey = HostKey
         };
     }
 }
