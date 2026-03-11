@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using Irc.Commands;
+﻿using Irc.Commands;
 using Irc.Directory.Commands;
 using Irc.Enumerations;
 using Irc.Interfaces;
@@ -80,8 +79,6 @@ public class DirectoryServer : Server
         AddCommand(new Finds());
         AddCommand(new Prop());
         AddCommand(new Irc.Directory.Commands.Create());
-        AddCommand(new Ping());
-        AddCommand(new Pong());
         AddCommand(new Version());
         AddCommand(new WebIrc());
     }

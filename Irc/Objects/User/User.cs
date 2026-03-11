@@ -350,7 +350,10 @@ public class User : ChatObject, IUser
             {
                 Log.Trace($"Ping Count for {this} hit stage {PingCount + 1}");
                 PingCount++;
-                Send(Raws.RPL_PING(Server, this));
+                if (!Server.IsDirectoryServer)
+                {
+                    Send(Raws.RPL_PING(Server, this));
+                }
             }
             else
             {
