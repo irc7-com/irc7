@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using Irc.Objects.Channel;
 using StackExchange.Redis;
 
@@ -43,7 +44,7 @@ public class CacheManager
         });
 
         // Use a 30-second TTL
-        _db.StringSet($"acs:server:{serverId}", payload, TimeSpan.FromSeconds(30));
+        _db.StringSet($"acs:server:{serverId}", payload, TimeSpan.FromSeconds(10));
     }
 
     // Unregisters the ACS server
@@ -69,12 +70,14 @@ public class CacheManager
             // Current users would always be 0 here as we are registering a room
             currentUsers: 0,
             // Need to sort this out better
-            maxUsers: 50
+            maxUsers: 50,
+            ownerKey: inMemoryChannel.OwnerKey,
+            hostKey: inMemoryChannel.HostKey
         );
     }
 
     // Registers a room to a specific ACS
-    public bool RegisterRoom(string roomName, string serverId, string category, string name, string topic, string modes, bool managed, string locale, string language, int currentUsers, int maxUsers)
+    public bool RegisterRoom(string roomName, string serverId, string category, string name, string topic, string modes, bool managed, string locale, string language, int currentUsers, int maxUsers, string ownerKey = "", string hostKey = "")
     {
         if (_db == null) return true;
 
@@ -89,7 +92,9 @@ public class CacheManager
             Locale = locale,
             Language = language,
             CurrentUsers = currentUsers,
-            MaxUsers = maxUsers
+            MaxUsers = maxUsers,
+            OwnerKey = ownerKey,
+            HostKey = hostKey
         });
 
         var script = @"
@@ -103,6 +108,13 @@ public class CacheManager
                 if decoded.serverId == ARGV[3] then
                     redis.call('HSET', 'acs:rooms', ARGV[1], ARGV[2])
                     return 1
+                else
+                    local server_key = 'acs:server:' .. decoded.serverId
+                    local server_exists = redis.call('EXISTS', server_key)
+                    if server_exists == 0 then
+                        redis.call('HSET', 'acs:rooms', ARGV[1], ARGV[2])
+                        return 1
+                    end
                 end
                 return 0
             end
@@ -140,6 +152,36 @@ public class CacheManager
         return null;
     }
 
+    public AcsRoomInfo? GetRoomInfo(string roomName)
+    {
+        if (_db == null) return null;
+        
+        var value = _db.HashGet("acs:rooms", roomName.ToUpper());
+        if (value.HasValue)
+        {
+            return JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());
+        }
+        return null;
+    }
+
+    public IEnumerable<AcsRoomInfo> GetRoomsForServer(string serverId)
+    {
+        if (_db == null) yield break;
+
+        var entries = _db.HashGetAll("acs:rooms");
+        foreach (var entry in entries)
+        {
+            if (entry.Value.HasValue)
+            {
+                var roomInfo = JsonSerializer.Deserialize<AcsRoomInfo>(entry.Value.ToString());
+                if (roomInfo != null && roomInfo.ServerId == serverId)
+                {
+                    yield return roomInfo;
+                }
+            }
+        }
+    }
+
     // Gets all active ACS servers
     public IEnumerable<AcsServerInfo> GetActiveServers()
     {
@@ -164,6 +206,54 @@ public class CacheManager
                     }
                 }
             }
+        }
+    }
+
+    public void PublishChannelCreate(string serverId, string payload)
+    {
+        if (Subscriber == null) return;
+        try
+        {
+            var channelName = new RedisChannel($"acs:events:channels:{serverId}", RedisChannel.PatternMode.Literal);
+            Console.WriteLine($"[CacheManager] Publishing to PubSub channel {channelName}");
+            Subscriber.Publish(channelName, payload);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CacheManager] Failed to publish channel create: {ex.Message}");
+        }
+    }
+
+    public void StartConsumingEvents(string serverId, Action<string> onMessageReceived, CancellationToken cancellationToken = default)
+    {
+        if (Subscriber == null) return;
+        var channelName = new RedisChannel($"acs:events:channels:{serverId}", RedisChannel.PatternMode.Literal);
+
+        Console.WriteLine($"[CacheManager] Subscribing to PubSub channel {channelName}");
+
+        try
+        {
+            Subscriber.Subscribe(channelName, (channel, value) =>
+            {
+                if (value.HasValue)
+                {
+                    Console.WriteLine($"[CacheManager] Received event on {channelName}");
+                    onMessageReceived(value.ToString());
+                }
+            });
+
+            cancellationToken.Register(() =>
+            {
+                try
+                {
+                    Subscriber.Unsubscribe(channelName);
+                }
+                catch { }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CacheManager] Failed to subscribe to channel: {ex.Message}");
         }
     }
 }
@@ -208,4 +298,33 @@ public class AcsRoomInfo
 
     [JsonPropertyName("maxUsers")]
     public int MaxUsers { get; set; }
+
+    [JsonPropertyName("ownerKey")]
+    public string OwnerKey { get; set; } = string.Empty;
+
+    [JsonPropertyName("hostKey")]
+    public string HostKey { get; set; } = string.Empty;
+
+    public InMemoryChannel ToInMemoryChannel()
+    {
+        var language = 1;
+        if (!string.IsNullOrWhiteSpace(Language) && int.TryParse(Language, out var parsedLanguage))
+        {
+            language = parsedLanguage;
+        }
+
+        return new InMemoryChannel
+        {
+            ServerName = ServerId,
+            Category = Category,
+            ChannelName = Name,
+            ChannelTopic = Topic,
+            Modes = Modes,
+            UserLimit = MaxUsers > 0 ? MaxUsers : 50,
+            Locale = Locale,
+            Language = language,
+            OwnerKey = OwnerKey,
+            HostKey = HostKey
+        };
+    }
 }

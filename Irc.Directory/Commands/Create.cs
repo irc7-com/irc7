@@ -84,10 +84,7 @@ public class Create : Command, ICommand
             return;
         }
         
-        server.CacheManager.Subscriber.Publish(
-            Resources.PubSubServiceChannels,
-            JsonSerializer.Serialize(inMemoryChannel)
-        );
+        server.CacheManager.PublishChannelCreate(targetServer.ServerId, JsonSerializer.Serialize(inMemoryChannel));
         chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
     }
 

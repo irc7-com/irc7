@@ -1013,6 +1013,11 @@ public static class Raws
         return $":{server} 929 {user} {targetUser} {targetChannel} :Cannot invite. Too many invites.";
     }
 
+    public static string IRCX_RPL_REGROUP_934(IServer server, IUser user, IChannel channel)
+    {        
+        return $":{server} 934 {user} {channel}:Channel moved due to regroup.";
+    }
+
     public static string IRCX_ERR_NOTIMPLEMENTED(IServer server, IUser user, string command)
     {
         return $":{server} 999 {user} :%s Sorry, this command is not implemented yet.";

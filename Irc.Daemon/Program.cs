@@ -46,10 +46,14 @@ internal class Program
             _server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0);
             _server.RemoteIp = options.Fqdn ?? "localhost";
 
+            if (!string.IsNullOrEmpty(options.ServerName))
+                _server.Name = options.ServerName;
+
             InitializeDefaultChannels(_server, serverType);
 
             if (_server is Server baseServer)
             {
+                baseServer.RecoverChannels();
                 baseServer.SetupHeartbeat();
             }
 
@@ -115,6 +119,9 @@ internal class Program
         var redisUrlOption =
             new Option<string>(["-r", "--redis"], "The Redis/KeyDB connection string (optional, enables caching and ADS/ACS load balancing)")
                 { ArgumentHelpName = "redisurl" };
+        var serverNameOption =
+            new Option<string>(["-n", "--name"], "The server name, overrides the Name value from DefaultServer.json")
+                { ArgumentHelpName = "servername" };
 
         var options = new Dictionary<string, Option>
         {
@@ -128,7 +135,8 @@ internal class Program
             { "fqdn", fqdnOption },
             { "serverType", serverTypeOption },
             { "chatServerIp", chatServerIpOption },
-            { "redisUrl", redisUrlOption }
+            { "redisUrl", redisUrlOption },
+            { "serverName", serverNameOption }
         };
 
         foreach (var option in options.Values) rootCommand.AddOption(option);
@@ -150,7 +158,8 @@ internal class Program
             Fqdn = context.ParseResult.GetValueForOption((Option<string>)optionsDict["fqdn"]),
             ServerType = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverType"]),
             ChatServerIp = context.ParseResult.GetValueForOption((Option<string>)optionsDict["chatServerIp"]),
-            RedisUrl = context.ParseResult.GetValueForOption((Option<string>)optionsDict["redisUrl"])
+            RedisUrl = context.ParseResult.GetValueForOption((Option<string>)optionsDict["redisUrl"]),
+            ServerName = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverName"])
         };
     }
 
@@ -258,6 +267,7 @@ internal class Program
             $"║ Backlog Size: {options.Backlog}",
             $"║ Redis URL: {options.RedisUrl}"
         };
+        if (!string.IsNullOrEmpty(options.ServerName)) infoLines.Add($"║ Server Name: {options.ServerName}");
         if (!string.IsNullOrEmpty(options.ChatServerIp)) infoLines.Add($"║ Chat Server Ip: {options.ChatServerIp}");
 
         var maxLength = 0;
