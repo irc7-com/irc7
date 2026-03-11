@@ -6,12 +6,14 @@ An IRC server inspired by MSN Chat, implementing IRC and IRCX protocols. Created
 
 ## Maintainers
 
-| Avatar | Name |
-|--------|------|
-| <img src="https://avatars.githubusercontent.com/u/20768067?s=120&v=4" width="40" /> | [@jyonxo](https://github.com/jyonxo) |
-| <img src="https://avatars.githubusercontent.com/u/204185?s=120&v=4" width="40" /> | [@realJoshByrnes](https://github.com/realJoshByrnes) |
-| <img src="https://avatars.githubusercontent.com/u/3322377?s=120&v=4" width="40" /> | [@joachimjusth](https://github.com/joachimjusth) |
-| <img src="https://avatars.githubusercontent.com/u/78354174?s=120&v=4" width="40" /> | [@ricardodevries](https://github.com/ricardodevries) |
+<table>
+  <tbody><tr>
+    <td><a href="https://github.com/jyonxo"><img src="https://avatars.githubusercontent.com/u/20768067?s=120&v=4"><br><sub><b>jyonxo</b></sub></a></td>
+    <td><a href="https://github.com/realJoshByrnes"><img src="https://avatars.githubusercontent.com/u/204185?s=120&v=4"><br><sub><b>realJoshByrnes</b></sub></a></td>
+    <td><a href="https://github.com/joachimjusth"><img src="https://avatars.githubusercontent.com/u/3322377?s=120&v=4"><br><sub><b>joachimjusth</b></sub></a></td>
+    <td><a href="https://github.com/ricardodevries"><img src="https://avatars.githubusercontent.com/u/78354174?s=120&v=4"><br><sub><b>ricardodevries</b></sub></a></td>
+  </tr>
+</tbody></table>
 
 ## Build
 
