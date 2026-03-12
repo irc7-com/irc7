@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/Tests/">
+    <Project Path="Irc.Tests/Irc.Tests.csproj" />
+    <Project Path="SSPI.GateKeeper.Tests/SSPI.GateKeeper.Tests.csproj" />
+    <Project Path="SSPI.NTLM.Tests/SSPI.NTLM.Tests.csproj" />
+  </Folder>
+  <Project Path="Irc.Daemon/Irc.Daemon.csproj" />
+  <Project Path="Irc.Directory/Irc.Directory.csproj" />
+  <Project Path="Irc.Helpers/Irc.Helpers.csproj" />
+  <Project Path="Irc.Logging/Irc.Logging.csproj" />
+  <Project Path="Irc/Irc.csproj" />
+  <Project Path="SSPI.GateKeeper/SSPI.GateKeeper.csproj" />
+  <Project Path="SSPI.NTLM/SSPI.NTLM.csproj" />
+</Solution>
