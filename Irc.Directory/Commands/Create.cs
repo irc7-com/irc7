@@ -63,7 +63,7 @@ public class Create : Command, ICommand
         }
 
         // Try to find if room exists or load balance to server with least connections
-        var targetServer = server.GetTargetServerForRoom(inMemoryChannel.ChannelName);
+        var targetServer = server.FindChannel(inMemoryChannel.ChannelName);
         if (targetServer == null || 
             (string.IsNullOrWhiteSpace(targetServer.Ip) || targetServer.Port == 0)
            )
@@ -73,19 +73,10 @@ public class Create : Command, ICommand
             return;
         }
 
-        var ip = targetServer.Ip;
-        var port = targetServer.Port;
-        
         inMemoryChannel.ServerName = targetServer.Name;
-
-        if (server.CacheManager.Subscriber == null)
-        {
-            Console.WriteLine("[Create] Skipping remote channel creation notification: Redis subscriber is not available.");
-            return;
-        }
         
         server.CacheManager.PublishChannelCreate(targetServer.ServerId, JsonSerializer.Serialize(inMemoryChannel));
-        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
+        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, targetServer.Ip, targetServer.Port.ToString()));
     }
 
     public new void Execute(IChatFrame chatFrame)

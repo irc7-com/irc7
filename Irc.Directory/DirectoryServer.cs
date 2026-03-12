@@ -1,9 +1,10 @@
-﻿using System.Globalization;
-using Irc.Commands;
+﻿using Irc.Commands;
 using Irc.Directory.Commands;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Objects.Channel;
 using Irc.Objects.Server;
+using Irc.Services;
 using Nick = Irc.Directory.Commands.Nick;
 using Version = Irc.Commands.Version;
 
@@ -14,59 +15,56 @@ public class DirectoryServer : Server
     public readonly string ChatServerIp = string.Empty;
     public readonly int ChatServerPort;
 
-    public Irc.Services.AcsServerInfo? GetTargetServerForRoom(string roomName)
+    public AcsServerInfo? FindChannel(string roomName)
     {
         if (!CacheManager.IsConnected) return null;
 
         var activeServers = CacheManager.GetActiveServers().ToList();
         var roomInfo = CacheManager.GetRoomInfo(roomName);
         
-        Irc.Services.AcsServerInfo? targetServer = null;
+        // If room doesn't exist and we don't want to create it, return null
+        if (roomInfo == null) return null;
 
-        if (roomInfo != null && !string.IsNullOrEmpty(roomInfo.ServerId))
-        {
-            targetServer = activeServers.FirstOrDefault(s => s.ServerId == roomInfo.ServerId);
+        // If room exists, return the server it's assigned to
+        var targetServer = LookupChannel(activeServers, roomInfo);
+        if (targetServer == null) targetServer = RegisterChannel(activeServers, roomInfo.ToInMemoryChannel());
+        
+        return targetServer;
+    }
+
+    private AcsServerInfo? LookupChannel(List<AcsServerInfo> activeServers, AcsRoomInfo? roomInfo)
+    {
+        if (roomInfo == null) return null;
+        
+        // If room is already assigned to a server, return it
+        if (string.IsNullOrWhiteSpace(roomInfo.ServerId)) return null;
+        
+        AcsServerInfo? targetServer = activeServers.FirstOrDefault(s => s.ServerId == roomInfo.ServerId);
+        
+        // If room is assigned to a server, return it
+        if (targetServer != null) return targetServer;
             
-            // Failover condition: Room exists in Redis but its assigned server is dead
-            if (targetServer == null)
-            {
-                targetServer = activeServers.OrderBy(s => s.UsersOnline).FirstOrDefault();
-                if (targetServer != null)
-                {
-                    // Clone the room to the new server via PubSub
-                    var inMemoryChannel = roomInfo.ToInMemoryChannel();
-                    inMemoryChannel.ServerName = targetServer.Name;
-                    
-                    if (CacheManager.Subscriber != null)
-                    {
-                        CacheManager.PublishChannelCreate(targetServer.ServerId, System.Text.Json.JsonSerializer.Serialize(inMemoryChannel));
+        // TBD: Probably sending something like this would be helpful
+        // IRCX_RPL_FINDS_DOWN_703
+        return null;
+    }
+
+    private AcsServerInfo? RegisterChannel(List<AcsServerInfo> activeServers, InMemoryChannel inMemoryChannel)
+    {
+        // If Redis is not available, return null
+        if (CacheManager.Subscriber == null) return null;
+        
+        // Get the server with the fewest users and assign the room to it
+        var targetServer = activeServers.OrderBy(s => s.UsersOnline).FirstOrDefault();
+        if (targetServer == null) return null;
+        
+        // Clone the room to the new server via PubSub
+        inMemoryChannel.ServerName = targetServer.Name;
                         
-                        // Update the room immediately in Redis so we don't cause an infinite failover loop 
-                        // for concurrent requests while the ACS is booting up the room.
-                        CacheManager.RegisterRoom(
-                            roomName: roomInfo.Name,
-                            serverId: targetServer.ServerId,
-                            category: roomInfo.Category,
-                            name: roomInfo.Name,
-                            topic: roomInfo.Topic,
-                            modes: roomInfo.Modes,
-                            managed: roomInfo.Managed,
-                            locale: roomInfo.Locale,
-                            language: roomInfo.Language,
-                            currentUsers: roomInfo.CurrentUsers,
-                            maxUsers: roomInfo.MaxUsers,
-                            ownerKey: roomInfo.OwnerKey,
-                            hostKey: roomInfo.HostKey
-                        );
-                    }
-                }
-            }
-        }
-        else
-        {
-            // Room does not exist, load balance to server with least connections
-            targetServer = activeServers.OrderBy(s => s.UsersOnline).FirstOrDefault();
-        }
+        // Update the room immediately in Redis so we don't cause an infinite failover loop 
+        // for concurrent requests while the ACS is booting up the room.
+        CacheManager.RegisterRoom(inMemoryChannel, targetServer.Name);
+        CacheManager.PublishChannelCreate(targetServer.ServerId, System.Text.Json.JsonSerializer.Serialize(inMemoryChannel));
 
         return targetServer;
     }

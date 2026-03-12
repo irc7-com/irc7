@@ -211,7 +211,12 @@ public class CacheManager
 
     public void PublishChannelCreate(string serverId, string payload)
     {
-        if (Subscriber == null) return;
+        if (Subscriber == null)
+        {
+            Console.WriteLine("[Create] Skipping remote channel creation notification: Redis subscriber is not available.");
+            return;
+        }
+
         try
         {
             var channelName = new RedisChannel($"acs:events:channels:{serverId}", RedisChannel.PatternMode.Literal);

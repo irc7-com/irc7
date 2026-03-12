@@ -39,12 +39,11 @@ internal class Finds : Command, ICommand
         var roomName = chatFrame.ChatMessage.Parameters.FirstOrDefault() ?? string.Empty;
         
         // Try to find if room exists or load balance to server with least connections
-        var targetServer = server.GetTargetServerForRoom(roomName);
-
-        if (targetServer != null)
+        var targetServer = server.FindChannel(roomName);
+        if (targetServer == null)
         {
-            ip = targetServer.Ip;
-            port = targetServer.Port;
+            chatFrame.User.Send(Irc.Constants.Raws.IRCX_RPL_FINDS_NOTFOUND_702(chatFrame.Server, chatFrame.User));
+            return;
         }
 
         if (string.IsNullOrEmpty(ip) || port == 0)
@@ -54,6 +53,6 @@ internal class Finds : Command, ICommand
             return;
         }
 
-        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
+        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, targetServer.Ip, targetServer.Port.ToString()));
     }
 }
