@@ -13,6 +13,7 @@ public class Channel : ChatObject, IChannel
 {
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
     public HashSet<string> InviteList = new();
+    public string Locale { get; set; }
     public long Creation { get; } = Resources.GetEpochNowInSeconds();
     public long TopicChanged { get; set; } = Resources.GetEpochNowInSeconds();
 
@@ -81,6 +82,7 @@ public class Channel : ChatObject, IChannel
         // Set locale
         // 1:+ST!EN-US!AV
         // 1:+ST 1:ST 1:-ST -- No idea
+        channel.Locale = inMemoryChannel.Locale;
         channel.Props.Subject.Value = $"1:ST:{inMemoryChannel.Locale}:{inMemoryChannel.Category}";
         
         // Set language
@@ -160,7 +162,6 @@ public class Channel : ChatObject, IChannel
         TopicChanged = Resources.GetEpochNowInSeconds();
         return this;
     }
-
     public IChannel SendOnJoinMessage(IUser user)
     {
         if (string.IsNullOrWhiteSpace(Props.Onjoin.Value)) return this;

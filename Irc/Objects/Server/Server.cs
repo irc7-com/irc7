@@ -175,17 +175,16 @@ public class Server : ChatObject, IServer
         // Update all active rooms to refresh their current state (users, topic, etc.)
         foreach (var channel in Channels.ToList())
         {
-            var categoryProp = channel.Props.GetProp("CATEGORY")?.Value;
-            var category = string.IsNullOrWhiteSpace(categoryProp) ? "UL" : categoryProp;
-            var topic = channel.Props.Topic.Value ?? string.Empty;
+            var category = channel.Props.Category.Value;
+            var topic = channel.Props.Topic.Value;
             var modes = channel.Modes.GetModeString();
-            var managed = modes.Contains('r');
-            var locale = channel.Props.GetProp("LOCALE")?.Value ?? string.Empty;
-            var language = channel.Props.Language.Value ?? string.Empty;
+            var managed = channel.Modes.Registered.ModeValue;
+            var locale = channel.Locale;
+            var language = channel.Props.Language.Value;
             var currentUsers = channel.GetMembers().Count;
             var maxUsers = channel.Modes.UserLimit.Value;
-            var ownerKey = channel.Props.GetProp("OWNERKEY")?.Value ?? string.Empty;
-            var hostKey = channel.Props.GetProp("HOSTKEY")?.Value ?? string.Empty;
+            var ownerKey = channel.Props.OwnerKey.Value;
+            var hostKey = channel.Props.HostKey.Value;
             
             var success = _cacheManager.RegisterRoom(
                 channel.GetName(), 

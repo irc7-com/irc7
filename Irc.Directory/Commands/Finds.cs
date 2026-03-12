@@ -20,19 +20,17 @@ internal class Finds : Command, ICommand
     public new void Execute(IChatFrame chatFrame)
     {
         var server = (DirectoryServer)chatFrame.Server;
-        string? ip = server.ChatServerIp;
-        int port = server.ChatServerPort;
 
         if (!server.CacheManager.IsConnected)
         {
-            if (string.IsNullOrEmpty(ip) || port == 0)
+            if (string.IsNullOrEmpty(server.ChatServerIp) || server.ChatServerPort == 0)
             {
                 // Fallback or error if no servers available
                 chatFrame.User.Send(Irc.Constants.Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
                 return;
             }
 
-            chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
+            chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, server.ChatServerIp, server.ChatServerPort.ToString()));
             return;
         }
 
@@ -46,7 +44,7 @@ internal class Finds : Command, ICommand
             return;
         }
 
-        if (string.IsNullOrEmpty(ip) || port == 0)
+        if (string.IsNullOrEmpty(targetServer.Ip) || targetServer.Port == 0)
         {
             // Fallback or error if no servers available
             chatFrame.User.Send(Irc.Constants.Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
