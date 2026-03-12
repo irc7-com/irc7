@@ -1013,6 +1013,11 @@ public static class Raws
         return $":{server} 929 {user} {targetUser} {targetChannel} :Cannot invite. Too many invites.";
     }
 
+    public static string IRCX_RPL_REGROUP_934(IServer server, IUser user, IChannel channel)
+    {        
+        return $":{server} 934 {user} {channel}:Channel moved due to regroup.";
+    }
+
     public static string IRCX_ERR_NOTIMPLEMENTED(IServer server, IUser user, string command)
     {
         return $":{server} 999 {user} :%s Sorry, this command is not implemented yet.";
@@ -1089,6 +1094,13 @@ public static class Raws
     public static string RPL_EQUESTION(IUser user, IChannel channel, string nickname, string message)
     {
         return $":{user.GetAddress()} EQUESTION {channel} {nickname} {channel} :{message}";
+    }
+
+    // IRCX CLONE message (draft-pfenning-irc-extensions-04 section 6.2)
+    // Informs hosts and owners in a CLONEABLE channel that a new CLONE channel was created.
+    public static string RPL_CLONE(IServer server, IChannel parent, IChannel clone)
+    {
+        return $":{server} CLONE {parent} {clone}";
     }
 }
 
