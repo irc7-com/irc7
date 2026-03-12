@@ -49,7 +49,7 @@ public class DirectoryServer : Server
         return null;
     }
 
-    private AcsServerInfo? RegisterChannel(List<AcsServerInfo> activeServers, InMemoryChannel inMemoryChannel)
+    public AcsServerInfo? RegisterChannel(List<AcsServerInfo> activeServers, InMemoryChannel inMemoryChannel)
     {
         // If Redis is not available, return null
         if (CacheManager.Subscriber == null) return null;

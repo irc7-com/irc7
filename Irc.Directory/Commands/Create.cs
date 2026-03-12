@@ -62,14 +62,14 @@ public class Create : Command, ICommand
             return;
         }
 
-        // Try to find if room exists or load balance to server with least connections
-        var targetServer = server.FindChannel(inMemoryChannel.ChannelName);
+        // Register the channel
+        var targetServer = server.RegisterChannel(server.CacheManager.GetActiveServers().ToList(), inMemoryChannel);
         if (targetServer == null || 
             (string.IsNullOrWhiteSpace(targetServer.Ip) || targetServer.Port == 0)
            )
         {
             // Fallback or error if no server available
-            chatFrame.User.Send(Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
+            chatFrame.User.Send(Raws.IRCX_RPL_FINDS_DOWN_703(chatFrame.Server, chatFrame.User));
             return;
         }
 
