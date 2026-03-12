@@ -135,7 +135,7 @@ public class CacheManager
     // Unregisters a room
     public void UnregisterRoom(string roomName)
     {
-        _db?.HashDelete("acs:rooms", roomName);
+        _db?.HashDelete("acs:rooms", roomName.ToUpper());
     }
 
     // Gets the server ID for a given room

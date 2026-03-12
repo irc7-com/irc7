@@ -22,7 +22,7 @@ public class DirectoryServer : Server
         var activeServers = CacheManager.GetActiveServers().ToList();
         var roomInfo = CacheManager.GetRoomInfo(roomName);
         
-        // If room doesn't exist and we don't want to create it, return null
+        // If room doesn't exist return null
         if (roomInfo == null) return null;
 
         // If room exists, return the server it's assigned to
