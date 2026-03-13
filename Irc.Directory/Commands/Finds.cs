@@ -35,18 +35,26 @@ internal class Finds : Command, ICommand
         }
 
         var roomName = chatFrame.ChatMessage.Parameters.FirstOrDefault() ?? string.Empty;
-        
-        // Try to find the server hosting the room; if the room does not exist, return NOTFOUND
-        var targetServer = server.FindChannel(roomName);
-        if (targetServer == null)
+
+        // Check if the room exists in the cache before trying to locate a host server
+        if (server.CacheManager.GetRoomInfo(roomName) == null)
         {
             chatFrame.User.Send(Irc.Constants.Raws.IRCX_RPL_FINDS_NOTFOUND_702(chatFrame.Server, chatFrame.User));
             return;
         }
 
-        if (string.IsNullOrEmpty(targetServer.Ip) || targetServer.Port == 0)
+        // Room exists – try to find or assign a host server
+        var targetServer = server.FindChannel(roomName);
+        if (targetServer == null || string.IsNullOrEmpty(targetServer.Ip) || targetServer.Port == 0)
         {
-            // Fallback or error if no servers available
+            // Infrastructure issue: room exists but no server is available to host it.
+            // Fall back to the static chat server if configured, otherwise send a generic error.
+            if (!string.IsNullOrEmpty(server.ChatServerIp) && server.ChatServerPort != 0)
+            {
+                chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, server.ChatServerIp, server.ChatServerPort.ToString()));
+                return;
+            }
+
             chatFrame.User.Send(Irc.Constants.Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
             return;
         }
