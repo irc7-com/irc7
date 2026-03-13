@@ -307,6 +307,8 @@ public class Server : ChatObject, IServer
 
     public bool AddChannel(IChannel channel)
     {
+        if (GetChannelByName(channel.GetName()) != null) return false;
+
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
             var serverId = Name;
@@ -323,7 +325,7 @@ public class Server : ChatObject, IServer
             var ownerKey = channel.Props.GetProp("OWNERKEY")?.Value ?? string.Empty;
             var hostKey = channel.Props.GetProp("HOSTKEY")?.Value ?? string.Empty;
             
-            var success = _cacheManager.RegisterRoom(
+            var success = _cacheManager.TryCreateRoom(
                 channel.GetName(), 
                 serverId, 
                 category, 
