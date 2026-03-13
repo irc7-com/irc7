@@ -2,12 +2,15 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using Irc.Objects.Channel;
+using NLog;
 using StackExchange.Redis;
 
 namespace Irc.Services;
 
 public class CacheManager
 {
+    public static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
     private readonly ConnectionMultiplexer? _redis;
     private readonly IDatabase? _db;
     public readonly ISubscriber? Subscriber;
@@ -24,7 +27,7 @@ public class CacheManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[CacheManager] Failed to connect to Redis/KeyDB at {redisUrl}: {ex.Message}");
+            Log.Error($"[CacheManager] Failed to connect to Redis/KeyDB at {redisUrl}: {ex.Message}");
         }
     }
 
@@ -127,7 +130,7 @@ public class CacheManager
         } 
         catch (Exception ex) 
         {
-            Console.WriteLine($"[CacheManager] Failed to run LUA script on Redis: {ex.Message}");
+            Log.Error($"[CacheManager] Failed to run LUA script on Redis: {ex.Message}");
             return false;
         }
     }
@@ -213,19 +216,19 @@ public class CacheManager
     {
         if (Subscriber == null)
         {
-            Console.WriteLine("[Create] Skipping remote channel creation notification: Redis subscriber is not available.");
+            Log.Trace("[Create] Skipping remote channel creation notification: Redis subscriber is not available.");
             return;
         }
 
         try
         {
             var channelName = new RedisChannel($"acs:events:channels:{serverId}", RedisChannel.PatternMode.Literal);
-            Console.WriteLine($"[CacheManager] Publishing to PubSub channel {channelName}");
+            Log.Trace($"[CacheManager] Publishing to PubSub channel {channelName}");
             Subscriber.Publish(channelName, payload);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[CacheManager] Failed to publish channel create: {ex.Message}");
+            Log.Error($"[CacheManager] Failed to publish channel create: {ex.Message}");
         }
     }
 
@@ -234,7 +237,7 @@ public class CacheManager
         if (Subscriber == null) return;
         var channelName = new RedisChannel($"acs:events:channels:{serverId}", RedisChannel.PatternMode.Literal);
 
-        Console.WriteLine($"[CacheManager] Subscribing to PubSub channel {channelName}");
+        Log.Trace($"[CacheManager] Subscribing to PubSub channel {channelName}");
 
         try
         {
@@ -242,7 +245,7 @@ public class CacheManager
             {
                 if (value.HasValue)
                 {
-                    Console.WriteLine($"[CacheManager] Received event on {channelName}");
+                    Log.Trace($"[CacheManager] Received event on {channelName}");
                     onMessageReceived(value.ToString());
                 }
             });
@@ -258,7 +261,7 @@ public class CacheManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[CacheManager] Failed to subscribe to channel: {ex.Message}");
+            Log.Error($"[CacheManager] Failed to subscribe to channel: {ex.Message}");
         }
     }
 }
