@@ -15,6 +15,13 @@ public class DirectoryServer : Server
     public readonly string ChatServerIp = string.Empty;
     public readonly int ChatServerPort;
 
+    public enum FindChannelStatus
+    {
+        NotFound,
+        Found,
+        Down
+    }
+
     private static InvalidOperationException ChannelManipulationNotSupported() =>
         new("Channel manipulation is not supported on a DirectoryServer.");
 
@@ -28,18 +35,52 @@ public class DirectoryServer : Server
 
     public AcsServerInfo? FindChannel(string roomName)
     {
-        if (!CacheManager.IsConnected) return null;
+        return FindChannel(roomName, out _);
+    }
+
+    public AcsServerInfo? FindChannel(string roomName, out FindChannelStatus status)
+    {
+        status = FindChannelStatus.NotFound;
+
+        if (!CacheManager.IsConnected)
+        {
+            status = FindChannelStatus.Down;
+            return null;
+        }
 
         var activeServers = CacheManager.GetActiveServers().ToList();
+        if (activeServers.Count == 0)
+        {
+            status = FindChannelStatus.Down;
+            return null;
+        }
+
         var roomInfo = CacheManager.GetRoomInfo(roomName);
-        
+
         // If room doesn't exist return null
-        if (roomInfo == null) return null;
+        if (roomInfo == null)
+        {
+            status = FindChannelStatus.NotFound;
+            return null;
+        }
 
         // If room exists, return the server it's assigned to
         var targetServer = LookupChannel(activeServers, roomInfo);
-        if (targetServer == null) targetServer = RegisterChannel(activeServers, roomInfo.ToInMemoryChannel());
-        
+        if (targetServer != null)
+        {
+            status = FindChannelStatus.Found;
+            return targetServer;
+        }
+
+        targetServer = RegisterChannel(activeServers, roomInfo.ToInMemoryChannel());
+        if (targetServer == null)
+        {
+            // Room exists but no server could be assigned (e.g., all servers down)
+            status = FindChannelStatus.Down;
+            return null;
+        }
+
+        status = FindChannelStatus.Found;
         return targetServer;
     }
 

@@ -48,10 +48,10 @@ public class Server : ChatObject, IServer
     private readonly ConcurrentDictionary<string, IChannel> _channels = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// A read-only snapshot of all channels. Use this wherever iteration is needed.
+    /// A read-only view of all channels. Use this wherever iteration is needed.
     /// The returned collection cannot be mutated; use <see cref="AddChannel"/> / <see cref="RemoveChannel"/> instead.
     /// </summary>
-    public IReadOnlyList<IChannel> ChannelList => _channels.Values.ToList();
+    public IReadOnlyCollection<IChannel> ChannelList => _channels.Values;
 
     public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
 
@@ -291,10 +291,9 @@ public class Server : ChatObject, IServer
     public virtual bool AddChannel(IChannel channel)
     {
         var channelName = channel.GetName();
-        var channelKey = channelName.ToUpperInvariant();
 
         // Ensure the channel is added in-memory only once before performing external side-effects.
-        if (!_channels.TryAdd(channelKey, channel))
+        if (!_channels.TryAdd(channelName, channel))
         {
             return false;
         }
@@ -305,7 +304,7 @@ public class Server : ChatObject, IServer
             if (!success)
             {
                 // Roll back the in-memory add if the external registration fails.
-                _channels.TryRemove(channelKey, out _);
+                _channels.TryRemove(channelName, out _);
                 return false;
             }
         }
