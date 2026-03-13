@@ -51,7 +51,7 @@ public class Server : ChatObject, IServer
     /// A read-only view of all channels. Use this wherever iteration is needed.
     /// The returned collection cannot be mutated; use <see cref="AddChannel"/> / <see cref="RemoveChannel"/> instead.
     /// </summary>
-    public IReadOnlyCollection<IChannel> ChannelList => _channels.Values;
+    public IReadOnlyCollection<IChannel> ChannelList => _channels.Values.ToList();
 
     public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
 
@@ -376,7 +376,7 @@ public class Server : ChatObject, IServer
 
     public IReadOnlyList<IChannel> GetChannels()
     {
-        return ChannelList;
+        return ChannelList.ToList();
     }
 
     public string GetSupportedChannelModes()
