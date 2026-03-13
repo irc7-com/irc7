@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using Irc.Interfaces;
 using Irc.Objects.Channel;
 using NLog;
 using StackExchange.Redis;
@@ -76,6 +77,37 @@ public class CacheManager
             maxUsers: 50,
             ownerKey: inMemoryChannel.OwnerKey,
             hostKey: inMemoryChannel.HostKey
+        );
+    }
+
+    public bool RegisterRoom(IChannel channel, string serverId)
+    {
+        var channelName = channel.GetName();
+        var category = channel.Props.Category.Value;
+        var topic = channel.Props.Topic.Value;
+        var modes = channel.Modes.GetModeString();
+        var managed = channel.Modes.Registered.ModeValue;
+        var locale = channel.Locale;
+        var language = channel.Props.Language.Value;
+        var currentUsers = channel.GetMembers().Count;
+        var maxUsers = channel.Modes.UserLimit.Value;
+        var ownerKey = channel.Props.OwnerKey.Value;
+        var hostKey = channel.Props.HostKey.Value;
+
+        return RegisterRoom(
+            channelName,
+            serverId,
+            category,
+            channelName,
+            topic,
+            modes,
+            managed,
+            locale,
+            language,
+            currentUsers,
+            maxUsers,
+            ownerKey,
+            hostKey
         );
     }
 
