@@ -15,6 +15,17 @@ public class DirectoryServer : Server
     public readonly string ChatServerIp = string.Empty;
     public readonly int ChatServerPort;
 
+    private static InvalidOperationException ChannelManipulationNotSupported() =>
+        new("Channel manipulation is not supported on a DirectoryServer.");
+
+    public override bool AddChannel(IChannel channel) => throw ChannelManipulationNotSupported();
+
+    public override void RemoveChannel(IChannel channel) => throw ChannelManipulationNotSupported();
+
+    public override IChannel? CreateChannel(string name) => throw ChannelManipulationNotSupported();
+
+    public override IChannel? CreateChannel(string name, string topic, string key) => throw ChannelManipulationNotSupported();
+
     public AcsServerInfo? FindChannel(string roomName)
     {
         if (!CacheManager.IsConnected) return null;
@@ -74,7 +85,6 @@ public class DirectoryServer : Server
         ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
-        IList<IChannel> channels,
         ICredentialProvider? ntlmCredentialProvider = null,
         string? chatServerIp = null,
         string? redisUrl = null
@@ -84,7 +94,6 @@ public class DirectoryServer : Server
             securityManager,
             floodProtectionManager,
             dataStore,
-            channels,
             ntlmCredentialProvider,
             redisUrl
         )

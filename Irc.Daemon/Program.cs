@@ -1,4 +1,4 @@
-﻿using System.CommandLine;
+﻿﻿using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Net;
 using System.Reflection;
@@ -49,7 +49,8 @@ internal class Program
             if (!string.IsNullOrEmpty(options.ServerName))
                 _server.Name = options.ServerName;
 
-            InitializeDefaultChannels(_server, serverType);
+            if (!_server.IsDirectoryServer)
+                InitializeDefaultChannels(_server, serverType);
 
             if (_server is Server baseServer)
             {
@@ -169,23 +170,22 @@ internal class Program
         var floodProtectionManager = new FloodProtectionManager();
         var securityManager = new SecurityManager();
         var dataStoreServerConfig = new DataStore("DefaultServer.json");
-        var channels = new List<IChannel>();
         return serverType switch
         {
             IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, securityManager,
-                floodProtectionManager, dataStoreServerConfig, channels, chatServerIp, redisUrl),
+                floodProtectionManager, dataStoreServerConfig, chatServerIp, redisUrl),
             _ => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
-                channels, credentialProvider, redisUrl)
+                credentialProvider, redisUrl)
         };
     }
 
     private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer,
         NtlmCredentials credentialProvider, SecurityManager securityManager,
-        FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig, List<IChannel> channels,
+        FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig,
         string? chatServerIp, string? redisUrl)
     {
         var server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
-            channels, credentialProvider, chatServerIp, redisUrl);
+            credentialProvider, chatServerIp, redisUrl);
 
         return server;
     }

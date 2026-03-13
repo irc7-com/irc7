@@ -41,7 +41,18 @@ public class Server : ChatObject, IServer
     private readonly Irc.Services.CacheManager _cacheManager;
     private System.Timers.Timer? _heartbeatTimer;
 
-    public IList<IChannel> Channels;
+    /// <summary>
+    /// Thread-safe channel store keyed by upper-case channel name for O(1) lookup and uniqueness.
+    /// Use <see cref="ChannelList"/> to enumerate channels without holding a lock.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, IChannel> _channels = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// A read-only snapshot of all channels. Use this wherever iteration is needed.
+    /// The returned collection cannot be mutated; use <see cref="AddChannel"/> / <see cref="RemoveChannel"/> instead.
+    /// </summary>
+    public IReadOnlyList<IChannel> ChannelList => _channels.Values.ToList();
+
     public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
 
     public IList<IUser> Users = new List<IUser>();
@@ -50,7 +61,6 @@ public class Server : ChatObject, IServer
         ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
-        IList<IChannel> channels,
         ICredentialProvider? credentialProvider = null,
         string? redisUrl = null)
     {
@@ -60,7 +70,6 @@ public class Server : ChatObject, IServer
         _securityManager = securityManager;
         _floodProtectionManager = floodProtectionManager;
         _DataStore = dataStore;
-        Channels = channels;
         
         _cacheManager = new Irc.Services.CacheManager(redisUrl);
         _processingTask = new Task(Process);
@@ -158,7 +167,7 @@ public class Server : ChatObject, IServer
                 {
                     var channel = Channel.Channel.FromInMemoryChannel(inMemoryChannel);
                     channel.Store = room.Managed;
-                    Channels.Add(channel);
+                    AddChannel(channel);
                     Log.Info($"Recovered channel {inMemoryChannel.ChannelName}");
                 }
             }
@@ -173,7 +182,7 @@ public class Server : ChatObject, IServer
         _cacheManager.RegisterServer(serverId, fqdn, port, Name, Users.Count);
 
         // Update all active rooms to refresh their current state (users, topic, etc.)
-        foreach (var channel in Channels.ToList())
+        foreach (var channel in ChannelList)
         {
             var category = channel.Props.Category.Value;
             var topic = channel.Props.Topic.Value;
@@ -305,7 +314,7 @@ public class Server : ChatObject, IServer
         }
     }
 
-    public bool AddChannel(IChannel channel)
+    public virtual bool AddChannel(IChannel channel)
     {
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
@@ -341,14 +350,18 @@ public class Server : ChatObject, IServer
             if (!success) return false;
         }
         
-        Channels.Add(channel);
-        return true;
+        // TryAdd ensures uniqueness – returns false if a channel with the same name already exists.
+        return _channels.TryAdd(channel.GetName().ToUpperInvariant(), channel);
     }
 
-    public void RemoveChannel(IChannel channel)
+    public virtual void RemoveChannel(IChannel channel)
     {
         InMemoryChannelRepository.Remove(channel.GetName());
-        Channels.Remove(channel);
+        var result = _channels.TryRemove(channel.GetName().ToUpperInvariant(), out _);
+        if (!result)
+        {
+            Log.Error("Could not remove channel");
+        }
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
             _cacheManager.UnregisterRoom(channel.GetName());
@@ -402,9 +415,9 @@ public class Server : ChatObject, IServer
             nicknames.Contains(user.GetAddress().Nickname, StringComparer.InvariantCultureIgnoreCase)).ToList();
     }
 
-    public IList<IChannel> GetChannels()
+    public IReadOnlyList<IChannel> GetChannels()
     {
-        return Channels;
+        return ChannelList;
     }
 
     public string GetSupportedChannelModes()
@@ -449,8 +462,8 @@ public class Server : ChatObject, IServer
 
     public IChannel? GetChannelByName(string name)
     {
-        return Channels.SingleOrDefault(c =>
-            string.Equals(c.GetName(), name, StringComparison.InvariantCultureIgnoreCase));
+        _channels.TryGetValue(name, out var channel);
+        return channel;
     }
 
     public ChatObject? GetChatObject(string name)
@@ -498,7 +511,7 @@ public class Server : ChatObject, IServer
             var serverId = $"{RemoteIp}:{_socketServer.Port}";
             _cacheManager.UnregisterServer(serverId);
             
-            foreach (var channel in Channels)
+            foreach (var channel in ChannelList)
             {
                 _cacheManager.UnregisterRoom(channel.GetName());
             }
@@ -633,7 +646,7 @@ public class Server : ChatObject, IServer
             if ((DateTime.UtcNow - _lastChannelCleanup).TotalSeconds >= 60)
             {
                 _lastChannelCleanup = DateTime.UtcNow;
-                var emptyChannels = Channels.ToList().Where(c => 
+                var emptyChannels = ChannelList.Where(c => 
                     !c.Store && 
                     c.GetMembers().Count == 0 && 
                     c.EmptySince.HasValue && 
