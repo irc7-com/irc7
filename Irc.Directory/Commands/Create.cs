@@ -73,8 +73,6 @@ public class Create : Command, ICommand
             return;
         }
 
-        inMemoryChannel.ServerName = targetServer.Name;
-        
         chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, targetServer.Ip, targetServer.Port.ToString()));
     }
 

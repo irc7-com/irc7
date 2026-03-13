@@ -27,7 +27,7 @@ public class CacheManager
         }
         catch (Exception ex)
         {
-            Log.Error($"[CacheManager] Failed to connect to Redis/KeyDB at {redisUrl}: {ex.Message}");
+            Log.Error(ex, $"[CacheManager] Failed to connect to Redis/KeyDB at {redisUrl}");
         }
     }
 
@@ -130,7 +130,7 @@ public class CacheManager
         } 
         catch (Exception ex) 
         {
-            Log.Error($"[CacheManager] Failed to run LUA script on Redis: {ex.Message}");
+            Log.Error(ex, "[CacheManager] Failed to run LUA script on Redis.");
             return false;
         }
     }
@@ -228,7 +228,7 @@ public class CacheManager
         }
         catch (Exception ex)
         {
-            Log.Error($"[CacheManager] Failed to publish channel create: {ex.Message}");
+            Log.Error(ex, "[CacheManager] Failed to publish channel create");
         }
     }
 
@@ -261,7 +261,7 @@ public class CacheManager
         }
         catch (Exception ex)
         {
-            Log.Error($"[CacheManager] Failed to subscribe to channel: {ex.Message}");
+            Log.Error(ex, "[CacheManager] Failed to subscribe to channel");
         }
     }
 }

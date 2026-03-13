@@ -36,7 +36,7 @@ internal class Finds : Command, ICommand
 
         var roomName = chatFrame.ChatMessage.Parameters.FirstOrDefault() ?? string.Empty;
         
-        // Try to find if room exists or load balance to server with least connections
+        // Try to find the server hosting the room; if the room does not exist, return NOTFOUND
         var targetServer = server.FindChannel(roomName);
         if (targetServer == null)
         {

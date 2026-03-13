@@ -370,15 +370,16 @@ public class Server : ChatObject, IServer
 
     public virtual void RemoveChannel(IChannel channel)
     {
-        InMemoryChannelRepository.Remove(channel.GetName());
-        var result = _channels.TryRemove(channel.GetName().ToUpperInvariant(), out _);
+        var channelName = channel.GetName();
+        InMemoryChannelRepository.Remove(channelName);
+        var result = _channels.TryRemove(channelName.ToUpperInvariant(), out _);
         if (!result)
         {
-            Log.Error("Could not remove channel");
+            Log.Error("Could not remove channel '{ChannelName}' from channel dictionary; it may have already been removed.", channelName);
         }
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
-            _cacheManager.UnregisterRoom(channel.GetName());
+            _cacheManager.UnregisterRoom(channelName);
         }
     }
 
