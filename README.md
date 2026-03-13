@@ -21,6 +21,12 @@ The current implementation of IRC7 is hosted by **SkyCrest**.
 
 IRC7 targets **.NET 10** and is built using **GitHub Actions**. See the [workflow](.github/workflows/dotnet.yml) for details.
 
+## ChannelMaster
+
+The repository now includes a new `ChannelMaster` coordination service scaffold in `Irc.ChannelMaster/`.
+
+- Local docs and run examples: [`Irc.ChannelMaster/README.md`](Irc.ChannelMaster/README.md)
+
 ## Documentation
 
 IRC7 is based on a mixture of the following specifications and data gathered during the time MSN Chat was operational:

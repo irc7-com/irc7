@@ -1,9 +1,11 @@
 <Solution>
   <Folder Name="/Tests/">
+    <Project Path="Irc.ChannelMaster.Tests/Irc.ChannelMaster.Tests.csproj" />
     <Project Path="Irc.Tests/Irc.Tests.csproj" />
     <Project Path="SSPI.GateKeeper.Tests/SSPI.GateKeeper.Tests.csproj" />
     <Project Path="SSPI.NTLM.Tests/SSPI.NTLM.Tests.csproj" />
   </Folder>
+  <Project Path="Irc.ChannelMaster/Irc.ChannelMaster.csproj" />
   <Project Path="Irc.Daemon/Irc.Daemon.csproj" />
   <Project Path="Irc.Directory/Irc.Directory.csproj" />
   <Project Path="Irc.Helpers/Irc.Helpers.csproj" />

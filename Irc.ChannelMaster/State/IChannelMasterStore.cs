@@ -1,0 +1,28 @@
+﻿using Irc.ChannelMaster.Models;
+
+namespace Irc.ChannelMaster.State;
+
+public interface IChannelMasterStore
+{
+    Task HeartbeatChannelMasterAsync(string channelMasterId, TimeSpan ttl, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> GetActiveChannelMastersAsync(CancellationToken cancellationToken = default);
+    Task<string?> GetCurrentLeaderAsync(CancellationToken cancellationToken = default);
+    Task DefineLeaderAsync(string leaderId, TimeSpan ttl, CancellationToken cancellationToken = default);
+
+    Task<bool> TryAcquireControllerLeaseAsync(string controllerId, TimeSpan leaseTtl, CancellationToken cancellationToken = default);
+    Task<bool> RenewControllerLeaseAsync(string controllerId, TimeSpan leaseTtl, CancellationToken cancellationToken = default);
+    Task ReleaseControllerLeaseAsync(string controllerId, CancellationToken cancellationToken = default);
+
+    Task HeartbeatBroadcastWorkerAsync(string workerId, int currentLoad, TimeSpan ttl, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<BroadcastWorkerStatus>> GetActiveBroadcastWorkersAsync(CancellationToken cancellationToken = default);
+
+    Task HeartbeatChatServerAsync(string chatServerId, int currentLoad, TimeSpan ttl, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ChatServerStatus>> GetActiveChatServersAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<string, string>> GetChatServerAssignmentsAsync(CancellationToken cancellationToken = default);
+    Task SetChatServerAssignmentAsync(string chatServerId, string broadcastWorkerId, CancellationToken cancellationToken = default);
+
+    Task<bool> TryClaimChannelAsync(string channelName, string ownerId, CancellationToken cancellationToken = default);
+    Task<string?> GetChannelOwnerAsync(string channelName, CancellationToken cancellationToken = default);
+}
+
