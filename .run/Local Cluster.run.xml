@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Local Cluster" type="CompoundRunConfigurationType">
+    <toRun name="Irc.Daemon: irc7-standalone-acs" type="LaunchSettings" />
+    <toRun name="Irc.Daemon: irc7-standalone-ads" type="LaunchSettings" />
+    <method v="2" />
+  </configuration>
+</component>

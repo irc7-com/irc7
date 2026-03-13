@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Redis Cluster" type="CompoundRunConfigurationType">
+    <toRun name="Irc.Daemon: irc7-redis-acs" type="LaunchSettings" />
+    <toRun name="Irc.Daemon: irc7-redis-acs2" type="LaunchSettings" />
+    <toRun name="Irc.Daemon: irc7-redis-ads" type="LaunchSettings" />
+    <method v="2" />
+  </configuration>
+</component>
