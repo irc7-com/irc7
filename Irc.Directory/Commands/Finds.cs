@@ -20,40 +20,37 @@ internal class Finds : Command, ICommand
     public new void Execute(IChatFrame chatFrame)
     {
         var server = (DirectoryServer)chatFrame.Server;
-        string? ip = server.ChatServerIp;
-        int port = server.ChatServerPort;
 
         if (!server.CacheManager.IsConnected)
         {
-            if (string.IsNullOrEmpty(ip) || port == 0)
+            if (string.IsNullOrEmpty(server.ChatServerIp) || server.ChatServerPort == 0)
             {
                 // Fallback or error if no servers available
                 chatFrame.User.Send(Irc.Constants.Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
                 return;
             }
 
-            chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
+            chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, server.ChatServerIp, server.ChatServerPort.ToString()));
             return;
         }
 
         var roomName = chatFrame.ChatMessage.Parameters.FirstOrDefault() ?? string.Empty;
         
-        // Try to find if room exists or load balance to server with least connections
-        var targetServer = server.GetTargetServerForRoom(roomName);
-
-        if (targetServer != null)
+        // Try to find the server hosting the room; if the room does not exist, return NOTFOUND
+        var targetServer = server.FindChannel(roomName);
+        if (targetServer == null)
         {
-            ip = targetServer.Ip;
-            port = targetServer.Port;
+            chatFrame.User.Send(Irc.Constants.Raws.IRCX_RPL_FINDS_NOTFOUND_702(chatFrame.Server, chatFrame.User));
+            return;
         }
 
-        if (string.IsNullOrEmpty(ip) || port == 0)
+        if (string.IsNullOrEmpty(targetServer.Ip) || targetServer.Port == 0)
         {
             // Fallback or error if no servers available
             chatFrame.User.Send(Irc.Constants.Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
             return;
         }
 
-        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
+        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, targetServer.Ip, targetServer.Port.ToString()));
     }
 }

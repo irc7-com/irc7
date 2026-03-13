@@ -1,13 +1,17 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using Irc.Interfaces;
 using Irc.Objects.Channel;
+using NLog;
 using StackExchange.Redis;
 
 namespace Irc.Services;
 
 public class CacheManager
 {
+    public static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
     private readonly ConnectionMultiplexer? _redis;
     private readonly IDatabase? _db;
     public readonly ISubscriber? Subscriber;
@@ -24,7 +28,7 @@ public class CacheManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[CacheManager] Failed to connect to Redis/KeyDB at {redisUrl}: {ex.Message}");
+            Log.Error(ex, $"[CacheManager] Failed to connect to Redis/KeyDB at {redisUrl}");
         }
     }
 
@@ -76,6 +80,37 @@ public class CacheManager
         );
     }
 
+    public bool RegisterRoom(IChannel channel, string serverId)
+    {
+        var channelName = channel.GetName();
+        var category = channel.Props.Category.Value;
+        var topic = channel.Props.Topic.Value;
+        var modes = channel.Modes.GetModeString();
+        var managed = channel.Modes.Registered.ModeValue;
+        var locale = channel.Locale;
+        var language = channel.Props.Language.Value;
+        var currentUsers = channel.GetMembers().Count;
+        var maxUsers = channel.Modes.UserLimit.Value;
+        var ownerKey = channel.Props.OwnerKey.Value;
+        var hostKey = channel.Props.HostKey.Value;
+
+        return RegisterRoom(
+            channelName,
+            serverId,
+            category,
+            channelName,
+            topic,
+            modes,
+            managed,
+            locale,
+            language,
+            currentUsers,
+            maxUsers,
+            ownerKey,
+            hostKey
+        );
+    }
+
     // Registers a room to a specific ACS
     public bool RegisterRoom(string roomName, string serverId, string category, string name, string topic, string modes, bool managed, string locale, string language, int currentUsers, int maxUsers, string ownerKey = "", string hostKey = "")
     {
@@ -122,12 +157,12 @@ public class CacheManager
 
         try 
         {
-            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { roomName.ToUpper(), payload, serverId });
+            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { roomName.ToUpperInvariant(), payload, serverId });
             return result == 1;
         } 
         catch (Exception ex) 
         {
-            Console.WriteLine($"[CacheManager] Failed to run LUA script on Redis: {ex.Message}");
+            Log.Error(ex, "[CacheManager] Failed to run LUA script on Redis.");
             return false;
         }
     }
@@ -135,7 +170,7 @@ public class CacheManager
     // Unregisters a room
     public void UnregisterRoom(string roomName)
     {
-        _db?.HashDelete("acs:rooms", roomName);
+        _db?.HashDelete("acs:rooms", roomName.ToUpperInvariant());
     }
 
     // Gets the server ID for a given room
@@ -143,7 +178,7 @@ public class CacheManager
     {
         if (_db == null) return null;
         
-        var value = _db.HashGet("acs:rooms", roomName.ToUpper());
+        var value = _db.HashGet("acs:rooms", roomName.ToUpperInvariant());
         if (value.HasValue)
         {
             var roomInfo = JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());
@@ -156,7 +191,7 @@ public class CacheManager
     {
         if (_db == null) return null;
         
-        var value = _db.HashGet("acs:rooms", roomName.ToUpper());
+        var value = _db.HashGet("acs:rooms", roomName.ToUpperInvariant());
         if (value.HasValue)
         {
             return JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());
@@ -211,16 +246,21 @@ public class CacheManager
 
     public void PublishChannelCreate(string serverId, string payload)
     {
-        if (Subscriber == null) return;
+        if (Subscriber == null)
+        {
+            Log.Trace("[Create] Skipping remote channel creation notification: Redis subscriber is not available.");
+            return;
+        }
+
         try
         {
             var channelName = new RedisChannel($"acs:events:channels:{serverId}", RedisChannel.PatternMode.Literal);
-            Console.WriteLine($"[CacheManager] Publishing to PubSub channel {channelName}");
+            Log.Trace($"[CacheManager] Publishing to PubSub channel {channelName}");
             Subscriber.Publish(channelName, payload);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[CacheManager] Failed to publish channel create: {ex.Message}");
+            Log.Error(ex, "[CacheManager] Failed to publish channel create");
         }
     }
 
@@ -229,7 +269,7 @@ public class CacheManager
         if (Subscriber == null) return;
         var channelName = new RedisChannel($"acs:events:channels:{serverId}", RedisChannel.PatternMode.Literal);
 
-        Console.WriteLine($"[CacheManager] Subscribing to PubSub channel {channelName}");
+        Log.Trace($"[CacheManager] Subscribing to PubSub channel {channelName}");
 
         try
         {
@@ -237,7 +277,7 @@ public class CacheManager
             {
                 if (value.HasValue)
                 {
-                    Console.WriteLine($"[CacheManager] Received event on {channelName}");
+                    Log.Trace($"[CacheManager] Received event on {channelName}");
                     onMessageReceived(value.ToString());
                 }
             });
@@ -253,7 +293,7 @@ public class CacheManager
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[CacheManager] Failed to subscribe to channel: {ex.Message}");
+            Log.Error(ex, "[CacheManager] Failed to subscribe to channel");
         }
     }
 }

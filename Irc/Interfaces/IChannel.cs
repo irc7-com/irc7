@@ -41,4 +41,5 @@ public interface IChannel : IChatObject
     long Creation { get; }
     long TopicChanged { get; set; }
     IChannel UpdateTopic(string topic);
+    string Locale { get; set; }
 }
