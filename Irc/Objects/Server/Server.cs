@@ -42,7 +42,7 @@ public class Server : ChatObject, IServer
     private System.Timers.Timer? _heartbeatTimer;
 
     /// <summary>
-    /// Thread-safe channel store keyed by upper-case channel name for O(1) lookup and uniqueness.
+    /// Thread-safe channel store keyed by channel name (case-insensitive) for O(1) lookup and uniqueness.
     /// Use <see cref="ChannelList"/> to enumerate channels without holding a lock.
     /// </summary>
     private readonly ConcurrentDictionary<string, IChannel> _channels = new(StringComparer.OrdinalIgnoreCase);
@@ -316,7 +316,7 @@ public class Server : ChatObject, IServer
     {
         var channelName = channel.GetName();
         InMemoryChannelRepository.Remove(channelName);
-        var result = _channels.TryRemove(channelName.ToUpperInvariant(), out _);
+        var result = _channels.TryRemove(channelName, out _);
         if (!result)
         {
             Log.Error("Could not remove channel '{ChannelName}' from channel dictionary; it may have already been removed.", channelName);
