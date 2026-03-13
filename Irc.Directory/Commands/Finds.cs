@@ -35,8 +35,14 @@ internal class Finds : Command, ICommand
         }
 
         var roomName = chatFrame.ChatMessage.Parameters.FirstOrDefault() ?? string.Empty;
-        
-        // Try to find the server hosting the room; if the room does not exist, return NOTFOUND
+
+        if (!server.CacheManager.GetActiveServers().Any())
+        {
+            chatFrame.User.Send(Raws.IRCX_RPL_FINDS_DOWN_703(chatFrame.Server, chatFrame.User));
+            return;
+        }
+
+        // We have active servers; if the channel is not found, it does not exist
         var targetServer = server.FindChannel(roomName);
         if (targetServer == null)
         {
