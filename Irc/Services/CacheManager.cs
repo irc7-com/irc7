@@ -2,12 +2,14 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using Irc.Objects.Channel;
+using NLog;
 using StackExchange.Redis;
 
 namespace Irc.Services;
 
 public class CacheManager
 {
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
     private readonly ConnectionMultiplexer? _redis;
     private readonly IDatabase? _db;
     public readonly ISubscriber? Subscriber;
@@ -213,7 +215,7 @@ public class CacheManager
     {
         if (Subscriber == null)
         {
-            Console.WriteLine("[Create] Skipping remote channel creation notification: Redis subscriber is not available.");
+            Log.Trace("[Create] Skipping remote channel creation notification: Redis subscriber is not available.");
             return;
         }
 
