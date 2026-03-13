@@ -50,7 +50,7 @@ public interface IServer: IChatObject
     IUser? GetUserByNickname(string nickname, IUser currentUser);
     IList<IUser> GetUsersByList(string nicknames, char separator);
     IList<IUser> GetUsersByList(List<string> nicknames, char separator);
-    IList<IChannel> GetChannels();
+    IReadOnlyList<IChannel> GetChannels();
     string GetSupportedChannelModes();
     string GetSupportedUserModes();
     IDictionary<EnumProtocolType, IProtocol> GetProtocols();

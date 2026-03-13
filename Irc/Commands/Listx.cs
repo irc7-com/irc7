@@ -1,4 +1,5 @@
 ﻿using Irc.Commands;
+using System.Collections.Generic;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Helpers;
@@ -99,7 +100,7 @@ public class Listx : Command, ICommand
     ListChannels(server, user, channels);
     }
 
-    public static void ListChannels(IServer server, IUser user, IList<IChannel> channels)
+    public static void ListChannels(IServer server, IUser user, IEnumerable<IChannel> channels)
     {
         // Case "811"      ' Start of LISTX
         user.Send(Raws.IRCX_RPL_LISTXSTART_811(server, user));
