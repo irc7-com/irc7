@@ -13,7 +13,7 @@ public class Channel : ChatObject, IChannel
 {
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
     public HashSet<string> InviteList = new();
-    public string Locale { get; set; }
+    public string Locale { get; set; } = string.Empty;
     public long Creation { get; } = Resources.GetEpochNowInSeconds();
     public long TopicChanged { get; set; } = Resources.GetEpochNowInSeconds();
 
@@ -82,8 +82,8 @@ public class Channel : ChatObject, IChannel
         // Set locale
         // 1:+ST!EN-US!AV
         // 1:+ST 1:ST 1:-ST -- No idea
-        channel.Locale = inMemoryChannel.Locale;
-        channel.Props.Subject.Value = $"1:ST:{inMemoryChannel.Locale}:{inMemoryChannel.Category}";
+        channel.Locale = inMemoryChannel.Locale ?? string.Empty;
+        channel.Props.Subject.Value = $"1:ST:{inMemoryChannel.Locale ?? string.Empty}:{inMemoryChannel.Category}";
         
         // Set language
         channel.Props.Language.Value = inMemoryChannel.Language.ToString();

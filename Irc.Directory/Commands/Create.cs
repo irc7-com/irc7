@@ -75,7 +75,6 @@ public class Create : Command, ICommand
 
         inMemoryChannel.ServerName = targetServer.Name;
         
-        server.CacheManager.PublishChannelCreate(targetServer.ServerId, JsonSerializer.Serialize(inMemoryChannel));
         chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, targetServer.Ip, targetServer.Port.ToString()));
     }
 

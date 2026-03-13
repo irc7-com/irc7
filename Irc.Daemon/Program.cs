@@ -1,4 +1,4 @@
-﻿﻿using System.CommandLine;
+using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Net;
 using System.Reflection;

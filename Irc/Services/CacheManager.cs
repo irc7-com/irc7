@@ -122,7 +122,7 @@ public class CacheManager
 
         try 
         {
-            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { roomName.ToUpper(), payload, serverId });
+            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { roomName.ToUpperInvariant(), payload, serverId });
             return result == 1;
         } 
         catch (Exception ex) 
@@ -135,7 +135,7 @@ public class CacheManager
     // Unregisters a room
     public void UnregisterRoom(string roomName)
     {
-        _db?.HashDelete("acs:rooms", roomName.ToUpper());
+        _db?.HashDelete("acs:rooms", roomName.ToUpperInvariant());
     }
 
     // Gets the server ID for a given room
@@ -143,7 +143,7 @@ public class CacheManager
     {
         if (_db == null) return null;
         
-        var value = _db.HashGet("acs:rooms", roomName.ToUpper());
+        var value = _db.HashGet("acs:rooms", roomName.ToUpperInvariant());
         if (value.HasValue)
         {
             var roomInfo = JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());
@@ -156,7 +156,7 @@ public class CacheManager
     {
         if (_db == null) return null;
         
-        var value = _db.HashGet("acs:rooms", roomName.ToUpper());
+        var value = _db.HashGet("acs:rooms", roomName.ToUpperInvariant());
         if (value.HasValue)
         {
             return JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());

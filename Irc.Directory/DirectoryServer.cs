@@ -74,7 +74,7 @@ public class DirectoryServer : Server
                         
         // Update the room immediately in Redis so we don't cause an infinite failover loop 
         // for concurrent requests while the ACS is booting up the room.
-        CacheManager.RegisterRoom(inMemoryChannel, targetServer.Name);
+        CacheManager.RegisterRoom(inMemoryChannel, targetServer.ServerId);
         CacheManager.PublishChannelCreate(targetServer.ServerId, System.Text.Json.JsonSerializer.Serialize(inMemoryChannel));
 
         return targetServer;

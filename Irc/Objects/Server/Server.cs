@@ -316,6 +316,15 @@ public class Server : ChatObject, IServer
 
     public virtual bool AddChannel(IChannel channel)
     {
+        var channelName = channel.GetName();
+        var channelKey = channelName.ToUpperInvariant();
+
+        // Ensure the channel is added in-memory only once before performing external side-effects.
+        if (!_channels.TryAdd(channelKey, channel))
+        {
+            return false;
+        }
+
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
             var serverId = Name;
@@ -331,27 +340,32 @@ public class Server : ChatObject, IServer
             var maxUsers = channel.Modes.UserLimit.Value;
             var ownerKey = channel.Props.GetProp("OWNERKEY")?.Value ?? string.Empty;
             var hostKey = channel.Props.GetProp("HOSTKEY")?.Value ?? string.Empty;
-            
+
             var success = _cacheManager.RegisterRoom(
-                channel.GetName(), 
-                serverId, 
-                category, 
-                channel.GetName(),
-                topic, 
-                modes, 
-                managed, 
-                locale, 
-                language, 
-                currentUsers, 
+                channelName,
+                serverId,
+                category,
+                channelName,
+                topic,
+                modes,
+                managed,
+                locale,
+                language,
+                currentUsers,
                 maxUsers,
                 ownerKey,
                 hostKey
             );
-            if (!success) return false;
+
+            if (!success)
+            {
+                // Roll back the in-memory add if the external registration fails.
+                _channels.TryRemove(channelKey, out _);
+                return false;
+            }
         }
-        
-        // TryAdd ensures uniqueness – returns false if a channel with the same name already exists.
-        return _channels.TryAdd(channel.GetName().ToUpperInvariant(), channel);
+
+        return true;
     }
 
     public virtual void RemoveChannel(IChannel channel)
