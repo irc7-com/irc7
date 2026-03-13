@@ -12,6 +12,8 @@ public class CacheManager
     private readonly IDatabase? _db;
     public readonly ISubscriber? Subscriber;
 
+    private static string CanonicalizeRoomKey(string roomName) => roomName.ToUpperInvariant();
+
     public CacheManager(string? redisUrl)
     {
         if (string.IsNullOrEmpty(redisUrl)) return;
@@ -76,6 +78,25 @@ public class CacheManager
         );
     }
 
+    public bool TryCreateRoom(InMemoryChannel inMemoryChannel, string serverId)
+    {
+        return TryCreateRoom(
+            roomName: inMemoryChannel.ChannelName,
+            serverId: serverId,
+            category: inMemoryChannel.Category,
+            name: inMemoryChannel.ChannelName,
+            topic: inMemoryChannel.ChannelTopic,
+            modes: inMemoryChannel.Modes,
+            managed: inMemoryChannel.Modes.Contains('r'),
+            locale: inMemoryChannel.Locale,
+            language: inMemoryChannel.Language.ToString(),
+            currentUsers: 0,
+            maxUsers: 50,
+            ownerKey: inMemoryChannel.OwnerKey,
+            hostKey: inMemoryChannel.HostKey
+        );
+    }
+
     // Registers a room to a specific ACS
     public bool RegisterRoom(string roomName, string serverId, string category, string name, string topic, string modes, bool managed, string locale, string language, int currentUsers, int maxUsers, string ownerKey = "", string hostKey = "")
     {
@@ -122,7 +143,7 @@ public class CacheManager
 
         try 
         {
-            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { roomName.ToUpper(), payload, serverId });
+            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { CanonicalizeRoomKey(roomName), payload, serverId });
             return result == 1;
         } 
         catch (Exception ex) 
@@ -132,10 +153,52 @@ public class CacheManager
         }
     }
 
+    // Creates a room only if it does not already exist in the global registry.
+    public bool TryCreateRoom(string roomName, string serverId, string category, string name, string topic, string modes, bool managed, string locale, string language, int currentUsers, int maxUsers, string ownerKey = "", string hostKey = "")
+    {
+        if (_db == null) return true;
+
+        var payload = JsonSerializer.Serialize(new AcsRoomInfo
+        {
+            ServerId = serverId,
+            Category = category,
+            Name = name,
+            Topic = topic,
+            Modes = modes,
+            Managed = managed,
+            Locale = locale,
+            Language = language,
+            CurrentUsers = currentUsers,
+            MaxUsers = maxUsers,
+            OwnerKey = ownerKey,
+            HostKey = hostKey
+        });
+
+        var script = @"
+            local exists = redis.call('HEXISTS', 'acs:rooms', ARGV[1])
+            if exists == 0 then
+                redis.call('HSET', 'acs:rooms', ARGV[1], ARGV[2])
+                return 1
+            end
+            return 0
+        ";
+
+        try
+        {
+            var result = (int)_db.ScriptEvaluate(script, keys: null, values: new RedisValue[] { CanonicalizeRoomKey(roomName), payload });
+            return result == 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CacheManager] Failed to run strict room-create LUA script on Redis: {ex.Message}");
+            return false;
+        }
+    }
+
     // Unregisters a room
     public void UnregisterRoom(string roomName)
     {
-        _db?.HashDelete("acs:rooms", roomName.ToUpper());
+        _db?.HashDelete("acs:rooms", CanonicalizeRoomKey(roomName));
     }
 
     // Gets the server ID for a given room
@@ -143,7 +206,7 @@ public class CacheManager
     {
         if (_db == null) return null;
         
-        var value = _db.HashGet("acs:rooms", roomName.ToUpper());
+        var value = _db.HashGet("acs:rooms", CanonicalizeRoomKey(roomName));
         if (value.HasValue)
         {
             var roomInfo = JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());
@@ -156,7 +219,7 @@ public class CacheManager
     {
         if (_db == null) return null;
         
-        var value = _db.HashGet("acs:rooms", roomName.ToUpper());
+        var value = _db.HashGet("acs:rooms", CanonicalizeRoomKey(roomName));
         if (value.HasValue)
         {
             return JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());
