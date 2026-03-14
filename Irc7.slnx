@@ -7,6 +7,4 @@
   <Project Path="Irc.Helpers/Irc.Helpers.csproj" />
   <Project Path="Irc.Logging/Irc.Logging.csproj" />
   <Project Path="Irc/Irc.csproj" />
-  <Project Path="SSPI.GateKeeper/SSPI.GateKeeper.csproj" />
-  <Project Path="SSPI.NTLM/SSPI.NTLM.csproj" />
 </Solution>

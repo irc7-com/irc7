@@ -5,8 +5,8 @@ using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
-using Irc.Objects.Collections;
-using Irc.Security.Packages;
+using Irc.Security;
+using Irc.Security.Credentials;
 using NLog;
 
 namespace Irc.Objects.User;
@@ -49,7 +49,7 @@ public class User : ChatObject, IUser
         _protocol = protocol;
         _dataRegulator = dataRegulator;
         _floodProtectionProfile = floodProtectionProfile;
-        _supportPackage = new ANON();
+        _supportPackage = new SupportPackage(server.GetCredentialManager());
         Channels = new ConcurrentDictionary<IChannel, IChannelMember>();
         base.Modes = new UserModes();
         base.Props = new UserProps();
@@ -250,7 +250,7 @@ public class User : ChatObject, IUser
 
     public bool IsAnon()
     {
-        return _supportPackage is ANON;
+        return _supportPackage is not null || !_supportPackage.IsAuthenticated();
     }
 
     public bool IsSysop()
@@ -368,10 +368,16 @@ public class User : ChatObject, IUser
         var userAddress = GetAddress();
         var credentials = GetSupportPackage().GetCredentials();
 
-        if (credentials == null) throw new Exception("Register: No credentials provided");
+        // if (credentials == null) throw new Exception("Register: No credentials provided");
+        if (credentials == null)
+        {
+            // ANON path
+            credentials = new Credential();
+            credentials.Domain = "ANON";
+        }
 
         var userHost = string.IsNullOrWhiteSpace(userAddress.User) ? userAddress.MaskedIp : userAddress.User;
-        if (GetSupportPackage() is not ANON)
+        if (!IsAnon())
         {
             var credUser = credentials.GetUsername();
             userHost = string.IsNullOrWhiteSpace(credUser) ? userAddress.MaskedIp : credUser;

@@ -7,8 +7,9 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 RUN \
     git clone https://github.com/IRC7/IRC7.git && \
+RUN \
+    #git clone https://github.com/IRC7/IRC7.git && \
     dotnet publish IRC7/Irc.Daemon \
-      --self-contained true \
       /p:PublishTrimmed=false \
       /p:PublishSingleFile=true \
       -c Release \

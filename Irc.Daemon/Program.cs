@@ -165,42 +165,39 @@ internal class Program
     }
 
     private static Server ConfigureServer(IrcType serverType, SocketServer socketServer,
-        NtlmCredentials credentialProvider, string? chatServerIp, string? redisUrl)
+        Credentials credentialProvider, string? chatServerIp, string? redisUrl)
     {
         var floodProtectionManager = new FloodProtectionManager();
-        var securityManager = new SecurityManager();
         var dataStoreServerConfig = new DataStore("DefaultServer.json");
         return serverType switch
         {
-            IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, securityManager,
-                floodProtectionManager, dataStoreServerConfig, chatServerIp, redisUrl),
-            _ => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
+            IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, floodProtectionManager, dataStoreServerConfig, chatServerIp, redisUrl),
+            _ => new Server(socketServer, floodProtectionManager, dataStoreServerConfig,
                 credentialProvider, redisUrl)
         };
     }
 
     private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer,
-        NtlmCredentials credentialProvider, SecurityManager securityManager,
-        FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig,
+        Credentials credentialProvider, FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig,
         string? chatServerIp, string? redisUrl)
     {
-        var server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
+        var server = new DirectoryServer(socketServer, floodProtectionManager, dataStoreServerConfig,
             credentialProvider, chatServerIp, redisUrl);
 
         return server;
     }
 
-    private static async Task<NtlmCredentials> LoadCredentials()
+    private static async Task<Credentials> LoadCredentials()
     {
         if (File.Exists("DefaultCredentials.json"))
         {
             var credentials =
                 JsonSerializer.Deserialize<Dictionary<string, Credential>>(
                     await File.ReadAllTextAsync("DefaultCredentials.json")) ?? new Dictionary<string, Credential>();
-            return new NtlmCredentials(credentials);
+            return new Credentials(credentials);
         }
 
-        return new NtlmCredentials(new Dictionary<string, Credential>());
+        return new Credentials(new Dictionary<string, Credential>());
     }
 
     private static void InitializeDefaultChannels(IServer server, IrcType serverType)

@@ -58,7 +58,6 @@ public interface IServer: IChatObject
     IChannel? GetChannelByName(string name);
     ChatObject? GetChatObject(string name);
     IProtocol? GetProtocol(EnumProtocolType protocolType);
-    ISecurityManager GetSecurityManager();
     ICredentialProvider? GetCredentialManager();
     void Shutdown();
     new string ToString();

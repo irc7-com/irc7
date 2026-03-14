@@ -3,6 +3,7 @@ using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Interfaces;
+using Irc.Security;
 
 public class Auth : Command, ICommand
 {
@@ -41,8 +42,7 @@ public class Auth : Command, ICommand
                     var credentialManager = chatFrame.Server.GetCredentialManager();
                     if (credentialManager == null) throw new ArgumentNullException(nameof(credentialManager));
 
-                    supportPackage = chatFrame.Server.GetSecurityManager()
-                        .CreatePackageInstance(packageName, credentialManager);
+                    supportPackage = new SupportPackage(credentialManager);
 
                     chatFrame.User.SetSupportPackage(supportPackage);
                 }
@@ -54,21 +54,21 @@ public class Auth : Command, ICommand
                 }
 
                 var supportPackageSequence =
-                    supportPackage.InitializeSecurityContext(token, chatFrame.Server.RemoteIp);
+                    supportPackage.InitializeSecurityContext(token, chatFrame.Server.RemoteIp, out var responseToken);
 
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
                 {
-                    var securityToken = supportPackage.CreateSecurityChallenge();
-
-                    // If the security token could not be created, disconnect the user
-                    if (securityToken == string.Empty)
-                    {
-                        chatFrame.User.Disconnect(Raws.IRCX_ERR_RESOURCE_907(chatFrame.Server, chatFrame.User));
-                        return;
-                    }
-
-                    var securityTokenEscaped = securityToken.ToEscape();
-                    chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(packageName, securityTokenEscaped));
+                    // var securityToken = supportPackage.CreateSecurityChallenge();
+                    //
+                    // // If the security token could not be created, disconnect the user
+                    // if (securityToken == string.Empty)
+                    // {
+                    //     chatFrame.User.Disconnect(Raws.IRCX_ERR_RESOURCE_907(chatFrame.Server, chatFrame.User));
+                    //     return;
+                    // }
+                    //
+                    // var securityTokenEscaped = securityToken.ToEscape();
+                    chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(packageName, responseToken.ToAsciiString().ToEscape()));
                     // Send reply
                     return;
                 }
@@ -76,7 +76,7 @@ public class Auth : Command, ICommand
             else if (sequence == "S")
             {
                 var supportPackageSequence =
-                    supportPackage.AcceptSecurityContext(token, chatFrame.Server.RemoteIp);
+                    supportPackage.AcceptSecurityContext(token, chatFrame.Server.RemoteIp, out var responseToken);
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
                 {
                     chatFrame.User.Authenticate();

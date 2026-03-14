@@ -2,11 +2,11 @@
 
 namespace Irc.Security.Credentials;
 
-public class NtlmCredentials : NtlmProvider, ICredentialProvider
+public class Credentials : ICredentialProvider
 {
     private readonly Dictionary<string, Credential> _credentials;
 
-    public NtlmCredentials(Dictionary<string, Credential> credentials)
+    public Credentials(Dictionary<string, Credential> credentials)
     {
         _credentials = credentials;
     }

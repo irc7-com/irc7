@@ -15,7 +15,6 @@ using Irc.Objects.Collections;
 using Irc.Objects.User;
 using Irc.Protocols;
 using Irc.Security.Credentials;
-using Irc.Security.Packages;
 using Irc.Security.Passport;
 using NLog;
 using Version = System.Version;
@@ -36,7 +35,6 @@ public class Server : ChatObject, IServer
     // Track IDs of users pending removal to avoid duplicate enqueues
     private readonly ConcurrentDictionary<Guid, byte> _pendingRemoveUserSet = new();
     private readonly Task _processingTask;
-    private readonly ISecurityManager _securityManager;
     private readonly ISocketServer _socketServer;
     private readonly Irc.Services.CacheManager _cacheManager;
     private System.Timers.Timer? _heartbeatTimer;
@@ -58,7 +56,6 @@ public class Server : ChatObject, IServer
     public IList<IUser> Users = new List<IUser>();
 
     public Server(ISocketServer socketServer,
-        ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
         ICredentialProvider? credentialProvider = null,
@@ -67,7 +64,6 @@ public class Server : ChatObject, IServer
         Name = dataStore.Get("Name");
         Title = Name;
         _socketServer = socketServer;
-        _securityManager = securityManager;
         _floodProtectionManager = floodProtectionManager;
         _DataStore = dataStore;
         
@@ -84,17 +80,11 @@ public class Server : ChatObject, IServer
         SupportPackages = _DataStore.GetAs<List<string>>(Resources.ConfigSaslPackages)?.ToArray() ??
                           Array.Empty<string>();
 
-        if (MaxAnonymousConnections > 0) _securityManager.AddSupportPackage(new ANON());
-        
         //IRCX Initialization
         _credentialProvider = credentialProvider;
         Props = new PropCollection();
         Access = new ServerAccess();
-
-        if (SupportPackages.Contains("NTLM"))
-            GetSecurityManager()
-                .AddSupportPackage(new NTLM(credentialProvider ?? new NtlmProvider()));
-
+        
         AddProtocol(EnumProtocolType.IRC, new Protocols.Irc());
         AddProtocol(EnumProtocolType.IRCX, new IrcX());
         AddProtocol(EnumProtocolType.IRC3, new Irc3());
@@ -124,8 +114,6 @@ public class Server : ChatObject, IServer
         if (SupportPackages.Contains("GateKeeper"))
         {
             _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
-            securityManager.AddSupportPackage(new GateKeeper(new DefaultProvider()));
-            securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(_passport)));
         }
 
         var modes = new ChannelModes().GetSupportedModes();
@@ -240,7 +228,7 @@ public class Server : ChatObject, IServer
     public int NetInvisibleCount { get; } = 0;
     public int NetServerCount { get; } = 0;
     public int NetUserCount { get; } = 0;
-    public string SecurityPackages => _securityManager.GetSupportedPackages();
+    public string SecurityPackages => "NTLM";
     public int SysopCount { get; } = 0;
     public int UnknownConnectionCount => _socketServer.CurrentConnections - NetUserCount;
     public string RemoteIp { set; get; } = string.Empty;
@@ -449,11 +437,6 @@ public class Server : ChatObject, IServer
     {
         if (Protocols.TryGetValue(protocolType, out var protocol)) return protocol;
         return null;
-    }
-
-    public ISecurityManager GetSecurityManager()
-    {
-        return _securityManager;
     }
 
     public ICredentialProvider? GetCredentialManager()
