@@ -1,4 +1,5 @@
-﻿using Irc.ChannelMaster.State;
+﻿using Irc.ChannelMaster.Models;
+using Irc.ChannelMaster.State;
 
 namespace Irc.ChannelMaster.Broadcast;
 
@@ -15,16 +16,23 @@ public sealed class BroadcastProcess
     public string WorkerId { get; }
     public TimeSpan WorkerTtl { get; set; } = TimeSpan.FromSeconds(15);
 
-    public async Task<IReadOnlyList<string>> RunOnceAsync(int currentLoad, CancellationToken cancellationToken = default)
+    public async Task<BroadcastAssignmentSnapshot> RunOnceAsync(int currentLoad, CancellationToken cancellationToken = default)
     {
         await _store.HeartbeatBroadcastWorkerAsync(WorkerId, currentLoad, WorkerTtl, cancellationToken);
 
         var assignments = await _store.GetChatServerAssignmentsAsync(cancellationToken);
-        return assignments
+        var assignedChatServers = assignments
             .Where(kvp => kvp.Value.Equals(WorkerId, StringComparison.OrdinalIgnoreCase))
             .Select(kvp => kvp.Key)
             .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
             .ToList();
+
+        return new BroadcastAssignmentSnapshot
+        {
+            WorkerId = WorkerId,
+            ReportedLoad = currentLoad,
+            ChatServerIds = assignedChatServers
+        };
     }
 }
 

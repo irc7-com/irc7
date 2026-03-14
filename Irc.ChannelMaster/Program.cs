@@ -93,8 +93,8 @@ public static class Program
 
         if (options.Mode is ProcessMode.Broadcast or ProcessMode.Both)
         {
-            var assignedServers = await broadcast.RunOnceAsync(options.WorkerLoad, cancellationToken);
-            Log.Info($"[Broadcast] assigned_chat_servers={assignedServers.Count}");
+            var snapshot = await broadcast.RunOnceAsync(options.WorkerLoad, cancellationToken);
+            Log.Info($"[Broadcast] worker={snapshot.WorkerId}, assigned_chat_servers={snapshot.ChatServerIds.Count}");
         }
     }
 
@@ -142,14 +142,14 @@ public static class Program
 
         public static void PrintHelp()
         {
-            Console.WriteLine("ChannelMaster options:");
-            Console.WriteLine("  --mode controller|broadcast|both   Process role to execute (default: both)");
-            Console.WriteLine("  --store memory|redis               State backend (default: memory)");
-            Console.WriteLine("  --redis <connection-string>        Redis connection string (required for --store redis)");
-            Console.WriteLine("  --id <instance-id>                 Instance identifier");
-            Console.WriteLine("  --worker-load <int>                Current worker load for broadcast heartbeat");
-            Console.WriteLine("  --once                             Run one control iteration and exit");
-            Console.WriteLine("  --help                             Show this help");
+            Log.Info("ChannelMaster options:");
+            Log.Info("  --mode controller, broadcast, both Process role to execute (default: both)");
+            Log.Info("  --store memory, redis              State backend (default: memory)");
+            Log.Info("  --redis <connection-string>        Redis connection string (required for --store redis)");
+            Log.Info("  --id <instance-id>                 Instance identifier");
+            Log.Info("  --worker-load <int>                Current worker load for broadcast heartbeat");
+            Log.Info("  --once                             Run one control iteration and exit");
+            Log.Info("  --help                             Show this help");
         }
 
         private static ProcessMode ParseMode(string? mode)

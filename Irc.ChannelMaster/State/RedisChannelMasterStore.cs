@@ -204,8 +204,48 @@ public sealed class RedisChannelMasterStore : IChannelMasterStore, IDisposable
         return _db.HashSetAsync(AssignmentsKey, chatServerId, broadcastWorkerId);
     }
 
-    public async Task<bool> TryClaimChannelAsync(string channelName, string ownerId, CancellationToken cancellationToken = default)
+    public async Task ReconcileChatServerAssignmentsAsync(CancellationToken cancellationToken = default)
     {
+        var entries = await _db.HashGetAllAsync(AssignmentsKey);
+        if (entries.Length == 0) return;
+
+        foreach (var entry in entries)
+        {
+            var chatServerId = entry.Name.ToString();
+            var workerId = entry.Value.ToString();
+            if (string.IsNullOrWhiteSpace(chatServerId) || string.IsNullOrWhiteSpace(workerId))
+            {
+                await _db.HashDeleteAsync(AssignmentsKey, entry.Name);
+                continue;
+            }
+
+            var chatServerExists = await _db.KeyExistsAsync(GetChatServerKey(chatServerId));
+            var workerExists = await _db.KeyExistsAsync(GetBroadcastWorkerKey(workerId));
+            if (chatServerExists && workerExists) continue;
+
+            await _db.HashDeleteAsync(AssignmentsKey, chatServerId);
+            if (!chatServerExists)
+            {
+                await _db.SetRemoveAsync(ChatServerSetKey, chatServerId);
+            }
+
+            if (!workerExists)
+            {
+                await _db.SetRemoveAsync(BroadcastWorkerSetKey, workerId);
+            }
+        }
+    }
+
+    public async Task<bool> TryClaimChannelAsync(string channelName, string channelUid, string ownerId, DateTime createdUtc, CancellationToken cancellationToken = default)
+    {
+        var payload = JsonSerializer.Serialize(new ChannelRecord
+        {
+            ChannelUid = channelUid,
+            ChannelName = channelName,
+            OwnerServerId = ownerId,
+            CreatedUtc = createdUtc
+        });
+
         var script = @"
             local exists = redis.call('HEXISTS', KEYS[1], ARGV[1])
             if exists == 0 then
@@ -218,16 +258,18 @@ public sealed class RedisChannelMasterStore : IChannelMasterStore, IDisposable
         var result = (int)await _db.ScriptEvaluateAsync(
             script,
             new RedisKey[] { ChannelsKey },
-            new RedisValue[] { CanonicalizeChannelName(channelName), ownerId }
+            new RedisValue[] { CanonicalizeChannelName(channelName), payload }
         );
 
         return result == 1;
     }
 
-    public async Task<string?> GetChannelOwnerAsync(string channelName, CancellationToken cancellationToken = default)
+    public async Task<ChannelRecord?> GetChannelRecordAsync(string channelName, CancellationToken cancellationToken = default)
     {
         var value = await _db.HashGetAsync(ChannelsKey, CanonicalizeChannelName(channelName));
-        return value.HasValue ? value.ToString() : null;
+        if (!value.HasValue) return null;
+
+        return JsonSerializer.Deserialize<ChannelRecord>(value.ToString());
     }
 
     public void Dispose()

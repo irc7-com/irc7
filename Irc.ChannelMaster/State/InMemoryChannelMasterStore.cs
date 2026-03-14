@@ -9,7 +9,7 @@ public sealed class InMemoryChannelMasterStore : IChannelMasterStore
     private readonly Dictionary<string, (BroadcastWorkerStatus status, DateTime expiresUtc)> _workers = new();
     private readonly Dictionary<string, (ChatServerStatus status, DateTime expiresUtc)> _chatServers = new();
     private readonly Dictionary<string, string> _assignments = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, string> _channels = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ChannelRecord> _channels = new(StringComparer.OrdinalIgnoreCase);
 
     private string? _leaderId;
     private DateTime _leaderExpiresUtc = DateTime.MinValue;
@@ -31,9 +31,7 @@ public sealed class InMemoryChannelMasterStore : IChannelMasterStore
     {
         lock (_sync)
         {
-            var now = DateTime.UtcNow;
-            var staleIds = _channelMasters.Where(kvp => kvp.Value <= now).Select(kvp => kvp.Key).ToList();
-            foreach (var staleId in staleIds) _channelMasters.Remove(staleId);
+            PruneExpiredChannelMasters(DateTime.UtcNow);
 
             return Task.FromResult<IReadOnlyList<string>>(_channelMasters.Keys
                 .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
@@ -128,9 +126,7 @@ public sealed class InMemoryChannelMasterStore : IChannelMasterStore
     {
         lock (_sync)
         {
-            var now = DateTime.UtcNow;
-            var staleKeys = _workers.Where(kvp => kvp.Value.expiresUtc <= now).Select(kvp => kvp.Key).ToList();
-            foreach (var staleKey in staleKeys) _workers.Remove(staleKey);
+            PruneExpiredWorkers(DateTime.UtcNow);
 
             return Task.FromResult<IReadOnlyList<BroadcastWorkerStatus>>(_workers.Values
                 .Select(v => v.status)
@@ -161,13 +157,7 @@ public sealed class InMemoryChannelMasterStore : IChannelMasterStore
     {
         lock (_sync)
         {
-            var now = DateTime.UtcNow;
-            var staleKeys = _chatServers.Where(kvp => kvp.Value.expiresUtc <= now).Select(kvp => kvp.Key).ToList();
-            foreach (var staleKey in staleKeys)
-            {
-                _chatServers.Remove(staleKey);
-                _assignments.Remove(staleKey);
-            }
+            PruneExpiredChatServers(DateTime.UtcNow);
 
             return Task.FromResult<IReadOnlyList<ChatServerStatus>>(_chatServers.Values
                 .Select(v => v.status)
@@ -195,24 +185,74 @@ public sealed class InMemoryChannelMasterStore : IChannelMasterStore
         return Task.CompletedTask;
     }
 
-    public Task<bool> TryClaimChannelAsync(string channelName, string ownerId, CancellationToken cancellationToken = default)
+    public Task ReconcileChatServerAssignmentsAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_sync)
+        {
+            var now = DateTime.UtcNow;
+            PruneExpiredWorkers(now);
+            PruneExpiredChatServers(now);
+
+            var staleAssignments = _assignments
+                .Where(kvp => !_chatServers.ContainsKey(kvp.Key) || !_workers.ContainsKey(kvp.Value))
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var chatServerId in staleAssignments)
+            {
+                _assignments.Remove(chatServerId);
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> TryClaimChannelAsync(string channelName, string channelUid, string ownerId, DateTime createdUtc, CancellationToken cancellationToken = default)
     {
         lock (_sync)
         {
             var key = CanonicalizeChannelName(channelName);
             if (_channels.ContainsKey(key)) return Task.FromResult(false);
 
-            _channels[key] = ownerId;
+            _channels[key] = new ChannelRecord
+            {
+                ChannelUid = channelUid,
+                ChannelName = channelName,
+                OwnerServerId = ownerId,
+                CreatedUtc = createdUtc
+            };
             return Task.FromResult(true);
         }
     }
 
-    public Task<string?> GetChannelOwnerAsync(string channelName, CancellationToken cancellationToken = default)
+    public Task<ChannelRecord?> GetChannelRecordAsync(string channelName, CancellationToken cancellationToken = default)
     {
         lock (_sync)
         {
             var key = CanonicalizeChannelName(channelName);
-            return Task.FromResult(_channels.TryGetValue(key, out var owner) ? owner : null);
+            return Task.FromResult(_channels.TryGetValue(key, out var record) ? record : null);
+        }
+    }
+
+    private void PruneExpiredChannelMasters(DateTime now)
+    {
+        var staleIds = _channelMasters.Where(kvp => kvp.Value <= now).Select(kvp => kvp.Key).ToList();
+        foreach (var staleId in staleIds) _channelMasters.Remove(staleId);
+    }
+
+    private void PruneExpiredWorkers(DateTime now)
+    {
+        var staleKeys = _workers.Where(kvp => kvp.Value.expiresUtc <= now).Select(kvp => kvp.Key).ToList();
+        foreach (var staleKey in staleKeys) _workers.Remove(staleKey);
+    }
+
+    private void PruneExpiredChatServers(DateTime now)
+    {
+        var staleKeys = _chatServers.Where(kvp => kvp.Value.expiresUtc <= now).Select(kvp => kvp.Key).ToList();
+        foreach (var staleKey in staleKeys)
+        {
+            _chatServers.Remove(staleKey);
+            _assignments.Remove(staleKey);
         }
     }
 

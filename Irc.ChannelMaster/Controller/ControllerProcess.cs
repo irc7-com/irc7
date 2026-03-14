@@ -52,6 +52,12 @@ public sealed class ControllerProcess
 
         if (!IsLeader) return false;
 
+        if (!await EnsureControllerLeaseAsync(cancellationToken))
+        {
+            IsLeader = false;
+            return false;
+        }
+
         var now = DateTime.UtcNow;
         if (now - _lastLeaderHeartbeatSentUtc >= LeaderHeartbeatInterval)
         {
@@ -60,10 +66,12 @@ public sealed class ControllerProcess
         }
 
         var workers = await _store.GetActiveBroadcastWorkersAsync(cancellationToken);
-        if (workers.Count == 0) return true;
-
         var chatServers = await _store.GetActiveChatServersAsync(cancellationToken);
-        if (chatServers.Count == 0) return true;
+        await _store.ReconcileChatServerAssignmentsAsync(cancellationToken);
+
+        if (workers.Count == 0 || chatServers.Count == 0) return true;
+
+        var currentAssignments = await _store.GetChatServerAssignmentsAsync(cancellationToken);
 
         var trackedLoads = workers.ToDictionary(
             worker => worker.WorkerId,
@@ -83,7 +91,12 @@ public sealed class ControllerProcess
                 .ThenBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
                 .First().Key;
 
-            await _store.SetChatServerAssignmentAsync(chatServer.ChatServerId, targetWorker, cancellationToken);
+            if (!currentAssignments.TryGetValue(chatServer.ChatServerId, out var assignedWorker) ||
+                !assignedWorker.Equals(targetWorker, StringComparison.OrdinalIgnoreCase))
+            {
+                await _store.SetChatServerAssignmentAsync(chatServer.ChatServerId, targetWorker, cancellationToken);
+            }
+
             trackedLoads[targetWorker] += Math.Max(1, chatServer.CurrentLoad);
         }
 
@@ -113,6 +126,12 @@ public sealed class ControllerProcess
             .Last();
 
         // Equivalent to LEADER-DEFINE: cluster converges on the max-ID winner.
+        if (string.Equals(electedLeader, ControllerId, StringComparison.OrdinalIgnoreCase) &&
+            !await EnsureControllerLeaseAsync(cancellationToken))
+        {
+            return false;
+        }
+
         await _store.DefineLeaderAsync(electedLeader, LeaseTtl, cancellationToken);
         _hasObservedLeader = true;
         _missedLeaderHeartbeats = 0;
@@ -120,14 +139,74 @@ public sealed class ControllerProcess
         return string.Equals(electedLeader, ControllerId, StringComparison.OrdinalIgnoreCase);
     }
 
-    public Task<bool> TryCreateChannelAsync(string channelName, CancellationToken cancellationToken = default)
+    public async Task<ControllerCommandResponse> HandleCommandAsync(
+        string commandName,
+        IReadOnlyList<string> arguments,
+        CancellationToken cancellationToken = default)
     {
-        return _store.TryClaimChannelAsync(channelName, ControllerId, cancellationToken);
+        if (commandName.Equals("CREATE", StringComparison.OrdinalIgnoreCase))
+        {
+            if (arguments.Count != 1 || string.IsNullOrWhiteSpace(arguments[0]))
+            {
+                return ControllerCommandResponse.Error("CREATE", "REQUIRES", "1", "ARGUMENT");
+            }
+
+            var result = await CreateChannelAsync(arguments[0], cancellationToken);
+            return result.Status switch
+            {
+                CreateChannelStatus.Success => ControllerCommandResponse.Success(result.ServerId!, result.ChannelUid!),
+                CreateChannelStatus.Busy => ControllerCommandResponse.Busy(),
+                CreateChannelStatus.NameConflict => ControllerCommandResponse.NameConflict(),
+                CreateChannelStatus.NotLeader => ControllerCommandResponse.Error("NOT", "LEADER"),
+                _ => ControllerCommandResponse.Error("UNKNOWN")
+            };
+        }
+
+        return ControllerCommandResponse.Error("UNKNOWN", "COMMAND");
     }
 
-    public Task<string?> GetChannelOwnerAsync(string channelName, CancellationToken cancellationToken = default)
+    public async Task<CreateChannelResult> CreateChannelAsync(string channelName, CancellationToken cancellationToken = default)
     {
-        return _store.GetChannelOwnerAsync(channelName, cancellationToken);
+        if (!IsLeader)
+        {
+            return CreateChannelResult.NotLeader();
+        }
+
+        if (!await EnsureControllerLeaseAsync(cancellationToken))
+        {
+            IsLeader = false;
+            return CreateChannelResult.NotLeader();
+        }
+
+        var chatServers = await _store.GetActiveChatServersAsync(cancellationToken);
+        if (chatServers.Count == 0)
+        {
+            return CreateChannelResult.Busy();
+        }
+
+        var targetServer = chatServers
+            .OrderBy(chat => chat.CurrentLoad)
+            .ThenBy(chat => chat.ChatServerId, StringComparer.OrdinalIgnoreCase)
+            .First();
+
+        var now = DateTime.UtcNow;
+        var channelUid = $"{targetServer.ChatServerId}:{now.Ticks}";
+
+        var claimed = await _store.TryClaimChannelAsync(channelName, channelUid, targetServer.ChatServerId, now, cancellationToken);
+        return claimed
+            ? CreateChannelResult.Success(targetServer.ChatServerId, channelUid)
+            : CreateChannelResult.NameConflict();
+    }
+
+    public async Task<bool> TryCreateChannelAsync(string channelName, CancellationToken cancellationToken = default)
+    {
+        var result = await CreateChannelAsync(channelName, cancellationToken);
+        return result.Status == CreateChannelStatus.Success;
+    }
+
+    public Task<ChannelRecord?> GetChannelRecordAsync(string channelName, CancellationToken cancellationToken = default)
+    {
+        return _store.GetChannelRecordAsync(channelName, cancellationToken);
     }
 
     public async Task StopAsync(CancellationToken cancellationToken = default)
@@ -136,6 +215,16 @@ public sealed class ControllerProcess
 
         await _store.ReleaseControllerLeaseAsync(ControllerId, cancellationToken);
         IsLeader = false;
+    }
+
+    private async Task<bool> EnsureControllerLeaseAsync(CancellationToken cancellationToken)
+    {
+        if (await _store.RenewControllerLeaseAsync(ControllerId, LeaseTtl, cancellationToken))
+        {
+            return true;
+        }
+
+        return await _store.TryAcquireControllerLeaseAsync(ControllerId, LeaseTtl, cancellationToken);
     }
 }
 

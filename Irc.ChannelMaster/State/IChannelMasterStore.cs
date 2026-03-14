@@ -21,8 +21,9 @@ public interface IChannelMasterStore
 
     Task<IReadOnlyDictionary<string, string>> GetChatServerAssignmentsAsync(CancellationToken cancellationToken = default);
     Task SetChatServerAssignmentAsync(string chatServerId, string broadcastWorkerId, CancellationToken cancellationToken = default);
+    Task ReconcileChatServerAssignmentsAsync(CancellationToken cancellationToken = default);
 
-    Task<bool> TryClaimChannelAsync(string channelName, string ownerId, CancellationToken cancellationToken = default);
-    Task<string?> GetChannelOwnerAsync(string channelName, CancellationToken cancellationToken = default);
+    Task<bool> TryClaimChannelAsync(string channelName, string channelUid, string ownerId, DateTime createdUtc, CancellationToken cancellationToken = default);
+    Task<ChannelRecord?> GetChannelRecordAsync(string channelName, CancellationToken cancellationToken = default);
 }
 
