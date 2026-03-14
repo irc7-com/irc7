@@ -1,42 +1,62 @@
 using System.Text.Json;
-using Irc.Constants;
+using Irc.Contracts.Messages;
 using Irc.Objects.Channel;
 using NLog;
-using StackExchange.Redis;
 
 namespace Irc.Objects.Server;
 
 public static class ServerHandlers
 {
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-    
-    public static RedisChannel ChannelPubSub = new RedisChannel(Resources.PubSubServiceChannels, RedisChannel.PatternMode.Literal); 
-    
-    public static void HandleChannelPubSub(Server server, string payload)
+
+    /// <summary>
+    /// Handles ASSIGN commands from the ChannelMaster.
+    /// Received via cm:cmd:acs:{serverId} pub-sub channel.
+    /// Creates the channel locally and writes a response to cm:reply:acs:{requestId}.
+    /// </summary>
+    public static void HandleChannelMasterAssign(Server server, string payload)
     {
-        Log.Trace($"HandleChannelPubSub: {payload}");
-        var inMemoryChannel = JsonSerializer.Deserialize<InMemoryChannel>(payload);
-        if (inMemoryChannel == null)
+        Log.Trace($"HandleChannelMasterAssign: {payload}");
+
+        AssignRequest? request;
+        try
         {
-            Log.Error($"Could not deserialize payload: {payload}");
+            request = JsonSerializer.Deserialize<AssignRequest>(payload);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Could not deserialize ASSIGN request: {ex.Message}");
             return;
         }
-                
-        if (inMemoryChannel.ServerName == server.Name)
-        {
-            if (server.GetChannelByName(inMemoryChannel.ChannelName) != null)
-            {
-                Log.Info($"Channel {inMemoryChannel.ChannelName} already exists in memory. Skipping creation from PubSub.");
-                return;
-            }
 
-            var channel = Channel.Channel.FromInMemoryChannel(inMemoryChannel);
-            if (!server.AddChannel(channel))
-            {
-                Console.WriteLine($"Could not register channel {inMemoryChannel.ChannelName} in Redis");
-                return;
-            }
-            Console.WriteLine($"Registered Channel {JsonSerializer.Serialize(inMemoryChannel)} in Redis");
+        if (request == null)
+        {
+            Log.Error($"ASSIGN request deserialized to null: {payload}");
+            return;
+        }
+
+        Log.Info($"ASSIGN received: channel={request.ChannelName} uid={request.ChannelUid}");
+
+        // Check if the channel already exists
+        if (server.GetChannelByName(request.ChannelName) != null)
+        {
+            Log.Info($"Channel {request.ChannelName} already exists. Accepting ASSIGN (idempotent).");
+            server.CacheManager.WriteAssignResponse(request.RequestId, accepted: true);
+            return;
+        }
+
+        // Create a minimal channel from the ASSIGN request
+        var channel = new Channel.Channel(request.ChannelName);
+
+        if (server.AddChannel(channel))
+        {
+            Log.Info($"ASSIGN accepted: channel={request.ChannelName} uid={request.ChannelUid}");
+            server.CacheManager.WriteAssignResponse(request.RequestId, accepted: true);
+        }
+        else
+        {
+            Log.Warn($"ASSIGN rejected: could not add channel {request.ChannelName}");
+            server.CacheManager.WriteAssignResponse(request.RequestId, accepted: false);
         }
     }
 }

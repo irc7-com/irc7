@@ -135,19 +135,23 @@ public sealed class InMemoryChannelMasterStore : IChannelMasterStore
         }
     }
 
-    public Task HeartbeatChatServerAsync(string chatServerId, int currentLoad, TimeSpan ttl, CancellationToken cancellationToken = default)
+    public Task HeartbeatChatServerAsync(string chatServerId, string hostname, int userCount, int channelCount, ChatServerStatusType status, TimeSpan ttl, string[]? channelNames = null, CancellationToken cancellationToken = default)
     {
         lock (_sync)
         {
             var now = DateTime.UtcNow;
-            var status = new ChatServerStatus
+            var chatStatus = new ChatServerStatus
             {
                 ChatServerId = chatServerId,
-                CurrentLoad = currentLoad,
-                LastSeenUtc = now
+                Hostname = hostname,
+                UserCount = userCount,
+                ChannelCount = channelCount,
+                Status = status,
+                LastSeenUtc = now,
+                ChannelNames = channelNames ?? []
             };
 
-            _chatServers[chatServerId] = (status, now.Add(ttl));
+            _chatServers[chatServerId] = (chatStatus, now.Add(ttl));
         }
 
         return Task.CompletedTask;
@@ -163,6 +167,19 @@ public sealed class InMemoryChannelMasterStore : IChannelMasterStore
                 .Select(v => v.status)
                 .OrderBy(c => c.ChatServerId, StringComparer.OrdinalIgnoreCase)
                 .ToList());
+        }
+    }
+
+    public Task<ChatServerStatus?> GetChatServerAsync(string chatServerId, CancellationToken cancellationToken = default)
+    {
+        lock (_sync)
+        {
+            if (_chatServers.TryGetValue(chatServerId, out var entry) && entry.expiresUtc > DateTime.UtcNow)
+            {
+                return Task.FromResult<ChatServerStatus?>(entry.status);
+            }
+
+            return Task.FromResult<ChatServerStatus?>(null);
         }
     }
 
@@ -225,12 +242,33 @@ public sealed class InMemoryChannelMasterStore : IChannelMasterStore
         }
     }
 
+    public Task UnclaimChannelAsync(string channelName, CancellationToken cancellationToken = default)
+    {
+        lock (_sync)
+        {
+            var key = CanonicalizeChannelName(channelName);
+            _channels.Remove(key);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task<ChannelRecord?> GetChannelRecordAsync(string channelName, CancellationToken cancellationToken = default)
     {
         lock (_sync)
         {
             var key = CanonicalizeChannelName(channelName);
             return Task.FromResult(_channels.TryGetValue(key, out var record) ? record : null);
+        }
+    }
+
+    public Task<ChannelRecord?> GetChannelByUidAsync(string channelUid, CancellationToken cancellationToken = default)
+    {
+        lock (_sync)
+        {
+            var match = _channels.Values.FirstOrDefault(r =>
+                string.Equals(r.ChannelUid, channelUid, StringComparison.Ordinal));
+            return Task.FromResult(match);
         }
     }
 

@@ -14,13 +14,19 @@ public sealed class RedisChannelMasterStore : IChannelMasterStore, IDisposable
     private const string AssignmentsKey = "cm:assign:chat-to-broadcast";
     private const string ChannelsKey = "cm:channels";
 
-    private readonly ConnectionMultiplexer _redis;
+    private readonly ConnectionMultiplexer? _ownedRedis;
     private readonly IDatabase _db;
 
     public RedisChannelMasterStore(string connectionString)
     {
-        _redis = ConnectionMultiplexer.Connect(connectionString);
-        _db = _redis.GetDatabase();
+        _ownedRedis = ConnectionMultiplexer.Connect(connectionString);
+        _db = _ownedRedis.GetDatabase();
+    }
+
+    public RedisChannelMasterStore(IConnectionMultiplexer redis)
+    {
+        _ownedRedis = null; // Caller owns the connection
+        _db = redis.GetDatabase();
     }
 
     public async Task HeartbeatChannelMasterAsync(string channelMasterId, TimeSpan ttl, CancellationToken cancellationToken = default)
@@ -148,14 +154,18 @@ public sealed class RedisChannelMasterStore : IChannelMasterStore, IDisposable
         return workers.OrderBy(w => w.WorkerId, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    public async Task HeartbeatChatServerAsync(string chatServerId, int currentLoad, TimeSpan ttl, CancellationToken cancellationToken = default)
+    public async Task HeartbeatChatServerAsync(string chatServerId, string hostname, int userCount, int channelCount, ChatServerStatusType status, TimeSpan ttl, string[]? channelNames = null, CancellationToken cancellationToken = default)
     {
         var key = GetChatServerKey(chatServerId);
         var payload = JsonSerializer.Serialize(new ChatServerStatus
         {
             ChatServerId = chatServerId,
-            CurrentLoad = currentLoad,
-            LastSeenUtc = DateTime.UtcNow
+            Hostname = hostname,
+            UserCount = userCount,
+            ChannelCount = channelCount,
+            Status = status,
+            LastSeenUtc = DateTime.UtcNow,
+            ChannelNames = channelNames ?? []
         });
 
         var transaction = _db.CreateTransaction();
@@ -187,6 +197,14 @@ public sealed class RedisChannelMasterStore : IChannelMasterStore, IDisposable
         }
 
         return chatServers.OrderBy(c => c.ChatServerId, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    public async Task<ChatServerStatus?> GetChatServerAsync(string chatServerId, CancellationToken cancellationToken = default)
+    {
+        var payload = await _db.StringGetAsync(GetChatServerKey(chatServerId));
+        if (!payload.HasValue) return null;
+
+        return JsonSerializer.Deserialize<ChatServerStatus>(payload.ToString());
     }
 
     public async Task<IReadOnlyDictionary<string, string>> GetChatServerAssignmentsAsync(CancellationToken cancellationToken = default)
@@ -264,6 +282,11 @@ public sealed class RedisChannelMasterStore : IChannelMasterStore, IDisposable
         return result == 1;
     }
 
+    public async Task UnclaimChannelAsync(string channelName, CancellationToken cancellationToken = default)
+    {
+        await _db.HashDeleteAsync(ChannelsKey, CanonicalizeChannelName(channelName));
+    }
+
     public async Task<ChannelRecord?> GetChannelRecordAsync(string channelName, CancellationToken cancellationToken = default)
     {
         var value = await _db.HashGetAsync(ChannelsKey, CanonicalizeChannelName(channelName));
@@ -272,9 +295,24 @@ public sealed class RedisChannelMasterStore : IChannelMasterStore, IDisposable
         return JsonSerializer.Deserialize<ChannelRecord>(value.ToString());
     }
 
+    public async Task<ChannelRecord?> GetChannelByUidAsync(string channelUid, CancellationToken cancellationToken = default)
+    {
+        var entries = await _db.HashGetAllAsync(ChannelsKey);
+        foreach (var entry in entries)
+        {
+            var record = JsonSerializer.Deserialize<ChannelRecord>(entry.Value.ToString());
+            if (record != null && string.Equals(record.ChannelUid, channelUid, StringComparison.Ordinal))
+            {
+                return record;
+            }
+        }
+
+        return null;
+    }
+
     public void Dispose()
     {
-        _redis.Dispose();
+        _ownedRedis?.Dispose();
     }
 
     private static string GetBroadcastWorkerKey(string workerId) => $"cm:broadcast:worker:{workerId}";

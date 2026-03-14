@@ -105,7 +105,7 @@ public class Server : ChatObject, IServer
             connection.OnConnect += (o, integer) => { Log.Info("Connect"); };
             connection.OnReceive += (o, s) =>
             {
-                // Console.WriteLine("OnRecv:" + s);
+                Console.WriteLine("OnRecv:" + s);
             };
             connection.OnDisconnect += (o, integer) => RemoveUser(user);
             connection.Accept();
@@ -129,10 +129,11 @@ public class Server : ChatObject, IServer
     {
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
-            Console.WriteLine($"[Server] Subscribing to PubSub channel for server: {Name}");
-            _cacheManager.StartConsumingEvents(Name, (payload) => 
+            // Subscribe to ChannelMaster ASSIGN commands
+            Console.WriteLine($"[Server] Subscribing to ChannelMaster ASSIGN channel for server: {Name}");
+            _cacheManager.SubscribeToChannelMasterAssign(Name, (payload) =>
             {
-                ServerHandlers.HandleChannelPubSub(this, payload);
+                ServerHandlers.HandleChannelMasterAssign(this, payload);
             }, _cancellationTokenSource.Token);
 
             _heartbeatTimer = new System.Timers.Timer(5000); // 5 seconds
@@ -145,91 +146,18 @@ public class Server : ChatObject, IServer
 
     public void RecoverChannels()
     {
-        if (_cacheManager.IsConnected && !IsDirectoryServer)
-        {
-            var serverId = Name;
-            var rooms = _cacheManager.GetRoomsForServer(serverId);
-            foreach (var room in rooms)
-            {
-                var inMemoryChannel = room.ToInMemoryChannel();
-                if (string.IsNullOrWhiteSpace(inMemoryChannel.ChannelName)) continue;
-
-                if (GetChannelByName(inMemoryChannel.ChannelName) == null)
-                {
-                    var channel = Channel.Channel.FromInMemoryChannel(inMemoryChannel);
-                    channel.Store = room.Managed;
-                    Channels.Add(channel);
-                    Log.Info($"Recovered channel {inMemoryChannel.ChannelName}");
-                }
-            }
-        }
+        // Channel recovery is now handled by the ChannelMaster via ASSIGN commands.
+        // No-op: channels will be re-assigned by the ChannelMaster as needed.
     }
 
     private void SendHeartbeat()
     {
         var fqdn = RemoteIp;
         var port = _socketServer.Port;
-        var serverId = Name;
-        _cacheManager.RegisterServer(serverId, fqdn, port, Name, Users.Count);
+        var hostname = $"{fqdn}:{port}";
 
-        // Update all active rooms to refresh their current state (users, topic, etc.)
-        foreach (var channel in Channels.ToList())
-        {
-            var categoryProp = channel.Props.GetProp("CATEGORY")?.Value;
-            var category = string.IsNullOrWhiteSpace(categoryProp) ? "UL" : categoryProp;
-            var topic = channel.Props.Topic.Value ?? string.Empty;
-            var modes = channel.Modes.GetModeString();
-            var managed = modes.Contains('r');
-            var locale = channel.Props.GetProp("LOCALE")?.Value ?? string.Empty;
-            var language = channel.Props.Language.Value ?? string.Empty;
-            var currentUsers = channel.GetMembers().Count;
-            var maxUsers = channel.Modes.UserLimit.Value;
-            var ownerKey = channel.Props.GetProp("OWNERKEY")?.Value ?? string.Empty;
-            var hostKey = channel.Props.GetProp("HOSTKEY")?.Value ?? string.Empty;
-            
-            var success = _cacheManager.RegisterRoom(
-                channel.GetName(), 
-                serverId, 
-                category, 
-                channel.GetName(),
-                topic, 
-                modes, 
-                managed, 
-                locale, 
-                language, 
-                currentUsers, 
-                maxUsers,
-                ownerKey,
-                hostKey
-            );
-
-            if (!success)
-            {
-                ConsolidateDuplicateChannel(channel);
-            }
-        }
-    }
-
-    private void ConsolidateDuplicateChannel(IChannel channel)
-    {
-        Log.Info($"Duplicate channel detected: {channel.GetName()}. Attempting to redirect users.");
-        var ownerId = _cacheManager.GetServerForRoom(channel.GetName());
-        if (ownerId == null) return;
-        
-        var ownerInfo = _cacheManager.GetActiveServers().FirstOrDefault(s => s.ServerId == ownerId);
-        if (ownerInfo == null) return;
-
-        var members = channel.GetMembers().ToList();
-        
-        RemoveChannel(channel);
-
-        Task.Run(async () => {
-            foreach (var member in members)
-            {
-                member.GetUser().Send(Raws.IRCX_RPL_REGROUP_934(this, member.GetUser(), channel));
-                await Task.Delay(50);
-            }
-        });
+        var channelNames = Channels.Select(c => c.GetName()).ToArray();
+        _cacheManager.HeartbeatToChannelMaster(Name, hostname, Users.Count, Channels.Count, TimeSpan.FromSeconds(10), channelNames);
     }
 
     public string[] SupportPackages { get; }
@@ -267,20 +195,6 @@ public class Server : ChatObject, IServer
     public bool IsDirectoryServer { get; set; }
     public Irc.Services.CacheManager CacheManager => _cacheManager;
 
-    public bool IsChannelHostedElsewhere(string channelName, out string? existingServerId)
-    {
-        existingServerId = null;
-        if (_cacheManager.IsConnected && !IsDirectoryServer)
-        {
-            existingServerId = _cacheManager.GetServerForRoom(channelName);
-            if (!string.IsNullOrEmpty(existingServerId) && existingServerId != Name)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public void SetMotd(string motd)
     {
         var lines = motd.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
@@ -308,40 +222,6 @@ public class Server : ChatObject, IServer
 
     public bool AddChannel(IChannel channel)
     {
-        if (_cacheManager.IsConnected && !IsDirectoryServer)
-        {
-            var serverId = Name;
-            // var serverId = $"{RemoteIp}:{_socketServer.Port}";
-            var categoryProp = channel.Props.GetProp("CATEGORY")?.Value;
-            var category = string.IsNullOrWhiteSpace(categoryProp) ? "UL" : categoryProp;
-            var topic = channel.Props.Topic.Value ?? string.Empty;
-            var modes = channel.Modes.GetModeString();
-            var managed = modes.Contains('r');
-            var locale = channel.Props.GetProp("LOCALE")?.Value ?? string.Empty;
-            var language = channel.Props.Language.Value ?? string.Empty;
-            var currentUsers = channel.GetMembers().Count;
-            var maxUsers = channel.Modes.UserLimit.Value;
-            var ownerKey = channel.Props.GetProp("OWNERKEY")?.Value ?? string.Empty;
-            var hostKey = channel.Props.GetProp("HOSTKEY")?.Value ?? string.Empty;
-            
-            var success = _cacheManager.RegisterRoom(
-                channel.GetName(), 
-                serverId, 
-                category, 
-                channel.GetName(),
-                topic, 
-                modes, 
-                managed, 
-                locale, 
-                language, 
-                currentUsers, 
-                maxUsers,
-                ownerKey,
-                hostKey
-            );
-            if (!success) return false;
-        }
-        
         Channels.Add(channel);
         return true;
     }
@@ -350,10 +230,6 @@ public class Server : ChatObject, IServer
     {
         InMemoryChannelRepository.Remove(channel.GetName());
         Channels.Remove(channel);
-        if (_cacheManager.IsConnected && !IsDirectoryServer)
-        {
-            _cacheManager.UnregisterRoom(channel.GetName());
-        }
     }
 
     public virtual IChannel? CreateChannel(string name)
@@ -496,13 +372,7 @@ public class Server : ChatObject, IServer
         
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
-            var serverId = $"{RemoteIp}:{_socketServer.Port}";
-            _cacheManager.UnregisterServer(serverId);
-            
-            foreach (var channel in Channels)
-            {
-                _cacheManager.UnregisterRoom(channel.GetName());
-            }
+            _cacheManager.UnregisterFromChannelMaster(Name);
         }
 
         _cancellationTokenSource.Cancel();

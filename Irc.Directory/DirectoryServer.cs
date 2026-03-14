@@ -14,62 +14,11 @@ public class DirectoryServer : Server
     public readonly string ChatServerIp = string.Empty;
     public readonly int ChatServerPort;
 
-    public Irc.Services.AcsServerInfo? GetTargetServerForRoom(string roomName)
-    {
-        if (!CacheManager.IsConnected) return null;
-
-        var activeServers = CacheManager.GetActiveServers().ToList();
-        var roomInfo = CacheManager.GetRoomInfo(roomName);
-        
-        Irc.Services.AcsServerInfo? targetServer = null;
-
-        if (roomInfo != null && !string.IsNullOrEmpty(roomInfo.ServerId))
-        {
-            targetServer = activeServers.FirstOrDefault(s => s.ServerId == roomInfo.ServerId);
-            
-            // Failover condition: Room exists in Redis but its assigned server is dead
-            if (targetServer == null)
-            {
-                targetServer = activeServers.OrderBy(s => s.UsersOnline).FirstOrDefault();
-                if (targetServer != null)
-                {
-                    // Clone the room to the new server via PubSub
-                    var inMemoryChannel = roomInfo.ToInMemoryChannel();
-                    inMemoryChannel.ServerName = targetServer.Name;
-                    
-                    if (CacheManager.Subscriber != null)
-                    {
-                        CacheManager.PublishChannelCreate(targetServer.ServerId, System.Text.Json.JsonSerializer.Serialize(inMemoryChannel));
-                        
-                        // Update the room immediately in Redis so we don't cause an infinite failover loop 
-                        // for concurrent requests while the ACS is booting up the room.
-                        CacheManager.RegisterRoom(
-                            roomName: roomInfo.Name,
-                            serverId: targetServer.ServerId,
-                            category: roomInfo.Category,
-                            name: roomInfo.Name,
-                            topic: roomInfo.Topic,
-                            modes: roomInfo.Modes,
-                            managed: roomInfo.Managed,
-                            locale: roomInfo.Locale,
-                            language: roomInfo.Language,
-                            currentUsers: roomInfo.CurrentUsers,
-                            maxUsers: roomInfo.MaxUsers,
-                            ownerKey: roomInfo.OwnerKey,
-                            hostKey: roomInfo.HostKey
-                        );
-                    }
-                }
-            }
-        }
-        else
-        {
-            // Room does not exist, load balance to server with least connections
-            targetServer = activeServers.OrderBy(s => s.UsersOnline).FirstOrDefault();
-        }
-
-        return targetServer;
-    }
+    /// <summary>
+    /// Client for sending commands to the ChannelMaster controller.
+    /// Non-null when Redis is connected.
+    /// </summary>
+    public ChannelMasterClient? ChannelMasterClient { get; }
 
     public DirectoryServer(
         ISocketServer socketServer,
@@ -121,5 +70,13 @@ public class DirectoryServer : Server
         AddCommand(new Pong());
         AddCommand(new Version());
         AddCommand(new WebIrc());
+
+        // Create ChannelMasterClient if Redis is available
+        if (CacheManager.RedisConnection != null)
+        {
+            ChannelMasterClient = new ChannelMasterClient(
+                CacheManager.RedisConnection,
+                requesterId: Name);
+        }
     }
 }

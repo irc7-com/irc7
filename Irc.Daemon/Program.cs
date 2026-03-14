@@ -213,13 +213,6 @@ internal class Program
         {
             var name = $"%#{defaultChannel.Name.ToEscape()}";
 
-            // If we're an ACS and connected to Redis, check if another ACS already hosts this channel
-            if (server.IsChannelHostedElsewhere(name, out var existingServerId))
-            {
-                Log.Info($"Skipping default channel {name}, already hosted on {existingServerId}");
-                continue;
-            }
-
             var channel = server.CreateChannel(name);
             if (channel == null)
             {

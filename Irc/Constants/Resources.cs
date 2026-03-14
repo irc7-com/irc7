@@ -116,12 +116,6 @@ public static class Resources
         return time.ToString("\"\"MMM d yyyy\" at \"HH:mm:ss ") + TimeZone;
     }
     
-    #region "Service Redis Channels"
-    
-    public static string PubSubServiceChannels = "Service.Channels";
-    
-    #endregion
-
     #region "Config"
 
     public static string ConfigServerId = "Id";

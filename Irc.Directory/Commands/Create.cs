@@ -1,7 +1,6 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Irc.Commands;
+﻿using Irc.Commands;
 using Irc.Constants;
+using Irc.Contracts.Messages;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects.Channel;
@@ -51,41 +50,60 @@ public class Create : Command, ICommand
         chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
     }
 
-    private void HandleRemoteCreate(IChatFrame chatFrame, InMemoryChannel inMemoryChannel)
+    /// <summary>
+    /// Routes the CREATE through the ChannelMaster controller.
+    /// The ChannelMaster selects the target ACS server and tells it to host the channel.
+    /// </summary>
+    private async void HandleChannelMasterCreate(IChatFrame chatFrame, InMemoryChannel inMemoryChannel)
     {
         var server = (DirectoryServer)chatFrame.Server;
-        var serverId = server.CacheManager.GetServerForRoom(inMemoryChannel.ChannelName);
-        if (!string.IsNullOrWhiteSpace(serverId))
-        {
-            // Channel already exists
-            chatFrame.User.Send(Raws.IRCX_RPL_FINDS_CHANNELEXISTS_705(server, chatFrame.User));
-            return;
-        }
+        var cmClient = server.ChannelMasterClient!;
 
-        // Try to find if room exists or load balance to server with least connections
-        var targetServer = server.GetTargetServerForRoom(inMemoryChannel.ChannelName);
-        if (targetServer == null || 
-            (string.IsNullOrWhiteSpace(targetServer.Ip) || targetServer.Port == 0)
-           )
+        try
         {
-            // Fallback or error if no server available
-            chatFrame.User.Send(Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User, "No chat servers available"));
-            return;
+            var response = await cmClient.CreateAsync(inMemoryChannel.ChannelName);
+
+            if (response == null)
+            {
+                // Timeout or no ChannelMaster listening
+                chatFrame.User.Send(Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User,
+                    "No chat servers available"));
+                return;
+            }
+
+            switch (response.Status)
+            {
+                case ControllerResponse.StatusSuccess:
+                    // Hostname is "ip:port"
+                    var hostname = response.Hostname ?? string.Empty;
+                    var parts = hostname.Split(':');
+                    var ip = parts.Length > 0 ? parts[0] : string.Empty;
+                    var port = parts.Length > 1 ? parts[1] : "6667";
+
+                    chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port));
+                    break;
+
+                case ControllerResponse.StatusNameConflict:
+                    chatFrame.User.Send(Raws.IRCX_RPL_FINDS_CHANNELEXISTS_705(server, chatFrame.User));
+                    break;
+
+                case ControllerResponse.StatusBusy:
+                    chatFrame.User.Send(Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User,
+                        "No chat servers available"));
+                    break;
+
+                default:
+                    chatFrame.User.Send(Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User,
+                        $"Channel creation failed: {response.Status}"));
+                    break;
+            }
         }
-
-        var ip = targetServer.Ip;
-        var port = targetServer.Port;
-        
-        inMemoryChannel.ServerName = targetServer.Name;
-
-        if (server.CacheManager.Subscriber == null)
+        catch (Exception ex)
         {
-            Console.WriteLine("[Create] Skipping remote channel creation notification: Redis subscriber is not available.");
-            return;
+            Console.WriteLine($"[Create] ChannelMaster error: {ex.Message}");
+            chatFrame.User.Send(Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User,
+                "No chat servers available"));
         }
-        
-        server.CacheManager.PublishChannelCreate(targetServer.ServerId, JsonSerializer.Serialize(inMemoryChannel));
-        chatFrame.User.Send(Raws.RPL_FINDS_MSN(server, chatFrame.User, ip, port.ToString()));
     }
 
     public new void Execute(IChatFrame chatFrame)
@@ -93,15 +111,23 @@ public class Create : Command, ICommand
         var server = (DirectoryServer)chatFrame.Server;
         if (!server.CacheManager.IsConnected)
         {
-            // When not connected to PubSub
-            // At the moment this is just a dumb return of 613
+            // When not connected to Redis, use static ACS config
             HandleLocalCreate(chatFrame);
             return;
         }
         
         var channel = global::Irc.Commands.Create.ProcessCreateRequest(chatFrame);
-        
-        // Handle via PubSub
-        if (channel != null) HandleRemoteCreate(chatFrame, channel);
+        if (channel == null) return;
+
+        if (server.ChannelMasterClient != null)
+        {
+            HandleChannelMasterCreate(chatFrame, channel);
+        }
+        else
+        {
+            // ChannelMaster is required when Redis is connected — no fallback
+            chatFrame.User.Send(Raws.IRC_RAW_999(chatFrame.Server, chatFrame.User,
+                "No chat servers available"));
+        }
     }
 }

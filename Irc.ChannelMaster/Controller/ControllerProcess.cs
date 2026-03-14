@@ -1,4 +1,6 @@
-﻿using Irc.ChannelMaster.Models;
+﻿using Irc.ChannelMaster.Controller.Commands;
+using Irc.ChannelMaster.Gateway;
+using Irc.ChannelMaster.Models;
 using Irc.ChannelMaster.State;
 
 namespace Irc.ChannelMaster.Controller;
@@ -6,14 +8,26 @@ namespace Irc.ChannelMaster.Controller;
 public sealed class ControllerProcess
 {
     private readonly IChannelMasterStore _store;
+    private readonly IChatServerGateway _gateway;
+    private readonly Dictionary<string, IControllerCommand> _commands = new(StringComparer.OrdinalIgnoreCase);
     private int _missedLeaderHeartbeats;
     private bool _hasObservedLeader;
     private DateTime _lastLeaderHeartbeatSentUtc = DateTime.MinValue;
 
-    public ControllerProcess(IChannelMasterStore store, string controllerId)
+    public ControllerProcess(IChannelMasterStore store, IChatServerGateway gateway, string controllerId)
     {
         _store = store;
+        _gateway = gateway;
         ControllerId = controllerId;
+
+        AddCommand(new CreateCommand());
+        AddCommand(new AssignCommand());
+        AddCommand(new FindHostCommand());
+    }
+
+    public void AddCommand(IControllerCommand command)
+    {
+        _commands[command.Name] = command;
     }
 
     public string ControllerId { get; }
@@ -23,7 +37,11 @@ public sealed class ControllerProcess
     public int LeaderHeartbeatMissThreshold { get; set; } = 6;
     public int LeaderPollRepeats { get; set; } = 5;
     public TimeSpan LeaderPollInterval { get; set; } = TimeSpan.FromSeconds(3);
+    public TimeSpan DefaultChannelTtl { get; set; } = TimeSpan.FromSeconds(30);
     public bool IsLeader { get; private set; }
+
+    public IChannelMasterStore Store => _store;
+    public IChatServerGateway Gateway => _gateway;
 
     public async Task<bool> RunOnceAsync(CancellationToken cancellationToken = default)
     {
@@ -68,6 +86,11 @@ public sealed class ControllerProcess
         var workers = await _store.GetActiveBroadcastWorkersAsync(cancellationToken);
         var chatServers = await _store.GetActiveChatServersAsync(cancellationToken);
         await _store.ReconcileChatServerAssignmentsAsync(cancellationToken);
+
+        // Reconcile channels reported by Chat Servers that are not yet tracked.
+        // This covers default channels created at ACS startup and channels that
+        // survive a ChannelMaster restart.
+        await ReconcileReportedChannelsAsync(chatServers, cancellationToken);
 
         if (workers.Count == 0 || chatServers.Count == 0) return true;
 
@@ -144,25 +167,12 @@ public sealed class ControllerProcess
         IReadOnlyList<string> arguments,
         CancellationToken cancellationToken = default)
     {
-        if (commandName.Equals("CREATE", StringComparison.OrdinalIgnoreCase))
+        if (!_commands.TryGetValue(commandName, out var command))
         {
-            if (arguments.Count != 1 || string.IsNullOrWhiteSpace(arguments[0]))
-            {
-                return ControllerCommandResponse.Error("CREATE", "REQUIRES", "1", "ARGUMENT");
-            }
-
-            var result = await CreateChannelAsync(arguments[0], cancellationToken);
-            return result.Status switch
-            {
-                CreateChannelStatus.Success => ControllerCommandResponse.Success(result.ServerId!, result.ChannelUid!),
-                CreateChannelStatus.Busy => ControllerCommandResponse.Busy(),
-                CreateChannelStatus.NameConflict => ControllerCommandResponse.NameConflict(),
-                CreateChannelStatus.NotLeader => ControllerCommandResponse.Error("NOT", "LEADER"),
-                _ => ControllerCommandResponse.Error("UNKNOWN")
-            };
+            return ControllerCommandResponse.Error("UNKNOWN", "COMMAND");
         }
 
-        return ControllerCommandResponse.Error("UNKNOWN", "COMMAND");
+        return await command.ExecuteAsync(this, arguments, cancellationToken);
     }
 
     public async Task<CreateChannelResult> CreateChannelAsync(string channelName, CancellationToken cancellationToken = default)
@@ -184,18 +194,39 @@ public sealed class ControllerProcess
             return CreateChannelResult.Busy();
         }
 
-        var targetServer = chatServers
+        var sortedServers = chatServers
+            .Where(chat => chat.Status == ChatServerStatusType.Active)
             .OrderBy(chat => chat.CurrentLoad)
             .ThenBy(chat => chat.ChatServerId, StringComparer.OrdinalIgnoreCase)
-            .First();
+            .ToList();
 
-        var now = DateTime.UtcNow;
-        var channelUid = $"{targetServer.ChatServerId}:{now.Ticks}";
+        if (sortedServers.Count == 0)
+        {
+            return CreateChannelResult.Busy();
+        }
 
-        var claimed = await _store.TryClaimChannelAsync(channelName, channelUid, targetServer.ChatServerId, now, cancellationToken);
-        return claimed
-            ? CreateChannelResult.Success(targetServer.ChatServerId, channelUid)
-            : CreateChannelResult.NameConflict();
+        foreach (var server in sortedServers)
+        {
+            var now = DateTime.UtcNow;
+            var channelUid = $"{server.ChatServerId}:{now.Ticks}";
+
+            var claimed = await _store.TryClaimChannelAsync(channelName, channelUid, server.ChatServerId, now, cancellationToken);
+            if (!claimed)
+            {
+                return CreateChannelResult.NameConflict();
+            }
+
+            var accepted = await _gateway.SendAssignAsync(server.ChatServerId, channelName, channelUid, DefaultChannelTtl, cancellationToken);
+            if (accepted)
+            {
+                return CreateChannelResult.Success(server.ChatServerId, channelUid);
+            }
+
+            // Server refused (BUSY) — unclaim and try next server
+            await _store.UnclaimChannelAsync(channelName, cancellationToken);
+        }
+
+        return CreateChannelResult.Busy();
     }
 
     public async Task<bool> TryCreateChannelAsync(string channelName, CancellationToken cancellationToken = default)
@@ -207,6 +238,104 @@ public sealed class ControllerProcess
     public Task<ChannelRecord?> GetChannelRecordAsync(string channelName, CancellationToken cancellationToken = default)
     {
         return _store.GetChannelRecordAsync(channelName, cancellationToken);
+    }
+
+    /// <summary>
+    /// Handles an inbound ASSIGN request (doc 4.1.2, first table).
+    /// A Channel Server asks the Controller to assign a registered channel to a Chat Server.
+    /// The Controller picks the least-loaded active server and sends an outbound ASSIGN.
+    /// </summary>
+    public async Task<AssignChannelResult> AssignChannelAsync(string channelUid, CancellationToken cancellationToken = default)
+    {
+        if (!IsLeader)
+        {
+            return AssignChannelResult.NotLeader();
+        }
+
+        if (!await EnsureControllerLeaseAsync(cancellationToken))
+        {
+            IsLeader = false;
+            return AssignChannelResult.NotLeader();
+        }
+
+        var channel = await _store.GetChannelByUidAsync(channelUid, cancellationToken);
+        if (channel == null)
+        {
+            return AssignChannelResult.NotFound();
+        }
+
+        var chatServers = await _store.GetActiveChatServersAsync(cancellationToken);
+        var sortedServers = chatServers
+            .Where(chat => chat.Status == ChatServerStatusType.Active)
+            .OrderBy(chat => chat.CurrentLoad)
+            .ThenBy(chat => chat.ChatServerId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var server in sortedServers)
+        {
+            var accepted = await _gateway.SendAssignAsync(
+                server.ChatServerId, channel.ChannelName, channel.ChannelUid, DefaultChannelTtl, cancellationToken);
+            if (accepted)
+            {
+                return AssignChannelResult.Success(server.ChatServerId);
+            }
+        }
+
+        return AssignChannelResult.Busy();
+    }
+
+    /// <summary>
+    /// Handles a FINDHOST request (doc 4.1.3).
+    /// Looks up which Chat Server hosts the given channel and returns its hostname.
+    /// FINDHOST does not require leader status — any controller can serve it.
+    /// </summary>
+    public async Task<string?> FindHostAsync(string channelName, CancellationToken cancellationToken = default)
+    {
+        var channel = await _store.GetChannelRecordAsync(channelName, cancellationToken);
+        if (channel == null)
+        {
+            return null;
+        }
+
+        var server = await _store.GetChatServerAsync(channel.OwnerServerId, cancellationToken);
+        return server?.Hostname;
+    }
+
+    /// <summary>
+    /// Reconciles channels that Chat Servers report hosting but that are not
+    /// yet tracked in the ChannelMaster store. This handles two cases:
+    /// 1. Default channels created at ACS startup (never went through CREATE).
+    /// 2. Channels that survive a ChannelMaster restart (store was cleared).
+    /// The leader claims each unreported channel on behalf of the ACS that hosts it.
+    /// </summary>
+    internal async Task ReconcileReportedChannelsAsync(
+        IReadOnlyList<ChatServerStatus> chatServers,
+        CancellationToken cancellationToken = default)
+    {
+        foreach (var server in chatServers)
+        {
+            if (server.ChannelNames.Length == 0) continue;
+
+            foreach (var channelName in server.ChannelNames)
+            {
+                if (string.IsNullOrWhiteSpace(channelName)) continue;
+
+                var existing = await _store.GetChannelRecordAsync(channelName, cancellationToken);
+                if (existing != null) continue;
+
+                // Channel exists on ACS but not in our store — claim it
+                var now = DateTime.UtcNow;
+                var channelUid = $"{server.ChatServerId}:{now.Ticks}";
+                var claimed = await _store.TryClaimChannelAsync(
+                    channelName, channelUid, server.ChatServerId, now, cancellationToken);
+
+                if (claimed)
+                {
+                    Console.WriteLine(
+                        $"[Controller] Reconciled channel {channelName} → {server.ChatServerId} (uid={channelUid})");
+                }
+            }
+        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken = default)

@@ -1,8 +1,10 @@
 ﻿using Irc.ChannelMaster.Broadcast;
 using Irc.ChannelMaster.Controller;
+using Irc.ChannelMaster.Gateway;
 using Irc.ChannelMaster.State;
 using Irc.Logging;
 using NLog;
+using StackExchange.Redis;
 
 namespace Irc.ChannelMaster;
 
@@ -32,13 +34,23 @@ public static class Program
             ? $"cm-{Environment.MachineName}-{Environment.ProcessId}"
             : options.InstanceId;
 
-        var store = CreateStore(options);
-        var controller = new ControllerProcess(store, $"{instanceId}:controller");
+        var (store, gateway, redisConnection) = CreateDependencies(options);
+        var controller = new ControllerProcess(store, gateway, $"{instanceId}:controller");
         var broadcast = new BroadcastProcess(store, $"{instanceId}:broadcast");
+
+        // Start command ingress (ADS → CM) when using Redis
+        CommandIngress? ingress = null;
+        if (redisConnection != null)
+        {
+            ingress = new CommandIngress(redisConnection, controller);
+        }
 
         try
         {
             Log.Info($"[ChannelMaster] mode={options.Mode}, store={options.Store}");
+
+            // Start listening for ADS commands before entering the main loop
+            ingress?.Start(cancellation.Token);
 
             if (options.RunOnce)
             {
@@ -62,21 +74,27 @@ public static class Program
         }
         finally
         {
+            ingress?.Dispose();
             await controller.StopAsync(CancellationToken.None);
             if (store is IDisposable disposableStore) disposableStore.Dispose();
+            redisConnection?.Dispose();
         }
     }
 
-    private static IChannelMasterStore CreateStore(CliOptions options)
+    private static (IChannelMasterStore store, IChatServerGateway gateway, IConnectionMultiplexer? redisConnection) CreateDependencies(CliOptions options)
     {
-        return options.Store switch
+        if (options.Store == StoreMode.Redis)
         {
-            StoreMode.Memory => new InMemoryChannelMasterStore(),
-            StoreMode.Redis when !string.IsNullOrWhiteSpace(options.RedisConnectionString) =>
-                new RedisChannelMasterStore(options.RedisConnectionString),
-            StoreMode.Redis => throw new InvalidOperationException("--redis must be provided when --store redis is selected."),
-            _ => throw new InvalidOperationException("Unsupported store mode.")
-        };
+            if (string.IsNullOrWhiteSpace(options.RedisConnectionString))
+                throw new InvalidOperationException("--redis must be provided when --store redis is selected.");
+
+            var redis = ConnectionMultiplexer.Connect(options.RedisConnectionString);
+            var store = new RedisChannelMasterStore(redis);
+            var gateway = new RedisChatServerGateway(redis);
+            return (store, gateway, redis);
+        }
+
+        return (new InMemoryChannelMasterStore(), new NoOpChatServerGateway(), null);
     }
 
     private static async Task RunModeOnceAsync(

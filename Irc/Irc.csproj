@@ -16,6 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Irc.Contracts\Irc.Contracts.csproj" />
         <ProjectReference Include="..\Irc.Helpers\Irc.Helpers.csproj" />
         <ProjectReference Include="..\SSPI.NTLM\SSPI.NTLM.csproj" />
     </ItemGroup>

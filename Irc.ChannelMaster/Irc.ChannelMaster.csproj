@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Irc.Contracts\Irc.Contracts.csproj" />
     <ProjectReference Include="..\Irc.Logging\Irc.Logging.csproj" />
     <PackageReference Include="StackExchange.Redis" Version="2.11.3" />
   </ItemGroup>

@@ -25,6 +25,11 @@ public sealed class ControllerCommandResponse
         Status = "NAME CONFLICT"
     };
 
+    public static ControllerCommandResponse NotFound() => new()
+    {
+        Status = "NOT FOUND"
+    };
+
     public static ControllerCommandResponse Error(params string[] arguments) => new()
     {
         Status = "ERROR",
