@@ -55,22 +55,25 @@ public static class Register
                 chatFrame.User.Send(Raws.IRCX_RPL_RPL_ENDOFMOTD_376(chatFrame.Server, chatFrame.User));
             }
 
-            switch (chatFrame.User.GetLevel())
+            if (!chatFrame.Server.IsDirectoryServer)
             {
-                case EnumUserAccessLevel.Administrator:
+                switch (chatFrame.User.GetLevel())
                 {
-                    chatFrame.User.PromoteToAdministrator();
-                    break;
-                }
-                case EnumUserAccessLevel.Sysop:
-                {
-                    chatFrame.User.PromoteToSysop();
-                    break;
-                }
-                case EnumUserAccessLevel.Guide:
-                {
-                    chatFrame.User.PromoteToGuide();
-                    break;
+                    case EnumUserAccessLevel.Administrator:
+                        {
+                            chatFrame.User.PromoteToAdministrator();
+                            break;
+                        }
+                    case EnumUserAccessLevel.Sysop:
+                        {
+                            chatFrame.User.PromoteToSysop();
+                            break;
+                        }
+                    case EnumUserAccessLevel.Guide:
+                        {
+                            chatFrame.User.PromoteToGuide();
+                            break;
+                        }
                 }
             }
         }
@@ -140,7 +143,7 @@ public static class Register
         var guest = user.IsGuest();
         var oper = user.GetLevel() >= EnumUserAccessLevel.Guide;
 
-        if (!authenticating && !registered && hasNickname)
+        if (!authenticating && !registered && hasNickname && !chatFrame.Server.IsDirectoryServer)
         {
             var isNicknameValid =
                 Nick.ValidateNickname(nickname, guest, oper, authenticating, isDs: chatFrame.Server.IsDirectoryServer);

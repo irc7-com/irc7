@@ -123,7 +123,6 @@ public class DirectoryServer : Server
 
     public DirectoryServer(
         ISocketServer socketServer,
-        ISecurityManager securityManager,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
         ICredentialProvider? ntlmCredentialProvider = null,
@@ -132,7 +131,6 @@ public class DirectoryServer : Server
     )
         : base(
             socketServer,
-            securityManager,
             floodProtectionManager,
             dataStore,
             ntlmCredentialProvider,
@@ -158,15 +156,12 @@ public class DirectoryServer : Server
         FlushCommands();
         AddCommand(new Ircvers());
         AddCommand(new Auth());
-        AddCommand(new AuthX());
         AddCommand(new Pass());
         AddCommand(new Nick());
         AddCommand(new UserCommand(), EnumProtocolType.IRC, "User");
         AddCommand(new Finds());
         AddCommand(new Prop());
         AddCommand(new Irc.Directory.Commands.Create());
-        AddCommand(new Ping());
-        AddCommand(new Pong());
         AddCommand(new Version());
         AddCommand(new WebIrc());
     }

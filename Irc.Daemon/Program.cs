@@ -12,6 +12,7 @@ using Irc.Objects.Server;
 using Irc.Security;
 using Irc.Security.Credentials;
 using NLog;
+using Vortex.Sspi;
 
 namespace Irc7d;
 
@@ -30,6 +31,15 @@ internal class Program
         rootCommand.SetHandler(async context =>
         {
             var options = GetOptions(context, optionsDictionary);
+
+            // --createPassword: hash the supplied password with NTLM and print as hex, then exit
+            if (!string.IsNullOrEmpty(options.CreatePassword))
+            {
+                var hash = SspiSession.NtlmHashPassword(options.CreatePassword);
+                var hex = Convert.ToHexString(hash);
+                Console.WriteLine($"NTLM Hash: {hex}");
+                return;
+            }
 
             var ip = !string.IsNullOrEmpty(options.BindIp) ? IPAddress.Parse(options.BindIp) : IPAddress.Any;
 
@@ -123,6 +133,9 @@ internal class Program
         var serverNameOption =
             new Option<string>(["-n", "--name"], "The server name, overrides the Name value from DefaultServer.json")
                 { ArgumentHelpName = "servername" };
+        var createPasswordOption =
+            new Option<string>(["--createPassword"], "Generate an NTLM hash of the supplied password and print it as hex, then exit")
+                { ArgumentHelpName = "password" };
 
         var options = new Dictionary<string, Option>
         {
@@ -137,7 +150,8 @@ internal class Program
             { "serverType", serverTypeOption },
             { "chatServerIp", chatServerIpOption },
             { "redisUrl", redisUrlOption },
-            { "serverName", serverNameOption }
+            { "serverName", serverNameOption },
+            { "createPassword", createPasswordOption }
         };
 
         foreach (var option in options.Values) rootCommand.AddOption(option);
@@ -160,47 +174,45 @@ internal class Program
             ServerType = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverType"]),
             ChatServerIp = context.ParseResult.GetValueForOption((Option<string>)optionsDict["chatServerIp"]),
             RedisUrl = context.ParseResult.GetValueForOption((Option<string>)optionsDict["redisUrl"]),
-            ServerName = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverName"])
+            ServerName = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverName"]),
+            CreatePassword = context.ParseResult.GetValueForOption((Option<string>)optionsDict["createPassword"])
         };
     }
 
     private static Server ConfigureServer(IrcType serverType, SocketServer socketServer,
-        NtlmCredentials credentialProvider, string? chatServerIp, string? redisUrl)
+        Credentials credentialProvider, string? chatServerIp, string? redisUrl)
     {
         var floodProtectionManager = new FloodProtectionManager();
-        var securityManager = new SecurityManager();
         var dataStoreServerConfig = new DataStore("DefaultServer.json");
         return serverType switch
         {
-            IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, securityManager,
-                floodProtectionManager, dataStoreServerConfig, chatServerIp, redisUrl),
-            _ => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
+            IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, floodProtectionManager, dataStoreServerConfig, chatServerIp, redisUrl),
+            _ => new Server(socketServer, floodProtectionManager, dataStoreServerConfig,
                 credentialProvider, redisUrl)
         };
     }
 
     private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer,
-        NtlmCredentials credentialProvider, SecurityManager securityManager,
-        FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig,
+        Credentials credentialProvider, FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig,
         string? chatServerIp, string? redisUrl)
     {
-        var server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
+        var server = new DirectoryServer(socketServer, floodProtectionManager, dataStoreServerConfig,
             credentialProvider, chatServerIp, redisUrl);
 
         return server;
     }
 
-    private static async Task<NtlmCredentials> LoadCredentials()
+    private static async Task<Credentials> LoadCredentials()
     {
         if (File.Exists("DefaultCredentials.json"))
         {
             var credentials =
                 JsonSerializer.Deserialize<Dictionary<string, Credential>>(
                     await File.ReadAllTextAsync("DefaultCredentials.json")) ?? new Dictionary<string, Credential>();
-            return new NtlmCredentials(credentials);
+            return new Credentials(credentials);
         }
 
-        return new NtlmCredentials(new Dictionary<string, Credential>());
+        return new Credentials(new Dictionary<string, Credential>());
     }
 
     private static void InitializeDefaultChannels(IServer server, IrcType serverType)

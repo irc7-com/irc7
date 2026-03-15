@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <AssemblyVersion>6.0.0.0</AssemblyVersion>
         <FileVersion>6.0.0.0</FileVersion>
+        <UserSecretsId>a31ba548-dd40-46d0-8334-83764f6a6e04</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,11 +18,11 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Irc.Helpers\Irc.Helpers.csproj" />
-        <ProjectReference Include="..\SSPI.NTLM\SSPI.NTLM.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="StackExchange.Redis" Version="2.11.3" />
+      <PackageReference Include="Vortex.Sspi" Version="0.3.3" />
     </ItemGroup>
 
 </Project>

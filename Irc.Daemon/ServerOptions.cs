@@ -14,4 +14,5 @@ public class ServerOptions
     public string? ChatServerIp { get; set; }
     public string? RedisUrl { get; set; }
     public string? ServerName { get; set; }
+    public string? CreatePassword { get; set; }
 }
