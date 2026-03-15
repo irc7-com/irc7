@@ -12,6 +12,7 @@ using Irc.Objects.Server;
 using Irc.Security;
 using Irc.Security.Credentials;
 using NLog;
+using Vortex.Sspi;
 
 namespace Irc7d;
 
@@ -30,6 +31,15 @@ internal class Program
         rootCommand.SetHandler(async context =>
         {
             var options = GetOptions(context, optionsDictionary);
+
+            // --createPassword: hash the supplied password with NTLM and print as hex, then exit
+            if (!string.IsNullOrEmpty(options.CreatePassword))
+            {
+                var hash = SspiSession.NtlmHashPassword(options.CreatePassword);
+                var hex = Convert.ToHexString(hash);
+                Console.WriteLine($"NTLM Hash: {hex}");
+                return;
+            }
 
             var ip = !string.IsNullOrEmpty(options.BindIp) ? IPAddress.Parse(options.BindIp) : IPAddress.Any;
 
@@ -123,6 +133,9 @@ internal class Program
         var serverNameOption =
             new Option<string>(["-n", "--name"], "The server name, overrides the Name value from DefaultServer.json")
                 { ArgumentHelpName = "servername" };
+        var createPasswordOption =
+            new Option<string>(["--createPassword"], "Generate an NTLM hash of the supplied password and print it as hex, then exit")
+                { ArgumentHelpName = "password" };
 
         var options = new Dictionary<string, Option>
         {
@@ -137,7 +150,8 @@ internal class Program
             { "serverType", serverTypeOption },
             { "chatServerIp", chatServerIpOption },
             { "redisUrl", redisUrlOption },
-            { "serverName", serverNameOption }
+            { "serverName", serverNameOption },
+            { "createPassword", createPasswordOption }
         };
 
         foreach (var option in options.Values) rootCommand.AddOption(option);
@@ -160,7 +174,8 @@ internal class Program
             ServerType = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverType"]),
             ChatServerIp = context.ParseResult.GetValueForOption((Option<string>)optionsDict["chatServerIp"]),
             RedisUrl = context.ParseResult.GetValueForOption((Option<string>)optionsDict["redisUrl"]),
-            ServerName = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverName"])
+            ServerName = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverName"]),
+            CreatePassword = context.ParseResult.GetValueForOption((Option<string>)optionsDict["createPassword"])
         };
     }
 

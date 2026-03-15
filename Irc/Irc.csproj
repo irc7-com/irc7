@@ -22,7 +22,7 @@
 
     <ItemGroup>
       <PackageReference Include="StackExchange.Redis" Version="2.11.3" />
-      <PackageReference Include="Vortex.Sspi" Version="0.3.0" />
+      <PackageReference Include="Vortex.Sspi" Version="0.3.3" />
     </ItemGroup>
 
 </Project>

@@ -70,18 +70,20 @@ public class SupportPackage : ISupportPackage
             return EnumSupportPackageSequence.SSP_FAILED;
         } 
         
-        
         var id = _sspiSession.GetIdentity();
-        
         Credentials = CredentialsProvider.GetUserCredentials(id.Domain, id.Username);
-        // int authIdentityStatus = Sspi.SspiEncodeStringsAsAuthIdentity(id.Username, id., password, out nint pAuthIdentity);
-        
-                                
-        // This is where we should get the username (and optionally domain) from _session and verify it against our user database.
-        // For this test, we will just verify against a hardcoded hash of the expected NTLMv2 response for the test credentials (password "password").
-        var hash = new byte[] { 0x88, 0x46, 0xF7, 0xEA, 0xEE, 0x8F, 0xB1, 0x17, 0xAD, 0x06, 0xBD, 0xD8, 0x30, 0xB7, 0x58, 0x6C };
 
-        var verifyResult = _sspiSession.Verify(hash);
+        if (string.IsNullOrEmpty(Credentials.Password) ||
+            Credentials.Password.Length % 2 != 0 ||
+            !System.Text.RegularExpressions.Regex.IsMatch(Credentials.Password, @"^[0-9A-Fa-f]+$"))
+        {
+            throw new InvalidOperationException(
+                $"Credential password for '{id.Username}' is not a valid hex string. Use --createPassword to generate one.");
+        }
+
+        var hash1 = Convert.FromHexString(Credentials.Password);
+
+        var verifyResult = _sspiSession.Verify(hash1);
         if (verifyResult == SEC_E_OK) Authenticated = true;
         
         _sspiSession.Dispose();
