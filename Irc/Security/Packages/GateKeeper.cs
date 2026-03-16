@@ -17,7 +17,7 @@ public class GateKeeper : SupportPackage, ISupportPackage
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
     private static readonly string Signature = "GKSSP\0";
-    protected readonly ICredentialProvider CredentialProvider;
+    protected ICredentialProvider CredentialProvider;
     private char[] _challenge = [];
     private byte[] _challengeBytes = [];
     protected GateKeeperToken ServerToken;

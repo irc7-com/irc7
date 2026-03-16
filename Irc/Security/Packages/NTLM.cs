@@ -30,7 +30,7 @@ public class NTLM : SupportPackage, ISupportPackage
 
     public override SupportPackage CreateInstance(ICredentialProvider credentialProvider)
     {
-        return new NTLM(credentialProvider);
+        return new NTLM(_credentialProvider);
     }
 
     public new ICredential? GetCredentials()

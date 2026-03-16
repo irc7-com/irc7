@@ -97,15 +97,17 @@ public class PassportV4
         return Decrypt(role);
     }
 
+    public Dictionary<string, string> DecryptToken(string cookie) => Decrypt(cookie);
+
     private Dictionary<string, string> Decrypt(string cookie)
     {
         var decodedToken = DecodeToken(cookie, _cryptKey);
         if (decodedToken == null) return new Dictionary<string, string>();
 
-        var validatedToken = ValidateToken(cookie, _signKey);
+        var validatedToken = ValidateToken(decodedToken, _signKey);
         if (validatedToken == null) return new Dictionary<string, string>();
 
-        var nvc = HttpUtility.ParseQueryString(cookie);
+        var nvc = HttpUtility.ParseQueryString(decodedToken);
         return nvc.AllKeys.ToDictionary(k => k ?? string.Empty, v => nvc[v] ?? string.Empty);
     }
 

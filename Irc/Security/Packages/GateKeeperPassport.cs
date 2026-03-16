@@ -10,6 +10,7 @@ public class GateKeeperPassport : GateKeeper
 
     public GateKeeperPassport(ICredentialProvider credentialProvider) : base(credentialProvider)
     {
+        CredentialProvider = credentialProvider;
         ServerSequence = EnumSupportPackageSequence.SSP_INIT;
         Guest = false;
         Listed = false;
@@ -17,7 +18,7 @@ public class GateKeeperPassport : GateKeeper
 
     public override SupportPackage CreateInstance(ICredentialProvider credentialProvider)
     {
-        return new GateKeeperPassport(credentialProvider);
+        return new GateKeeperPassport(CredentialProvider);
     }
 
     public override EnumSupportPackageSequence AcceptSecurityContext(string data, string ip)
