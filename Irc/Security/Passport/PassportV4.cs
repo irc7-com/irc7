@@ -111,6 +111,31 @@ public class PassportV4
         return nvc.AllKeys.ToDictionary(k => k ?? string.Empty, v => nvc[v] ?? string.Empty);
     }
 
+    private string Encrypt(string payload)
+    {
+        var sigBytes = SignToken(payload, _signKey);
+        var sig = HttpUtility.UrlEncode(Convert.ToBase64String(sigBytes));
+        var signedPayload = payload + "&sig=" + sig;
+        return EncodeToken(signedPayload, _cryptKey);
+    }
+
+    public string CreateTicket(string puid, string domain, long ts, long ttl)
+    {
+        var payload = $"puid={HttpUtility.UrlEncode(puid)}&domain={HttpUtility.UrlEncode(domain)}&ts={ts}&ttl={ttl}";
+        return Encrypt(payload);
+    }
+
+    public string CreateProfile(string pid, long ts)
+    {
+        var payload = $"pid={HttpUtility.UrlEncode(pid)}&ts={ts}";
+        return Encrypt(payload);
+    }
+
+    public string CreateRegCookie(string nick)
+    {
+        var payload = $"nick={HttpUtility.UrlEncode(nick)}";
+        return Encrypt(payload);
+    }
 
     private static byte[] Derive(string secret, string prefix)
     {
@@ -123,6 +148,31 @@ public class PassportV4
             Array.Copy(hashOutput, byteKey, keyLength);
             return byteKey;
         }
+    }
+
+    public string EncodeToken(string plaintext, byte[] cryptKey)
+    {
+        if (cryptKey == null || cryptKey.Length == 0)
+            throw new InvalidOperationException("Error: EncodeToken: Secret key was not set. Aborting.");
+
+        const int ivLength = 16;
+        var iv = RandomNumberGenerator.GetBytes(ivLength);
+
+        using var aesAlg = Aes.Create();
+        aesAlg.KeySize = 128;
+        aesAlg.Key = cryptKey;
+        aesAlg.IV = iv;
+        aesAlg.Padding = PaddingMode.PKCS7;
+
+        using var memStream = new MemoryStream();
+        memStream.Write(iv, 0, ivLength);
+        using (var cStream = new CryptoStream(memStream, aesAlg.CreateEncryptor(), CryptoStreamMode.Write))
+        using (var sWriter = new StreamWriter(cStream, Encoding.UTF8))
+        {
+            sWriter.Write(plaintext);
+        }
+
+        return Convert.ToBase64String(memStream.ToArray());
     }
 
     public string? DecodeToken(string token, byte[] cryptKey)
