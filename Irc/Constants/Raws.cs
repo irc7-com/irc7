@@ -213,7 +213,7 @@ public static class Raws
     //     :irc.example.com 005 nickname CHANTYPES=#& PREFIX=(ov)@+ CHANLIMIT=#:200 :are supported by this server
     public static string IRCX_RPL_ISUPPORT_005(IServer server, IUser user, string channelTypes, string memberModes, string memberModeFlags, string channelModes, int channelLimit)
     {
-        return $":{server} 005 {user} CHANTYPES={channelTypes} PREFIX=({memberModes}){memberModeFlags} CHANMODES={channelModes} CHANLIMIT={channelTypes}:{channelLimit} :are supported by this server";
+        return $":{server} 005 {user} BOT={Resources.UserModeBot} CHANTYPES={channelTypes} PREFIX=({memberModes}){memberModeFlags} CHANMODES={channelModes} CHANLIMIT={channelTypes}:{channelLimit} :are supported by this server";
     }
 
     public static string IRCX_RPL_UMODEIS_221(IServer server, IUser user, string modes)
@@ -370,6 +370,11 @@ public static class Raws
     public static string IRCX_RPL_TOPIC_332(IServer server, IUser user, IChannel channel, string topic)
     {
         return $":{server} 332 {user} {channel} :{topic}";
+    }
+
+    public static string IRC_RPL_WHOISBOT_335(IServer server, IUser user, IUser targetUser)
+    {
+        return $":{server} 335 {user} {targetUser} :is a Bot on {server}";
     }
 
     public static string IRCX_RPL_VERSION_351(IServer server, IUser user, Version version)

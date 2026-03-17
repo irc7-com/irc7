@@ -62,6 +62,10 @@ public class Whois : Command, ICommand
         if (user.GetLevel() >= EnumUserAccessLevel.Guide)
             user.Send(Raws.IRCX_RPL_WHOISIP_320(server, user, targetUser));
 
+        var targetUserModes = (UserModes)targetUser.Modes;
+        if (targetUserModes.Bot.ModeValue)
+            user.Send(Raws.IRC_RPL_WHOISBOT_335(server, user, targetUser));
+
         var userModes = (UserModes)user.Modes;
         if (userModes.Secure.ModeValue)
             user.Send(Raws.IRC2_RPL_WHOISSECURE_671(server, user, targetUser));

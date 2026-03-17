@@ -337,6 +337,9 @@ public static class Resources
     public static char UserModeSecure = 'S';
     public static char UserModeWallops = 'w';
 
+    // IRCv3
+    public static char UserModeBot = 'B';
+
     // Apollo
     public static char ChannelModeSubscriber = 'S';
     public static char ChannelModeOnStage = 'g';
