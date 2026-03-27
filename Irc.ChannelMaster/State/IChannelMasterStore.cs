@@ -28,5 +28,24 @@ public interface IChannelMasterStore
     Task UnclaimChannelAsync(string channelName, CancellationToken cancellationToken = default);
     Task<ChannelRecord?> GetChannelRecordAsync(string channelName, CancellationToken cancellationToken = default);
     Task<ChannelRecord?> GetChannelByUidAsync(string channelUid, CancellationToken cancellationToken = default);
+    Task<IReadOnlyDictionary<string, ChannelRecord>> GetAllChannelRecordsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates the MemberCount on an existing ChannelRecord.
+    /// Returns true if the channel was found and updated, false if not found.
+    /// </summary>
+    Task<bool> UpdateChannelMemberCountAsync(string channelName, int memberCount, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Reassigns a channel to a new owner Chat Server (used during fail-over, doc 4.5.3).
+    /// Returns true if the channel was found and updated, false if not found.
+    /// </summary>
+    Task<bool> UpdateChannelOwnerAsync(string channelName, string newOwnerServerId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns all channel records grouped by their OwnerServerId.
+    /// Used by the BroadcastProcess to build per-ChatServer CHANNEL-UPDATE messages (doc 4.4.4).
+    /// </summary>
+    Task<IReadOnlyDictionary<string, IReadOnlyList<ChannelRecord>>> GetChannelsByOwnerAsync(CancellationToken cancellationToken = default);
 }
 

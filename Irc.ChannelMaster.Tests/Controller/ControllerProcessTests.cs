@@ -296,6 +296,9 @@ public class ControllerProcessTests
         var createResult = await setupController.CreateChannelAsync("%#Lobby");
         Assert.That(createResult.Status, Is.EqualTo(CreateChannelStatus.Success));
 
+        // Re-heartbeat with the channel name so cleanup doesn't remove it
+        await store.HeartbeatChatServerAsync("acs-1", "acs1.example.com", 1, 1, ChatServerStatusType.Active, TimeSpan.FromMinutes(1), channelNames: new[] { "%#Lobby" });
+
         // Now try to ASSIGN with a rejecting gateway
         var controller = new ControllerProcess(store, rejectGateway, "controller-A")
         {
@@ -323,6 +326,9 @@ public class ControllerProcessTests
 
         _ = await controller.RunOnceAsync();
         await controller.CreateChannelAsync("%#General");
+
+        // Re-heartbeat with the channel name so cleanup doesn't remove it
+        await store.HeartbeatChatServerAsync("acs-1", "acs1.example.com", 1, 1, ChatServerStatusType.Active, TimeSpan.FromMinutes(1), channelNames: new[] { "%#General" });
 
         var response = await controller.HandleCommandAsync("FINDHOST", new[] { "%#General" });
 
@@ -362,9 +368,294 @@ public class ControllerProcessTests
         _ = await controller.RunOnceAsync();
         await controller.CreateChannelAsync("%#General");
 
+        // Re-heartbeat with the channel name so cleanup doesn't remove it
+        await store.HeartbeatChatServerAsync("acs-1", "acs1.example.com", 1, 1, ChatServerStatusType.Active, TimeSpan.FromMinutes(1), channelNames: new[] { "%#General" });
+
         var response = await controller.HandleCommandAsync("FINDHOST", new[] { "%#GENERAL" });
 
         Assert.That(response.Status, Is.EqualTo("SUCCESS"));
         Assert.That(response.Arguments[0], Is.EqualTo("acs1.example.com"));
+    }
+
+    // ── Phase 3A: Orphaned Channel Cleanup ─────────────────────────────
+
+    [Test]
+    public async Task RunOnce_CleansUpChannelOwnedByDeadServer()
+    {
+        var store = new InMemoryChannelMasterStore();
+        var controller = new ControllerProcess(store, DefaultGateway, "controller-A")
+        {
+            LeaderPollRepeats = 1,
+            LeaderPollInterval = TimeSpan.Zero
+        };
+
+        // Register a live ACS and create a channel assigned to "dead-acs"
+        await store.HeartbeatChatServerAsync("live-acs", "live.example.com", 0, 0, ChatServerStatusType.Active, TimeSpan.FromMinutes(1));
+        await store.HeartbeatBroadcastWorkerAsync("worker-1", 0, TimeSpan.FromMinutes(1));
+        await store.TryClaimChannelAsync("%#OrphanRoom", "dead-acs:123", "dead-acs", DateTime.UtcNow);
+
+        // "dead-acs" is NOT in the active chat servers — its heartbeat expired.
+        _ = await controller.RunOnceAsync();
+
+        // The channel owned by the dead server should have been unclaimed.
+        var record = await store.GetChannelRecordAsync("%#OrphanRoom");
+        Assert.That(record, Is.Null, "Channel owned by dead ACS should be cleaned up");
+    }
+
+    [Test]
+    public async Task RunOnce_CleansUpChannelNotReportedByLiveServer()
+    {
+        var store = new InMemoryChannelMasterStore();
+        var controller = new ControllerProcess(store, DefaultGateway, "controller-A")
+        {
+            LeaderPollRepeats = 1,
+            LeaderPollInterval = TimeSpan.Zero
+        };
+
+        // ACS is alive but reports only one channel — the other was deleted on the ACS
+        await store.HeartbeatChatServerAsync("acs-1", "acs1.example.com", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), new[] { "%#Kept" });
+        await store.HeartbeatBroadcastWorkerAsync("worker-1", 0, TimeSpan.FromMinutes(1));
+
+        await store.TryClaimChannelAsync("%#Kept", "acs-1:100", "acs-1", DateTime.UtcNow);
+        await store.TryClaimChannelAsync("%#Deleted", "acs-1:101", "acs-1", DateTime.UtcNow);
+
+        _ = await controller.RunOnceAsync();
+
+        var kept = await store.GetChannelRecordAsync("%#Kept");
+        var deleted = await store.GetChannelRecordAsync("%#Deleted");
+
+        Assert.That(kept, Is.Not.Null, "Channel still reported by ACS should be preserved");
+        Assert.That(deleted, Is.Null, "Channel not reported by ACS should be cleaned up");
+    }
+
+    [Test]
+    public async Task RunOnce_PreservesChannelReportedByLiveServer()
+    {
+        var store = new InMemoryChannelMasterStore();
+        var controller = new ControllerProcess(store, DefaultGateway, "controller-A")
+        {
+            LeaderPollRepeats = 1,
+            LeaderPollInterval = TimeSpan.Zero
+        };
+
+        await store.HeartbeatChatServerAsync("acs-1", "acs1.example.com", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), new[] { "%#Active" });
+        await store.HeartbeatBroadcastWorkerAsync("worker-1", 0, TimeSpan.FromMinutes(1));
+        await store.TryClaimChannelAsync("%#Active", "acs-1:200", "acs-1", DateTime.UtcNow);
+
+        _ = await controller.RunOnceAsync();
+
+        var record = await store.GetChannelRecordAsync("%#Active");
+        Assert.That(record, Is.Not.Null, "Channel reported by live ACS should NOT be cleaned up");
+        Assert.That(record!.OwnerServerId, Is.EqualTo("acs-1"));
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // Phase 3E: Active Fail-Over (doc 4.5.3)
+    // ────────────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task FailOver_SuspectServerNotReassignedOnFirstMiss()
+    {
+        var store = new InMemoryChannelMasterStore();
+        var controller = new ControllerProcess(store, DefaultGateway, "controller-A")
+        {
+            LeaderPollRepeats = 1,
+            LeaderPollInterval = TimeSpan.Zero
+        };
+
+        // Cycle 1: acs-1 and acs-2 both alive
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), ["%#Room1"]);
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), ["%#Room2"]);
+        await store.HeartbeatBroadcastWorkerAsync("worker-1", 0, TimeSpan.FromMinutes(1));
+        await store.TryClaimChannelAsync("%#Room1", "acs-1:100", "acs-1", DateTime.UtcNow);
+        await store.TryClaimChannelAsync("%#Room2", "acs-2:200", "acs-2", DateTime.UtcNow);
+
+        _ = await controller.RunOnceAsync();
+
+        // Cycle 2: acs-1 disappears (heartbeat expired), acs-2 still alive
+        // Re-register only acs-2 with channelNames to prevent cleanup
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), ["%#Room2"]);
+        // Simulate acs-1 expiry by re-registering with very short TTL then waiting — 
+        // or simply not re-registering (in-memory store prunes on read).
+        // Force expiry: heartbeat with 0 TTL
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.Zero, ["%#Room1"]);
+
+        _ = await controller.RunOnceAsync();
+
+        // After first miss, acs-1 is Suspect — channel should NOT be reassigned yet
+        var room1 = await store.GetChannelRecordAsync("%#Room1");
+        Assert.That(room1, Is.Not.Null, "Channel should still exist during suspect phase");
+        Assert.That(room1!.OwnerServerId, Is.EqualTo("acs-1"),
+            "Channel owner should not change during suspect phase");
+    }
+
+    [Test]
+    public async Task FailOver_DeadServerChannelsReassignedAfterTwoMisses()
+    {
+        var store = new InMemoryChannelMasterStore();
+        var gateway = new AcceptAllGateway();
+        var controller = new ControllerProcess(store, gateway, "controller-A")
+        {
+            LeaderPollRepeats = 1,
+            LeaderPollInterval = TimeSpan.Zero
+        };
+
+        // Cycle 1: both alive
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), ["%#Room1"]);
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 0,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1));
+        await store.HeartbeatBroadcastWorkerAsync("worker-1", 0, TimeSpan.FromMinutes(1));
+        await store.TryClaimChannelAsync("%#Room1", "acs-1:100", "acs-1", DateTime.UtcNow);
+
+        _ = await controller.RunOnceAsync();
+
+        // Cycle 2: acs-1 gone (first miss → Suspect)
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.Zero, ["%#Room1"]);
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 0,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1));
+
+        _ = await controller.RunOnceAsync();
+
+        // Cycle 3: acs-1 still gone (second miss → Dead, channels reassigned)
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 0,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), ["%#Room1"]);
+
+        _ = await controller.RunOnceAsync();
+
+        var room1 = await store.GetChannelRecordAsync("%#Room1");
+        Assert.That(room1, Is.Not.Null, "Channel should be reassigned, not deleted");
+        Assert.That(room1!.OwnerServerId, Is.EqualTo("acs-2"),
+            "Channel should be reassigned to surviving server");
+    }
+
+    [Test]
+    public async Task FailOver_SuspectServerRecovers_NoReassignment()
+    {
+        var store = new InMemoryChannelMasterStore();
+        var controller = new ControllerProcess(store, DefaultGateway, "controller-A")
+        {
+            LeaderPollRepeats = 1,
+            LeaderPollInterval = TimeSpan.Zero
+        };
+
+        // Cycle 1: both alive
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), ["%#Room1"]);
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 0,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1));
+        await store.HeartbeatBroadcastWorkerAsync("worker-1", 0, TimeSpan.FromMinutes(1));
+        await store.TryClaimChannelAsync("%#Room1", "acs-1:100", "acs-1", DateTime.UtcNow);
+
+        _ = await controller.RunOnceAsync();
+
+        // Cycle 2: acs-1 gone (first miss → Suspect)
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.Zero, ["%#Room1"]);
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 0,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1));
+
+        _ = await controller.RunOnceAsync();
+
+        // Cycle 3: acs-1 comes back!
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), ["%#Room1"]);
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 0,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1));
+
+        _ = await controller.RunOnceAsync();
+
+        var room1 = await store.GetChannelRecordAsync("%#Room1");
+        Assert.That(room1, Is.Not.Null);
+        Assert.That(room1!.OwnerServerId, Is.EqualTo("acs-1"),
+            "Channel should remain with original owner after recovery");
+    }
+
+    [Test]
+    public async Task FailOver_NoActiveServers_OrphanedChannelRemoved()
+    {
+        var store = new InMemoryChannelMasterStore();
+        var gateway = new RejectAllGateway();
+        var controller = new ControllerProcess(store, gateway, "controller-A")
+        {
+            LeaderPollRepeats = 1,
+            LeaderPollInterval = TimeSpan.Zero
+        };
+
+        // Cycle 1: only acs-1 alive
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1), ["%#Room1"]);
+        await store.HeartbeatBroadcastWorkerAsync("worker-1", 0, TimeSpan.FromMinutes(1));
+        await store.TryClaimChannelAsync("%#Room1", "acs-1:100", "acs-1", DateTime.UtcNow);
+
+        _ = await controller.RunOnceAsync();
+
+        // Cycle 2: acs-1 gone (first miss → Suspect)
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 1, 1,
+            ChatServerStatusType.Active, TimeSpan.Zero, ["%#Room1"]);
+
+        _ = await controller.RunOnceAsync();
+
+        // Cycle 3: acs-1 still gone (Dead) — and gateway rejects all assigns
+        _ = await controller.RunOnceAsync();
+
+        var room1 = await store.GetChannelRecordAsync("%#Room1");
+        Assert.That(room1, Is.Null,
+            "Channel should be removed when no server accepts reassignment");
+    }
+
+    [Test]
+    public async Task FailOver_MultipleChannelsReassigned()
+    {
+        var store = new InMemoryChannelMasterStore();
+        var gateway = new AcceptAllGateway();
+        var controller = new ControllerProcess(store, gateway, "controller-A")
+        {
+            LeaderPollRepeats = 1,
+            LeaderPollInterval = TimeSpan.Zero
+        };
+
+        // Cycle 1: both alive, acs-1 has 3 channels
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 10, 3,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1),
+            ["%#Room1", "%#Room2", "%#Room3"]);
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 0,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1));
+        await store.HeartbeatBroadcastWorkerAsync("worker-1", 0, TimeSpan.FromMinutes(1));
+        await store.TryClaimChannelAsync("%#Room1", "acs-1:100", "acs-1", DateTime.UtcNow);
+        await store.TryClaimChannelAsync("%#Room2", "acs-1:101", "acs-1", DateTime.UtcNow);
+        await store.TryClaimChannelAsync("%#Room3", "acs-1:102", "acs-1", DateTime.UtcNow);
+
+        _ = await controller.RunOnceAsync();
+
+        // Cycle 2: acs-1 gone (Suspect)
+        await store.HeartbeatChatServerAsync("acs-1", "h1:6667", 10, 3,
+            ChatServerStatusType.Active, TimeSpan.Zero, ["%#Room1", "%#Room2", "%#Room3"]);
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 0,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1));
+
+        _ = await controller.RunOnceAsync();
+
+        // Cycle 3: acs-1 still gone (Dead) — all 3 channels reassigned
+        await store.HeartbeatChatServerAsync("acs-2", "h2:6667", 1, 0,
+            ChatServerStatusType.Active, TimeSpan.FromMinutes(1),
+            ["%#Room1", "%#Room2", "%#Room3"]);
+
+        _ = await controller.RunOnceAsync();
+
+        foreach (var name in new[] { "%#Room1", "%#Room2", "%#Room3" })
+        {
+            var record = await store.GetChannelRecordAsync(name);
+            Assert.That(record, Is.Not.Null, $"{name} should still exist after reassignment");
+            Assert.That(record!.OwnerServerId, Is.EqualTo("acs-2"),
+                $"{name} should be reassigned to acs-2");
+        }
     }
 }

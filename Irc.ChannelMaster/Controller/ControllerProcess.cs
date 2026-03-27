@@ -14,6 +14,20 @@ public sealed class ControllerProcess
     private bool _hasObservedLeader;
     private DateTime _lastLeaderHeartbeatSentUtc = DateTime.MinValue;
 
+    /// <summary>
+    /// Tracks Chat Servers that were previously active but are now missing.
+    /// Key = ChatServerId, Value = number of consecutive cycles the server has been absent.
+    /// After 1 missed cycle the server is Suspect (no new channels assigned).
+    /// After 2 missed cycles the server is Dead (channels reassigned). (doc 4.5.3)
+    /// </summary>
+    private readonly Dictionary<string, int> _suspectServers = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Set of Chat Server IDs that were active in the previous RunOnceAsync cycle.
+    /// Used to detect newly missing servers for fail-over tracking.
+    /// </summary>
+    private readonly HashSet<string> _previouslyActiveServers = new(StringComparer.OrdinalIgnoreCase);
+
     public ControllerProcess(IChannelMasterStore store, IChatServerGateway gateway, string controllerId)
     {
         _store = store;
@@ -91,6 +105,16 @@ public sealed class ControllerProcess
         // This covers default channels created at ACS startup and channels that
         // survive a ChannelMaster restart.
         await ReconcileReportedChannelsAsync(chatServers, cancellationToken);
+
+        // Remove channel records whose owner ACS no longer reports them
+        // (the channel was deleted on the ACS, e.g., empty for >5 min).
+        await CleanupOrphanedChannelsAsync(chatServers, cancellationToken);
+
+        // Detect and handle Chat Server fail-over (doc 4.5.3):
+        // servers that were previously active but are now missing from the
+        // heartbeat list are tracked as Suspect → Dead and their channels
+        // reassigned to surviving servers.
+        await DetectAndHandleFailOverAsync(chatServers, cancellationToken);
 
         if (workers.Count == 0 || chatServers.Count == 0) return true;
 
@@ -334,6 +358,195 @@ public sealed class ControllerProcess
                     Console.WriteLine(
                         $"[Controller] Reconciled channel {channelName} → {server.ChatServerId} (uid={channelUid})");
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Removes channel records from the store whose owner ACS either:
+    /// 1. Is still alive but no longer reports the channel in its heartbeat
+    ///    (the channel was deleted on the ACS, e.g., empty for &gt;5 min).
+    /// 2. Is dead (no longer in the active chat server list).
+    /// This is the reverse of <see cref="ReconcileReportedChannelsAsync"/>:
+    /// that method adds missing channels, this method removes stale ones.
+    /// </summary>
+    internal async Task CleanupOrphanedChannelsAsync(
+        IReadOnlyList<ChatServerStatus> chatServers,
+        CancellationToken cancellationToken = default)
+    {
+        var allRecords = await _store.GetAllChannelRecordsAsync(cancellationToken);
+        if (allRecords.Count == 0) return;
+
+        // Build a lookup: serverId → set of channel names that server reports hosting
+        var reportedByServer = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        var activeServerIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var server in chatServers)
+        {
+            activeServerIds.Add(server.ChatServerId);
+
+            var channelSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var name in server.ChannelNames)
+            {
+                if (!string.IsNullOrWhiteSpace(name))
+                    channelSet.Add(name);
+            }
+
+            reportedByServer[server.ChatServerId] = channelSet;
+        }
+
+        foreach (var (_, record) in allRecords)
+        {
+            var ownerId = record.OwnerServerId;
+
+            if (!activeServerIds.Contains(ownerId))
+            {
+                // Owner ACS is not in the active list.
+                // If it's being tracked as suspect by fail-over detection, skip —
+                // DetectAndHandleFailOverAsync will handle reassignment.
+                // Otherwise (never-seen server, e.g. stale data after CM restart),
+                // remove the orphaned channel immediately.
+                if (_suspectServers.ContainsKey(ownerId) || _previouslyActiveServers.Contains(ownerId))
+                    continue;
+
+                await _store.UnclaimChannelAsync(record.ChannelName, cancellationToken);
+                Console.WriteLine(
+                    $"[Controller] Cleaned up orphaned channel {record.ChannelName} (owner {ownerId} is unknown)");
+                continue;
+            }
+
+            // Owner is alive — check if it still reports this channel
+            if (reportedByServer.TryGetValue(ownerId, out var reported) &&
+                !reported.Contains(record.ChannelName))
+            {
+                await _store.UnclaimChannelAsync(record.ChannelName, cancellationToken);
+                Console.WriteLine(
+                    $"[Controller] Cleaned up stale channel {record.ChannelName} (owner {ownerId} no longer reports it)");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Detects Chat Servers that have disappeared from the active list and
+    /// handles fail-over per doc section 4.5.3:
+    ///   1. First missed cycle → server marked Suspect (no new channels assigned,
+    ///      already handled: CreateChannelAsync filters Status == Active).
+    ///   2. Second consecutive missed cycle → server declared Dead; all its
+    ///      channels are reassigned to the least-loaded active Chat Server.
+    ///   3. If a suspect server reappears, it is removed from tracking.
+    /// </summary>
+    internal async Task DetectAndHandleFailOverAsync(
+        IReadOnlyList<ChatServerStatus> chatServers,
+        CancellationToken cancellationToken = default)
+    {
+        var currentActiveIds = new HashSet<string>(
+            chatServers.Select(s => s.ChatServerId), StringComparer.OrdinalIgnoreCase);
+
+        // Servers that were previously active but are now missing
+        var newlyMissing = _previouslyActiveServers
+            .Where(id => !currentActiveIds.Contains(id))
+            .ToList();
+
+        // Add newly missing servers to suspect tracking
+        foreach (var id in newlyMissing)
+        {
+            if (!_suspectServers.ContainsKey(id))
+                _suspectServers[id] = 1;
+        }
+
+        // Increment miss count for already-suspect servers that are still absent
+        foreach (var id in _suspectServers.Keys.ToList())
+        {
+            if (!currentActiveIds.Contains(id) && !newlyMissing.Contains(id))
+                _suspectServers[id]++;
+        }
+
+        // Servers that reappeared — remove from suspect tracking
+        var recovered = _suspectServers.Keys
+            .Where(id => currentActiveIds.Contains(id))
+            .ToList();
+        foreach (var id in recovered)
+        {
+            _suspectServers.Remove(id);
+            Console.WriteLine($"[Controller] Chat Server {id} recovered from suspect state");
+        }
+
+        // Process dead servers (2+ consecutive missed cycles)
+        var deadServers = _suspectServers
+            .Where(kvp => kvp.Value >= 2)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var deadServerId in deadServers)
+        {
+            Console.WriteLine($"[Controller] Chat Server {deadServerId} declared dead — reassigning channels");
+            await ReassignChannelsFromDeadServerAsync(deadServerId, chatServers, cancellationToken);
+            _suspectServers.Remove(deadServerId);
+        }
+
+        // Log suspect servers (1 missed cycle)
+        foreach (var (id, count) in _suspectServers)
+        {
+            Console.WriteLine($"[Controller] Chat Server {id} is suspect (missed {count} cycle(s))");
+        }
+
+        // Update the set for the next cycle
+        _previouslyActiveServers.Clear();
+        foreach (var id in currentActiveIds)
+            _previouslyActiveServers.Add(id);
+    }
+
+    /// <summary>
+    /// Reassigns all channels owned by a dead Chat Server to surviving active servers.
+    /// For each channel, the least-loaded active server is selected and ASSIGN is sent.
+    /// If ASSIGN succeeds, the channel record's owner is updated.
+    /// If no active server accepts, the channel is removed (unclaimed).
+    /// </summary>
+    internal async Task ReassignChannelsFromDeadServerAsync(
+        string deadServerId,
+        IReadOnlyList<ChatServerStatus> chatServers,
+        CancellationToken cancellationToken = default)
+    {
+        var allRecords = await _store.GetAllChannelRecordsAsync(cancellationToken);
+        var orphanedChannels = allRecords.Values
+            .Where(r => string.Equals(r.OwnerServerId, deadServerId, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (orphanedChannels.Count == 0) return;
+
+        var activeServers = chatServers
+            .Where(s => s.Status == ChatServerStatusType.Active)
+            .OrderBy(s => s.CurrentLoad)
+            .ThenBy(s => s.ChatServerId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var channel in orphanedChannels)
+        {
+            bool reassigned = false;
+
+            foreach (var server in activeServers)
+            {
+                var accepted = await _gateway.SendAssignAsync(
+                    server.ChatServerId, channel.ChannelName, channel.ChannelUid,
+                    DefaultChannelTtl, cancellationToken);
+
+                if (accepted)
+                {
+                    await _store.UpdateChannelOwnerAsync(
+                        channel.ChannelName, server.ChatServerId, cancellationToken);
+                    Console.WriteLine(
+                        $"[Controller] Reassigned {channel.ChannelName} from {deadServerId} → {server.ChatServerId}");
+                    reassigned = true;
+                    break;
+                }
+            }
+
+            if (!reassigned)
+            {
+                // No server accepted — remove the orphaned channel
+                await _store.UnclaimChannelAsync(channel.ChannelName, cancellationToken);
+                Console.WriteLine(
+                    $"[Controller] Removed orphaned channel {channel.ChannelName} (no server accepted reassignment)");
             }
         }
     }

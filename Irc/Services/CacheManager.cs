@@ -153,4 +153,32 @@ public class CacheManager
             Console.WriteLine($"[CacheManager] Failed to write ASSIGN response: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Publishes a CHAT-UPDATE message to the ChannelMaster's broadcast process
+    /// via the cm:chat:update pub-sub channel (doc section 4.4.5).
+    /// Only channels whose member count has changed since the last update
+    /// should be included. A member count of zero signals channel closure.
+    /// </summary>
+    public void PublishChatUpdate(string serverId, ChatUpdateEntry[] entries)
+    {
+        if (Subscriber == null || entries.Length == 0) return;
+
+        try
+        {
+            var message = new ChatUpdateMessage
+            {
+                ChatServerId = serverId,
+                Entries = entries
+            };
+
+            var json = JsonSerializer.Serialize(message);
+            var channel = new RedisChannel(RedisChannels.ChatUpdateChannel, RedisChannel.PatternMode.Literal);
+            Subscriber.Publish(channel, json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CacheManager] Failed to publish CHAT-UPDATE: {ex.Message}");
+        }
+    }
 }

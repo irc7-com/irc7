@@ -55,6 +55,25 @@ public static class RedisChannels
     /// </summary>
     public const string AcsReplyKeyPattern = "cm:reply:acs:{0}";
 
+    // ── CHAT-UPDATE (ACS → ChannelMaster Broadcast Process) ─────────────
+
+    /// <summary>
+    /// Pub-sub channel where ACS publishes CHAT-UPDATE messages
+    /// containing per-channel member count updates (doc 4.4.5).
+    /// Payload = JSON ChatUpdateMessage.
+    /// </summary>
+    public const string ChatUpdateChannel = "cm:chat:update";
+
+    // ── CHANNEL-UPDATE (ChannelMaster Broadcast Process → ADS) ──────────
+
+    /// <summary>
+    /// Pub-sub channel where the ChannelMaster BroadcastProcess publishes
+    /// CHANNEL-UPDATE messages containing complete per-ChatServer channel
+    /// snapshots (doc section 4.4.4). One message per ChatServer.
+    /// Payload = JSON ChannelUpdateMessage.
+    /// </summary>
+    public const string ChannelUpdateChannel = "cm:channel:update";
+
     // ── Helpers ──────────────────────────────────────────────────────────
 
     public static string ChatServerKey(string serverId) =>

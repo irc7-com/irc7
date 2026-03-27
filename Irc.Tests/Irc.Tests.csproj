@@ -23,6 +23,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Irc\Irc.csproj" />
+      <ProjectReference Include="..\Irc.Directory\Irc.Directory.csproj" />
+      <ProjectReference Include="..\Irc.Contracts\Irc.Contracts.csproj" />
     </ItemGroup>
 
 </Project>

@@ -272,6 +272,56 @@ public sealed class InMemoryChannelMasterStore : IChannelMasterStore
         }
     }
 
+    public Task<IReadOnlyDictionary<string, ChannelRecord>> GetAllChannelRecordsAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_sync)
+        {
+            var snapshot = _channels.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
+            return Task.FromResult<IReadOnlyDictionary<string, ChannelRecord>>(snapshot);
+        }
+    }
+
+    public Task<bool> UpdateChannelMemberCountAsync(string channelName, int memberCount, CancellationToken cancellationToken = default)
+    {
+        lock (_sync)
+        {
+            var key = CanonicalizeChannelName(channelName);
+            if (!_channels.TryGetValue(key, out var record))
+                return Task.FromResult(false);
+
+            record.MemberCount = memberCount;
+            return Task.FromResult(true);
+        }
+    }
+
+    public Task<bool> UpdateChannelOwnerAsync(string channelName, string newOwnerServerId, CancellationToken cancellationToken = default)
+    {
+        lock (_sync)
+        {
+            var key = CanonicalizeChannelName(channelName);
+            if (!_channels.TryGetValue(key, out var record))
+                return Task.FromResult(false);
+
+            record.OwnerServerId = newOwnerServerId;
+            return Task.FromResult(true);
+        }
+    }
+
+    public Task<IReadOnlyDictionary<string, IReadOnlyList<ChannelRecord>>> GetChannelsByOwnerAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_sync)
+        {
+            var grouped = _channels.Values
+                .GroupBy(r => r.OwnerServerId, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (IReadOnlyList<ChannelRecord>)g.OrderBy(r => r.ChannelName, StringComparer.OrdinalIgnoreCase).ToList(),
+                    StringComparer.OrdinalIgnoreCase);
+
+            return Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<ChannelRecord>>>(grouped);
+        }
+    }
+
     private void PruneExpiredChannelMasters(DateTime now)
     {
         var staleIds = _channelMasters.Where(kvp => kvp.Value <= now).Select(kvp => kvp.Key).ToList();

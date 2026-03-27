@@ -20,6 +20,13 @@ public class DirectoryServer : Server
     /// </summary>
     public ChannelMasterClient? ChannelMasterClient { get; }
 
+    /// <summary>
+    /// In-memory channel directory populated by CHANNEL-UPDATE messages
+    /// from the ChannelMaster BroadcastProcess (doc section 4.4.3-4.4.4).
+    /// Non-null when Redis is connected.
+    /// </summary>
+    public ChannelStore? ChannelStore { get; }
+
     public DirectoryServer(
         ISocketServer socketServer,
         ISecurityManager securityManager,
@@ -69,14 +76,18 @@ public class DirectoryServer : Server
         AddCommand(new Ping());
         AddCommand(new Pong());
         AddCommand(new Version());
+        AddCommand(new Listx());
         AddCommand(new WebIrc());
 
-        // Create ChannelMasterClient if Redis is available
+        // Create ChannelMasterClient and ChannelStore if Redis is available
         if (CacheManager.RedisConnection != null)
         {
             ChannelMasterClient = new ChannelMasterClient(
                 CacheManager.RedisConnection,
                 requesterId: Name);
+
+            ChannelStore = new ChannelStore();
+            ChannelStore.SubscribeToChannelUpdates(CacheManager.RedisConnection);
         }
     }
 }

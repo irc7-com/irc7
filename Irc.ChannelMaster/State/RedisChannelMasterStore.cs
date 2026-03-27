@@ -310,6 +310,80 @@ public sealed class RedisChannelMasterStore : IChannelMasterStore, IDisposable
         return null;
     }
 
+    public async Task<IReadOnlyDictionary<string, ChannelRecord>> GetAllChannelRecordsAsync(CancellationToken cancellationToken = default)
+    {
+        var entries = await _db.HashGetAllAsync(ChannelsKey);
+        var result = new Dictionary<string, ChannelRecord>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in entries)
+        {
+            var record = JsonSerializer.Deserialize<ChannelRecord>(entry.Value.ToString());
+            if (record != null)
+            {
+                result[entry.Name.ToString()] = record;
+            }
+        }
+
+        return result;
+    }
+
+    public async Task<bool> UpdateChannelMemberCountAsync(string channelName, int memberCount, CancellationToken cancellationToken = default)
+    {
+        var field = CanonicalizeChannelName(channelName);
+        var value = await _db.HashGetAsync(ChannelsKey, field);
+        if (!value.HasValue) return false;
+
+        var record = JsonSerializer.Deserialize<ChannelRecord>(value.ToString());
+        if (record == null) return false;
+
+        record.MemberCount = memberCount;
+        var payload = JsonSerializer.Serialize(record);
+        await _db.HashSetAsync(ChannelsKey, field, payload);
+        return true;
+    }
+
+    public async Task<bool> UpdateChannelOwnerAsync(string channelName, string newOwnerServerId, CancellationToken cancellationToken = default)
+    {
+        var field = CanonicalizeChannelName(channelName);
+        var value = await _db.HashGetAsync(ChannelsKey, field);
+        if (!value.HasValue) return false;
+
+        var record = JsonSerializer.Deserialize<ChannelRecord>(value.ToString());
+        if (record == null) return false;
+
+        record.OwnerServerId = newOwnerServerId;
+        var payload = JsonSerializer.Serialize(record);
+        await _db.HashSetAsync(ChannelsKey, field, payload);
+        return true;
+    }
+
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<ChannelRecord>>> GetChannelsByOwnerAsync(CancellationToken cancellationToken = default)
+    {
+        var entries = await _db.HashGetAllAsync(ChannelsKey);
+        var grouped = new Dictionary<string, List<ChannelRecord>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in entries)
+        {
+            var record = JsonSerializer.Deserialize<ChannelRecord>(entry.Value.ToString());
+            if (record == null) continue;
+
+            if (!grouped.TryGetValue(record.OwnerServerId, out var list))
+            {
+                list = new List<ChannelRecord>();
+                grouped[record.OwnerServerId] = list;
+            }
+
+            list.Add(record);
+        }
+
+        var result = grouped.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (IReadOnlyList<ChannelRecord>)kvp.Value.OrderBy(r => r.ChannelName, StringComparer.OrdinalIgnoreCase).ToList(),
+            StringComparer.OrdinalIgnoreCase);
+
+        return result;
+    }
+
     public void Dispose()
     {
         _ownedRedis?.Dispose();

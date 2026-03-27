@@ -6,7 +6,14 @@ namespace Irc.ChannelMaster.Models;
 public enum ChatServerStatusType
 {
     Active,
-    Standby
+    Standby,
+    /// <summary>
+    /// The Chat Server has missed heartbeats and is under observation.
+    /// No new channels will be assigned to a Suspect server (doc 4.5.3).
+    /// If it remains unresponsive, it will be declared dead and its
+    /// channels reassigned.
+    /// </summary>
+    Suspect
 }
 
 public sealed class ChatServerStatus

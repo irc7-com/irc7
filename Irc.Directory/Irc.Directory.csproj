@@ -8,6 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="Irc.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Irc\Irc.csproj"/>
         <ProjectReference Include="..\Irc.Contracts\Irc.Contracts.csproj"/>
     </ItemGroup>

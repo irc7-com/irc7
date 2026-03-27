@@ -40,6 +40,9 @@ public class Server : ChatObject, IServer
     private readonly ISocketServer _socketServer;
     private readonly Irc.Services.CacheManager _cacheManager;
     private System.Timers.Timer? _heartbeatTimer;
+    private System.Timers.Timer? _chatUpdateTimer;
+    /// <summary>Tracks last-reported member counts per channel name for delta CHAT-UPDATE.</summary>
+    private readonly Dictionary<string, int> _lastReportedMemberCounts = new(StringComparer.OrdinalIgnoreCase);
 
     public IList<IChannel> Channels;
     public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
@@ -141,6 +144,13 @@ public class Server : ChatObject, IServer
             _heartbeatTimer.AutoReset = true;
             _heartbeatTimer.Start();
             SendHeartbeat(); // Send first heartbeat immediately
+
+            // CHAT-UPDATE timer: send per-channel member count deltas (doc 4.4.5)
+            // Default interval: 90 seconds per the architecture document.
+            _chatUpdateTimer = new System.Timers.Timer(90_000);
+            _chatUpdateTimer.Elapsed += (s, e) => SendChatUpdate();
+            _chatUpdateTimer.AutoReset = true;
+            _chatUpdateTimer.Start();
         }
     }
 
@@ -158,6 +168,63 @@ public class Server : ChatObject, IServer
 
         var channelNames = Channels.Select(c => c.GetName()).ToArray();
         _cacheManager.HeartbeatToChannelMaster(Name, hostname, Users.Count, Channels.Count, TimeSpan.FromSeconds(10), channelNames);
+    }
+
+    /// <summary>
+    /// Sends a CHAT-UPDATE message to the ChannelMaster with per-channel
+    /// member count changes since the last update (doc section 4.4.5).
+    /// Only channels whose member count has changed are included.
+    /// A member count of zero signals channel closure.
+    /// </summary>
+    private void SendChatUpdate()
+    {
+        try
+        {
+            var entries = new List<Irc.Contracts.Messages.ChatUpdateEntry>();
+            var currentChannelNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var channel in Channels.ToList())
+            {
+                var name = channel.GetName();
+                var memberCount = channel.GetMembers().Count;
+                currentChannelNames.Add(name);
+
+                // Only include channels whose count has changed
+                if (_lastReportedMemberCounts.TryGetValue(name, out var lastCount) && lastCount == memberCount)
+                    continue;
+
+                _lastReportedMemberCounts[name] = memberCount;
+                entries.Add(new Irc.Contracts.Messages.ChatUpdateEntry
+                {
+                    ChannelName = name,
+                    MemberCount = memberCount
+                });
+            }
+
+            // Detect channels that were removed since the last update — send zero count
+            var removedChannels = _lastReportedMemberCounts.Keys
+                .Where(name => !currentChannelNames.Contains(name))
+                .ToList();
+
+            foreach (var name in removedChannels)
+            {
+                _lastReportedMemberCounts.Remove(name);
+                entries.Add(new Irc.Contracts.Messages.ChatUpdateEntry
+                {
+                    ChannelName = name,
+                    MemberCount = 0
+                });
+            }
+
+            if (entries.Count > 0)
+            {
+                _cacheManager.PublishChatUpdate(Name, entries.ToArray());
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Server] Failed to send CHAT-UPDATE: {ex.Message}");
+        }
     }
 
     public string[] SupportPackages { get; }
@@ -369,6 +436,7 @@ public class Server : ChatObject, IServer
     public void Shutdown()
     {
         _heartbeatTimer?.Stop();
+        _chatUpdateTimer?.Stop();
         
         if (_cacheManager.IsConnected && !IsDirectoryServer)
         {
