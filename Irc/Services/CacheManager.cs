@@ -39,13 +39,14 @@ public class CacheManager
     {
         if (_db == null) return;
         
-        var payload = JsonSerializer.Serialize(new
+        var payload = JsonSerializer.Serialize(new AcsServerInfo
         {
+            ServerId = serverId,
             Ip = ip,
             Port = port,
             Name = name,
             UsersOnline = usersOnline
-        });
+        }, IrcJsonContext.Default.AcsServerInfo);
 
         // Use a 30-second TTL
         _db.StringSet($"acs:server:{serverId}", payload, TimeSpan.FromSeconds(10));
@@ -130,7 +131,7 @@ public class CacheManager
             MaxUsers = maxUsers,
             OwnerKey = ownerKey,
             HostKey = hostKey
-        });
+        }, IrcJsonContext.Default.AcsRoomInfo);
 
         var script = @"
             local exists = redis.call('HEXISTS', 'acs:rooms', ARGV[1])
@@ -181,7 +182,7 @@ public class CacheManager
         var value = _db.HashGet("acs:rooms", roomName.ToUpperInvariant());
         if (value.HasValue)
         {
-            var roomInfo = JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());
+            var roomInfo = JsonSerializer.Deserialize(value.ToString(), IrcJsonContext.Default.AcsRoomInfo);
             return roomInfo?.ServerId;
         }
         return null;
@@ -194,7 +195,7 @@ public class CacheManager
         var value = _db.HashGet("acs:rooms", roomName.ToUpperInvariant());
         if (value.HasValue)
         {
-            return JsonSerializer.Deserialize<AcsRoomInfo>(value.ToString());
+            return JsonSerializer.Deserialize(value.ToString(), IrcJsonContext.Default.AcsRoomInfo);
         }
         return null;
     }
@@ -208,7 +209,7 @@ public class CacheManager
         {
             if (entry.Value.HasValue)
             {
-                var roomInfo = JsonSerializer.Deserialize<AcsRoomInfo>(entry.Value.ToString());
+                var roomInfo = JsonSerializer.Deserialize(entry.Value.ToString(), IrcJsonContext.Default.AcsRoomInfo);
                 if (roomInfo != null && roomInfo.ServerId == serverId)
                 {
                     yield return roomInfo;
@@ -233,7 +234,7 @@ public class CacheManager
                 var value = _db.StringGet(key);
                 if (value.HasValue)
                 {
-                    var info = JsonSerializer.Deserialize<AcsServerInfo>(value.ToString());
+                    var info = JsonSerializer.Deserialize(value.ToString(), IrcJsonContext.Default.AcsServerInfo);
                     if (info != null)
                     {
                         info.ServerId = key.ToString().Substring("acs:server:".Length);

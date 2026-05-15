@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Irc.Interfaces;
 
 namespace Irc.IO;
@@ -21,9 +23,9 @@ public class DataStore : IDataStore
     {
         if (!string.IsNullOrWhiteSpace(path))
         {
-            // Workaround for forced case comparison
-            // (specifying PropertyNameCaseInsensitive = true in JsonSerializerOptions also didn't work)
-            var tempSet = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(path));
+            // Use source-generated context to avoid reflection (AOT-safe)
+            var tempSet = JsonSerializer.Deserialize(File.ReadAllText(path),
+                IrcJsonContext.Default.DictionaryStringString);
             if (tempSet == null) return;
 
             foreach (var kvp in tempSet) _sets.Add(kvp.Key, kvp.Value);
@@ -40,9 +42,18 @@ public class DataStore : IDataStore
         _sets[key] = value;
     }
 
+    [RequiresUnreferencedCode("Generic JSON serialization requires reflection. Use SetAs<T>(key, value, JsonTypeInfo<T>) for AOT.")]
+    [RequiresDynamicCode("Generic JSON serialization requires dynamic code. Use SetAs<T>(key, value, JsonTypeInfo<T>) for AOT.")]
     public void SetAs<T>(string key, T value)
     {
         var json = JsonSerializer.Serialize(value);
+        Set(key, json);
+    }
+
+    /// <summary>AOT-safe overload that accepts a <see cref="JsonTypeInfo{T}"/>.</summary>
+    public void SetAs<T>(string key, T value, JsonTypeInfo<T> typeInfo)
+    {
+        var json = JsonSerializer.Serialize(value, typeInfo);
         Set(key, json);
     }
 
@@ -52,11 +63,21 @@ public class DataStore : IDataStore
         return value ?? string.Empty;
     }
 
+    [RequiresUnreferencedCode("Generic JSON deserialization requires reflection. Use GetAs<T>(key, JsonTypeInfo<T>) for AOT.")]
+    [RequiresDynamicCode("Generic JSON deserialization requires dynamic code. Use GetAs<T>(key, JsonTypeInfo<T>) for AOT.")]
     public T GetAs<T>(string key) where T : new()
     {
         var json = Get(key);
         if (string.IsNullOrEmpty(json)) return new T();
         return JsonSerializer.Deserialize<T>(json) ?? new T();
+    }
+
+    /// <summary>AOT-safe overload that accepts a <see cref="JsonTypeInfo{T}"/>.</summary>
+    public T? GetAs<T>(string key, JsonTypeInfo<T> typeInfo)
+    {
+        var json = Get(key);
+        if (string.IsNullOrEmpty(json)) return default;
+        return JsonSerializer.Deserialize(json, typeInfo);
     }
 
     public List<KeyValuePair<string, string>> GetList()
