@@ -1,4 +1,5 @@
-﻿using Irc.Commands;
+﻿using Irc;
+using Irc.Commands;
 using Irc.Directory.Commands;
 using Irc.Enumerations;
 using Irc.Interfaces;
@@ -116,7 +117,7 @@ public class DirectoryServer : Server
         // Update the room immediately in Redis so we don't cause an infinite failover loop 
         // for concurrent requests while the ACS is booting up the room.
         CacheManager.RegisterRoom(inMemoryChannel, targetServer.ServerId);
-        CacheManager.PublishChannelCreate(targetServer.ServerId, System.Text.Json.JsonSerializer.Serialize(inMemoryChannel));
+        CacheManager.PublishChannelCreate(targetServer.ServerId, System.Text.Json.JsonSerializer.Serialize(inMemoryChannel, IrcJsonContext.Default.InMemoryChannel));
 
         return targetServer;
     }
@@ -158,7 +159,6 @@ public class DirectoryServer : Server
         FlushCommands();
         AddCommand(new Ircvers());
         AddCommand(new Auth());
-        AddCommand(new AuthX());
         AddCommand(new Pass());
         AddCommand(new Nick());
         AddCommand(new UserCommand(), EnumProtocolType.IRC, "User");

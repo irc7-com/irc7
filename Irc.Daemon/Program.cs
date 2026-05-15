@@ -2,7 +2,6 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Net;
 using System.Reflection;
-using System.Text.Json;
 using Irc.Directory;
 using Irc.Helpers;
 using Irc.Interfaces;
@@ -195,8 +194,9 @@ internal class Program
         if (File.Exists("DefaultCredentials.json"))
         {
             var credentials =
-                JsonSerializer.Deserialize<Dictionary<string, Credential>>(
-                    await File.ReadAllTextAsync("DefaultCredentials.json")) ?? new Dictionary<string, Credential>();
+                System.Text.Json.JsonSerializer.Deserialize(
+                    await File.ReadAllTextAsync("DefaultCredentials.json"),
+                    IrcDaemonJsonContext.Default.DictionaryStringCredential) ?? new Dictionary<string, Credential>();
             return new NtlmCredentials(credentials);
         }
 
@@ -206,7 +206,9 @@ internal class Program
     private static void InitializeDefaultChannels(IServer server, IrcType serverType)
     {
         var defaultChannels =
-            JsonSerializer.Deserialize<List<DefaultChannel>>(File.ReadAllText("DefaultChannels.json"));
+            System.Text.Json.JsonSerializer.Deserialize(
+                File.ReadAllText("DefaultChannels.json"),
+                IrcDaemonJsonContext.Default.ListDefaultChannel);
         if (defaultChannels == null) return;
 
         foreach (var defaultChannel in defaultChannels)

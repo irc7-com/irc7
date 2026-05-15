@@ -1,7 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Interfaces;
@@ -77,9 +76,9 @@ public class GateKeeper : SupportPackage, ISupportPackage
                         writer.WriteLine();
                         writer.WriteLine(DateTime.UtcNow);
                         writer.WriteLine("Challenge");
-                        writer.WriteLine(JsonSerializer.Serialize(_challengeBytes.Select(b => (int)b).ToArray()));
+                        writer.WriteLine(System.Text.Json.JsonSerializer.Serialize(_challengeBytes.Select(b => (int)b).ToArray(), IrcJsonContext.Default.Int32Array));
                         writer.WriteLine("Response");
-                        writer.WriteLine(JsonSerializer.Serialize(context.Select(b => (int)b).ToArray()));
+                        writer.WriteLine(System.Text.Json.JsonSerializer.Serialize(context.Select(b => (int)b).ToArray(), IrcJsonContext.Default.Int32Array));
                     }
 
                     return EnumSupportPackageSequence.SSP_FAILED;
@@ -145,8 +144,8 @@ public class GateKeeper : SupportPackage, ISupportPackage
         var h1 = md5.ComputeHash(ctx.ToByteArray(), 0, ctx.Length);
 
         var bHashEqual = h1.SequenceEqual(context);
-        Log.Debug($"Auth: Received = {JsonSerializer.Serialize(context.Select(b => (int)b).ToArray())}");
-        Log.Debug($"Auth: Expected = {JsonSerializer.Serialize(h1.Select(b => (int)b).ToArray())}");
+        Log.Debug($"Auth: Received = {System.Text.Json.JsonSerializer.Serialize(context.Select(b => (int)b).ToArray(), IrcJsonContext.Default.Int32Array)}");
+        Log.Debug($"Auth: Expected = {System.Text.Json.JsonSerializer.Serialize(h1.Select(b => (int)b).ToArray(), IrcJsonContext.Default.Int32Array)}");
 
         return bHashEqual;
     }

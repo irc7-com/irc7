@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Irc.Constants;
 using Irc.Objects.Channel;
 using NLog;
@@ -15,7 +14,7 @@ public static class ServerHandlers
     public static void HandleChannelPubSub(Server server, string payload)
     {
         Log.Trace($"HandleChannelPubSub: {payload}");
-        var inMemoryChannel = JsonSerializer.Deserialize<InMemoryChannel>(payload);
+        var inMemoryChannel = System.Text.Json.JsonSerializer.Deserialize(payload, IrcJsonContext.Default.InMemoryChannel);
         if (inMemoryChannel == null)
         {
             Log.Error($"Could not deserialize payload: {payload}");
@@ -36,7 +35,7 @@ public static class ServerHandlers
                 Console.WriteLine($"Could not register channel {inMemoryChannel.ChannelName} in Redis");
                 return;
             }
-            Console.WriteLine($"Registered Channel {JsonSerializer.Serialize(inMemoryChannel)} in Redis");
+            Console.WriteLine($"Registered Channel {System.Text.Json.JsonSerializer.Serialize(inMemoryChannel, IrcJsonContext.Default.InMemoryChannel)} in Redis");
         }
     }
 }

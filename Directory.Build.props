@@ -3,5 +3,8 @@
     <LangVersion>latest</LangVersion>
     <TargetFrameworkVersion>net10.0</TargetFrameworkVersion>
     <Prefer32Bit>false</Prefer32Bit>
+    <!-- Enable trim analysis across all projects so warnings surface early -->
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
 </Project>

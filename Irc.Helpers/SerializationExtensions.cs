@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace Irc.Helpers;
 
@@ -11,7 +12,7 @@ public static class SerializationExtensions
         var pBuf = Marshal.AllocHGlobal(ptrMessageSize);
         try
         {
-            Marshal.StructureToPtr(serializableObject, pBuf, false);
+            Marshal.StructureToPtr((T)serializableObject, pBuf, false);
             for (var i = 0; i < ptrMessageSize; i++) serialBytes[i] = Marshal.ReadByte(pBuf, i);
 
             return serialBytes;
@@ -26,7 +27,9 @@ public static class SerializationExtensions
         }
     }
 
-    public static T Deserialize<T>(this byte[] bytes)
+    public static T Deserialize<[DynamicallyAccessedMembers(
+        DynamicallyAccessedMemberTypes.PublicConstructors |
+        DynamicallyAccessedMemberTypes.NonPublicConstructors)] T>(this byte[] bytes)
     {
         var size = Marshal.SizeOf<T>();
         var pBuf = IntPtr.Zero;

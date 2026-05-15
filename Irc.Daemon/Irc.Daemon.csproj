@@ -11,6 +11,13 @@
         <Company>Irc7d</Company>
         <Product>Irc7d</Product>
         <AssemblyName>Irc7d</AssemblyName>
+        <!-- AOT / Native compilation settings -->
+        <PublishAot>true</PublishAot>
+        <SelfContained>true</SelfContained>
+        <PublishSingleFile>false</PublishSingleFile>
+        <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
+        <InvariantGlobalization>false</InvariantGlobalization>
+        <OptimizationPreference>Size</OptimizationPreference>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

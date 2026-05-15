@@ -77,11 +77,11 @@ public class Server : ChatObject, IServer
 
         LoadSettingsFromDataStore();
 
-        _DataStore.SetAs("creation", DateTime.UtcNow);
+        _DataStore.SetAs("creation", DateTime.UtcNow, IrcJsonContext.Default.DateTime);
         _DataStore.Set("supported.channel.modes",
             new ChannelModes().GetSupportedModes());
         _DataStore.Set("supported.user.modes", new UserModes().GetSupportedModes());
-        SupportPackages = _DataStore.GetAs<List<string>>(Resources.ConfigSaslPackages)?.ToArray() ??
+        SupportPackages = _DataStore.GetAs<List<string>>(Resources.ConfigSaslPackages, IrcJsonContext.Default.ListString)?.ToArray() ??
                           Array.Empty<string>();
 
         if (MaxAnonymousConnections > 0) _securityManager.AddSupportPackage(new ANON());
@@ -216,7 +216,7 @@ public class Server : ChatObject, IServer
 
     public string[] SupportPackages { get; }
 
-    public DateTime CreationDate => _DataStore.GetAs<DateTime>("creation");
+    public DateTime CreationDate => _DataStore.GetAs<DateTime>("creation", IrcJsonContext.Default.DateTime);
 
     // Server Properties To be moved to another class later
     public string Title { get; private set; }
@@ -266,12 +266,12 @@ public class Server : ChatObject, IServer
     public void SetMotd(string motd)
     {
         var lines = motd.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-        _DataStore.SetAs(Resources.ConfigMotd, lines);
+        _DataStore.SetAs(Resources.ConfigMotd, lines, IrcJsonContext.Default.StringArray);
     }
 
     public string[] GetMotd()
     {
-        return _DataStore.GetAs<List<string>>(Resources.ConfigMotd)?.ToArray() ?? Array.Empty<string>();
+        return _DataStore.GetAs<string[]>(Resources.ConfigMotd, IrcJsonContext.Default.StringArray) ?? Array.Empty<string>();
     }
 
     public void AddUser(IUser user)
@@ -563,17 +563,17 @@ public class Server : ChatObject, IServer
     public void LoadSettingsFromDataStore()
     {
         var title = _DataStore.Get(Resources.ConfigServerTitle);
-        var maxInputBytes = _DataStore.GetAs<int>(Resources.ConfigMaxInputBytes);
-        var maxOutputBytes = _DataStore.GetAs<int>(Resources.ConfigMaxOutputBytes);
-        var pingInterval = _DataStore.GetAs<int>(Resources.ConfigPingInterval);
-        var pingAttempts = _DataStore.GetAs<int>(Resources.ConfigPingAttempts);
-        var maxChannels = _DataStore.GetAs<int>(Resources.ConfigMaxChannels);
-        var maxConnections = _DataStore.GetAs<int>(Resources.ConfigMaxConnections);
-        var maxAuthenticatedConnections = _DataStore.GetAs<int>(Resources.ConfigMaxAuthenticatedConnections);
-        var maxAnonymousConnections = _DataStore.GetAs<int?>(Resources.ConfigMaxAnonymousConnections);
-        var basicAuthentication = _DataStore.GetAs<bool?>(Resources.ConfigBasicAuthentication);
-        var anonymousConnections = _DataStore.GetAs<bool?>(Resources.ConfigAnonymousConnections);
-        var joinOnCreate = _DataStore.GetAs<bool?>(Resources.ConfigJoinOnCreate);
+        var maxInputBytes = _DataStore.GetAs<int>(Resources.ConfigMaxInputBytes, IrcJsonContext.Default.Int32);
+        var maxOutputBytes = _DataStore.GetAs<int>(Resources.ConfigMaxOutputBytes, IrcJsonContext.Default.Int32);
+        var pingInterval = _DataStore.GetAs<int>(Resources.ConfigPingInterval, IrcJsonContext.Default.Int32);
+        var pingAttempts = _DataStore.GetAs<int>(Resources.ConfigPingAttempts, IrcJsonContext.Default.Int32);
+        var maxChannels = _DataStore.GetAs<int>(Resources.ConfigMaxChannels, IrcJsonContext.Default.Int32);
+        var maxConnections = _DataStore.GetAs<int>(Resources.ConfigMaxConnections, IrcJsonContext.Default.Int32);
+        var maxAuthenticatedConnections = _DataStore.GetAs<int>(Resources.ConfigMaxAuthenticatedConnections, IrcJsonContext.Default.Int32);
+        var maxAnonymousConnections = _DataStore.GetAs<int?>(Resources.ConfigMaxAnonymousConnections, IrcJsonContext.Default.NullableInt32);
+        var basicAuthentication = _DataStore.GetAs<bool?>(Resources.ConfigBasicAuthentication, IrcJsonContext.Default.NullableBoolean);
+        var anonymousConnections = _DataStore.GetAs<bool?>(Resources.ConfigAnonymousConnections, IrcJsonContext.Default.NullableBoolean);
+        var joinOnCreate = _DataStore.GetAs<bool?>(Resources.ConfigJoinOnCreate, IrcJsonContext.Default.NullableBoolean);
 
         if (!string.IsNullOrWhiteSpace(title)) Title = title;
         if (maxInputBytes > 0) MaxInputBytes = maxInputBytes;
