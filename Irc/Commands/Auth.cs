@@ -42,7 +42,7 @@ public class Auth : Command, ICommand
                     if (credentialManager == null) throw new ArgumentNullException(nameof(credentialManager));
 
                     supportPackage = chatFrame.Server.GetSecurityManager()
-                        .CreatePackageInstance(packageName, credentialManager);
+                        .CreatePackageInstance(credentialManager);
 
                     chatFrame.User.SetSupportPackage(supportPackage);
                 }
@@ -54,20 +54,12 @@ public class Auth : Command, ICommand
                 }
 
                 var supportPackageSequence =
-                    supportPackage.InitializeSecurityContext(token, chatFrame.Server.RemoteIp);
+                    supportPackage.InitializeSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
 
-                if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
+                if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK || supportPackageSequence == EnumSupportPackageSequence.SSP_EXT)
                 {
-                    var securityToken = supportPackage.CreateSecurityChallenge();
-
-                    // If the security token could not be created, disconnect the user
-                    if (securityToken == string.Empty)
-                    {
-                        chatFrame.User.Disconnect(Raws.IRCX_ERR_RESOURCE_907(chatFrame.Server, chatFrame.User));
-                        return;
-                    }
-
-                    var securityTokenEscaped = securityToken.ToEscape();
+                    var authResponse = supportPackage.GetAuthResponse();
+                    var securityTokenEscaped = authResponse.ToEscape();
                     chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(packageName, securityTokenEscaped));
                     // Send reply
                     return;
@@ -76,7 +68,7 @@ public class Auth : Command, ICommand
             else if (sequence == "S")
             {
                 var supportPackageSequence =
-                    supportPackage.AcceptSecurityContext(token, chatFrame.Server.RemoteIp);
+                    supportPackage.AcceptSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
                 {
                     chatFrame.User.Authenticate();

@@ -13,11 +13,13 @@
         <EmbeddedResource Remove="Operations\**" />
         <None Remove="Operations\**" />
         <None Remove="Logging\" />
+        <None Update="ircx_sspi.dll">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Irc.Helpers\Irc.Helpers.csproj" />
-        <ProjectReference Include="..\SSPI.NTLM\SSPI.NTLM.csproj" />
     </ItemGroup>
 
     <ItemGroup>

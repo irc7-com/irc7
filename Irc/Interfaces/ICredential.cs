@@ -1,4 +1,5 @@
 ﻿using Irc.Enumerations;
+using Irc.Security;
 
 namespace Irc.Interfaces;
 
@@ -10,9 +11,11 @@ public interface ICredential
     public string Nickname { get; set; }
     public string UserGroup { get; set; }
     public string Modes { get; set; }
+    public string Prefix { get; set; }
     public bool Guest { get; set; }
     public long IssuedAt { get; set; }
     public EnumUserAccessLevel Level { get; set; }
+    public PermissionProfile? PermissionProfile { get; set; }
     EnumUserAccessLevel GetLevel();
     string GetDomain();
     string GetUsername();

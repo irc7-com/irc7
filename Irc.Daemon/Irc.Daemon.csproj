@@ -11,7 +11,10 @@
         <Company>Irc7d</Company>
         <Product>Irc7d</Product>
         <AssemblyName>Irc7d</AssemblyName>
-        <!-- AOT / Native compilation settings -->
+        <!-- AOT / Native compilation settings (Release only) -->
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <PublishAot>true</PublishAot>
         <SelfContained>true</SelfContained>
         <PublishSingleFile>false</PublishSingleFile>
@@ -34,6 +37,18 @@
         <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1"/>
         <None Update="DefaultCredentials.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="ircx_sspi.dll">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="master.key">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="credentials.vault">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="DefaultPermissions.json">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
     <ItemGroup>

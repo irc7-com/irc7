@@ -91,10 +91,6 @@ public class Server : ChatObject, IServer
         Props = new PropCollection();
         Access = new ServerAccess();
 
-        if (SupportPackages.Contains("NTLM"))
-            GetSecurityManager()
-                .AddSupportPackage(new NTLM(credentialProvider ?? new NtlmProvider()));
-
         AddProtocol(EnumProtocolType.IRC, new Protocols.Irc());
         AddProtocol(EnumProtocolType.IRCX, new IrcX());
         AddProtocol(EnumProtocolType.IRC3, new Irc3());
@@ -124,8 +120,6 @@ public class Server : ChatObject, IServer
         if (SupportPackages.Contains("GateKeeper"))
         {
             _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
-            securityManager.AddSupportPackage(new GateKeeper(new DefaultProvider()));
-            securityManager.AddSupportPackage(new GateKeeperPassport(new PassportProvider(_passport)));
         }
 
         var modes = new ChannelModes().GetSupportedModes();

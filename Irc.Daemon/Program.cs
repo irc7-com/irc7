@@ -39,8 +39,9 @@ internal class Program
             socketServer.OnListen += (_, __) => DisplayStartupInfo(options, ip);
 
             var credentialProvider = await LoadCredentials();
+            var defaultPermissions = await LoadDefaultPermissions();
 
-            _server = ConfigureServer(serverType, socketServer, credentialProvider, options.ChatServerIp, options.RedisUrl);
+            _server = ConfigureServer(serverType, socketServer, credentialProvider, defaultPermissions, options.ChatServerIp, options.RedisUrl);
 
             _server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0);
             _server.RemoteIp = options.Fqdn ?? "localhost";
@@ -164,10 +165,10 @@ internal class Program
     }
 
     private static Server ConfigureServer(IrcType serverType, SocketServer socketServer,
-        NtlmCredentials credentialProvider, string? chatServerIp, string? redisUrl)
+        NtlmCredentials credentialProvider, Dictionary<string, PermissionProfile> defaultPermissions, string? chatServerIp, string? redisUrl)
     {
         var floodProtectionManager = new FloodProtectionManager();
-        var securityManager = new SecurityManager();
+        var securityManager = new SecurityManager(defaultPermissions);
         var dataStoreServerConfig = new DataStore("DefaultServer.json");
         return serverType switch
         {
@@ -201,6 +202,18 @@ internal class Program
         }
 
         return new NtlmCredentials(new Dictionary<string, Credential>());
+    }
+
+    private static async Task<Dictionary<string, PermissionProfile>> LoadDefaultPermissions()
+    {
+        if (!File.Exists("DefaultPermissions.json"))
+            return new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
+
+        var loaded = System.Text.Json.JsonSerializer.Deserialize(
+            await File.ReadAllTextAsync("DefaultPermissions.json"),
+            IrcDaemonJsonContext.Default.DictionaryStringPermissionProfile) ?? new Dictionary<string, PermissionProfile>();
+
+        return new Dictionary<string, PermissionProfile>(loaded, StringComparer.OrdinalIgnoreCase);
     }
 
     private static void InitializeDefaultChannels(IServer server, IrcType serverType)

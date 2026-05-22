@@ -7,9 +7,11 @@ namespace Irc7d;
 /// Source-generated JSON serializer context for AOT / trimming support in the Irc7d daemon.
 /// </summary>
 [JsonSerializable(typeof(Dictionary<string, Credential>))]
+[JsonSerializable(typeof(Dictionary<string, PermissionProfile>))]
 [JsonSerializable(typeof(List<DefaultChannel>))]
 [JsonSerializable(typeof(DefaultChannel))]
 [JsonSerializable(typeof(Credential))]
+[JsonSerializable(typeof(PermissionProfile))]
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
 internal partial class IrcDaemonJsonContext : JsonSerializerContext
 {
