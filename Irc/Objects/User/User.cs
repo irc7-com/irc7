@@ -350,7 +350,14 @@ public class User : ChatObject, IUser
             {
                 Log.Trace($"Ping Count for {this} hit stage {PingCount + 1}");
                 PingCount++;
-                Send(Raws.RPL_PING(Server, this));
+                
+                // Note: Directory Server does not support PING/PONG
+                // PING causes MSN CAC to disconnect.
+                
+                if (!Server.IsDirectoryServer)
+                {
+                    Send(Raws.RPL_PING(Server, this));
+                }
             }
             else
             {

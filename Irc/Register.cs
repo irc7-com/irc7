@@ -20,6 +20,7 @@ public static class Register
             chatFrame.User.Send(Raws.IRCX_RPL_WELCOME_003(chatFrame.Server, chatFrame.User));
             chatFrame.User.Send(Raws.IRCX_RPL_WELCOME_004(chatFrame.Server, chatFrame.User,
                 chatFrame.Server.ServerVersion));
+            
             chatFrame.User.Send(Raws.IRCX_RPL_ISUPPORT_005(
                 chatFrame.Server, 
                 chatFrame.User,
@@ -28,7 +29,7 @@ public static class Register
                 ".@+", // temporary
                 "b,k,l,SWadefghimnprstuwxz", // temporary
                 chatFrame.Server.MaxChannels
-                ));
+            ));
             
             chatFrame.User.Send(Raws.IRCX_RPL_LUSERCLIENT_251(chatFrame.Server, chatFrame.User, 0, 0, 0));
             chatFrame.User.Send(Raws.IRCX_RPL_LUSEROP_252(chatFrame.Server, chatFrame.User, 0));
@@ -55,23 +56,28 @@ public static class Register
                 chatFrame.User.Send(Raws.IRCX_RPL_RPL_ENDOFMOTD_376(chatFrame.Server, chatFrame.User));
             }
 
-            switch (chatFrame.User.GetLevel())
+            // Note: Directory Server does not send user modes,
+            // This causes the MSN CAC to disconnect
+            if (!chatFrame.Server.IsDirectoryServer)
             {
-                case EnumUserAccessLevel.Administrator:
+                switch (chatFrame.User.GetLevel())
                 {
-                    chatFrame.User.PromoteToAdministrator();
-                    break;
-                }
-                case EnumUserAccessLevel.Sysop:
-                {
-                    chatFrame.User.PromoteToSysop();
-                    break;
-                }
-                case EnumUserAccessLevel.Guide:
-                {
-                    chatFrame.User.PromoteToGuide();
-                    break;
-                }
+                    case EnumUserAccessLevel.Administrator:
+                    {
+                        chatFrame.User.PromoteToAdministrator();
+                        break;
+                    }
+                    case EnumUserAccessLevel.Sysop:
+                    {
+                        chatFrame.User.PromoteToSysop();
+                        break;
+                    }
+                    case EnumUserAccessLevel.Guide:
+                    {
+                        chatFrame.User.PromoteToGuide();
+                        break;
+                    }
+                }   
             }
         }
     }

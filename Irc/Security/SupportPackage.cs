@@ -302,6 +302,13 @@ public class SupportPackage : ISupportPackage
             }
 
             Credentials = BuildCredential(username, domain, permissionProfile);
+            
+            // MSN CAC will PROP its nickname after NTLM auth, the below bit is to ensure there is a nick
+            if (package == "NTLM")
+            {
+                Credentials.Nickname = username;
+            }
+            
             Guest = permissionProfile.Guest;
             Authenticated = true;
             return EnumSupportPackageSequence.SSP_OK;
