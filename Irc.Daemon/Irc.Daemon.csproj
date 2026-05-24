@@ -28,16 +28,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Irc.Directory\Irc.Directory.csproj"/>
+        <ProjectReference Include="..\Irc.Host\Irc.Host.csproj"/>
         <ProjectReference Include="..\Irc\Irc.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="SocketConnection.cs" />
+        <Compile Remove="SocketServer.cs" />
+        <Compile Remove="ServerOptions.cs" />
     </ItemGroup>
 
     <ItemGroup>
         <None Remove="states\"/>
         <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1"/>
-        <None Update="DefaultCredentials.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
         <None Update="ircx_sspi.dll">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>

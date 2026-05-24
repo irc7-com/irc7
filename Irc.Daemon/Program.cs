@@ -2,14 +2,13 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Net;
 using System.Reflection;
-using Irc.Directory;
 using Irc.Helpers;
+using Irc.Host;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Logging;
 using Irc.Objects.Server;
 using Irc.Security;
-using Irc.Security.Credentials;
 using NLog;
 
 namespace Irc7d;
@@ -32,16 +31,13 @@ internal class Program
 
             var ip = !string.IsNullOrEmpty(options.BindIp) ? IPAddress.Parse(options.BindIp) : IPAddress.Any;
 
-            Enum.TryParse<IrcType>(options.ServerType, true, out var serverType);
-
             var socketServer = new SocketServer(ip, options.BindPort, options.Backlog, options.MaxConnections, options.MaxConnectionsPerIp,
                 options.BufferSize);
             socketServer.OnListen += (_, __) => DisplayStartupInfo(options, ip);
 
-            var credentialProvider = await LoadCredentials();
             var defaultPermissions = await LoadDefaultPermissions();
 
-            _server = ConfigureServer(serverType, socketServer, credentialProvider, defaultPermissions, options.ChatServerIp, options.RedisUrl);
+            _server = ConfigureServer(socketServer, defaultPermissions, options.RedisUrl);
 
             _server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0);
             _server.RemoteIp = options.Fqdn ?? "localhost";
@@ -49,8 +45,7 @@ internal class Program
             if (!string.IsNullOrEmpty(options.ServerName))
                 _server.Name = options.ServerName;
 
-            if (!_server.IsDirectoryServer)
-                InitializeDefaultChannels(_server, serverType);
+            InitializeDefaultChannels(_server);
 
             if (_server is Server baseServer)
             {
@@ -111,12 +106,6 @@ internal class Program
         var fqdnOption = new Option<string>(["-f", "--fqdn"], "The FQDN of the machine (default localhost)")
             { ArgumentHelpName = "fqdn" };
         fqdnOption.SetDefaultValue("localhost");
-        var serverTypeOption = new Option<string>(["-t", "--type"], "Type of server e.g. IRC, IRCX, ACS, ADS")
-            { ArgumentHelpName = "type" };
-        serverTypeOption.SetDefaultValue("ACS");
-        var chatServerIpOption =
-            new Option<string>(["-s", "--server"], "The Chat Server Ip and Port e.g. 127.0.0.1:6667")
-                { ArgumentHelpName = "server" };
         var redisUrlOption =
             new Option<string>(["-r", "--redis"], "The Redis/KeyDB connection string (optional, enables caching and ADS/ACS load balancing)")
                 { ArgumentHelpName = "redisurl" };
@@ -134,8 +123,6 @@ internal class Program
             { "maxConnections", maxConnectionsOption },
             { "maxConnectionsPerIp", maxConnectionsPerIpOption },
             { "fqdn", fqdnOption },
-            { "serverType", serverTypeOption },
-            { "chatServerIp", chatServerIpOption },
             { "redisUrl", redisUrlOption },
             { "serverName", serverNameOption }
         };
@@ -157,51 +144,19 @@ internal class Program
             MaxConnections = context.ParseResult.GetValueForOption((Option<int>)optionsDict["maxConnections"]),
             MaxConnectionsPerIp = context.ParseResult.GetValueForOption((Option<int>)optionsDict["maxConnectionsPerIp"]),
             Fqdn = context.ParseResult.GetValueForOption((Option<string>)optionsDict["fqdn"]),
-            ServerType = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverType"]),
-            ChatServerIp = context.ParseResult.GetValueForOption((Option<string>)optionsDict["chatServerIp"]),
             RedisUrl = context.ParseResult.GetValueForOption((Option<string>)optionsDict["redisUrl"]),
             ServerName = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverName"])
         };
     }
 
-    private static Server ConfigureServer(IrcType serverType, SocketServer socketServer,
-        NtlmCredentials credentialProvider, Dictionary<string, PermissionProfile> defaultPermissions, string? chatServerIp, string? redisUrl)
+    private static Server ConfigureServer(SocketServer socketServer,
+        Dictionary<string, PermissionProfile> defaultPermissions, string? redisUrl)
     {
         var floodProtectionManager = new FloodProtectionManager();
         var securityManager = new SecurityManager(defaultPermissions);
         var dataStoreServerConfig = new DataStore("DefaultServer.json");
-        return serverType switch
-        {
-            IrcType.ADS => ConfigureDirectoryServer(socketServer, credentialProvider, securityManager,
-                floodProtectionManager, dataStoreServerConfig, chatServerIp, redisUrl),
-            _ => new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
-                credentialProvider, redisUrl)
-        };
-    }
-
-    private static DirectoryServer ConfigureDirectoryServer(SocketServer socketServer,
-        NtlmCredentials credentialProvider, SecurityManager securityManager,
-        FloodProtectionManager floodProtectionManager, DataStore dataStoreServerConfig,
-        string? chatServerIp, string? redisUrl)
-    {
-        var server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
-            credentialProvider, chatServerIp, redisUrl);
-
-        return server;
-    }
-
-    private static async Task<NtlmCredentials> LoadCredentials()
-    {
-        if (File.Exists("DefaultCredentials.json"))
-        {
-            var credentials =
-                System.Text.Json.JsonSerializer.Deserialize(
-                    await File.ReadAllTextAsync("DefaultCredentials.json"),
-                    IrcDaemonJsonContext.Default.DictionaryStringCredential) ?? new Dictionary<string, Credential>();
-            return new NtlmCredentials(credentials);
-        }
-
-        return new NtlmCredentials(new Dictionary<string, Credential>());
+        return new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
+            null, redisUrl);
     }
 
     private static async Task<Dictionary<string, PermissionProfile>> LoadDefaultPermissions()
@@ -216,7 +171,7 @@ internal class Program
         return new Dictionary<string, PermissionProfile>(loaded, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static void InitializeDefaultChannels(IServer server, IrcType serverType)
+    private static void InitializeDefaultChannels(IServer server)
     {
         var defaultChannels =
             System.Text.Json.JsonSerializer.Deserialize(
@@ -276,14 +231,12 @@ internal class Program
             $"║ Port: {options.BindPort}",
             $"║ Max Connections: {options.MaxConnections}",
             $"║ Max Connections Per IP: {options.MaxConnectionsPerIp}",
-            $"║ Server Type: {options.ServerType?.ToUpper()}",
             $"║ FQDN: {options.Fqdn}",
             $"║ Buffer Size: {options.BufferSize} bytes",
             $"║ Backlog Size: {options.Backlog}",
             $"║ Redis URL: {options.RedisUrl}"
         };
         if (!string.IsNullOrEmpty(options.ServerName)) infoLines.Add($"║ Server Name: {options.ServerName}");
-        if (!string.IsNullOrEmpty(options.ChatServerIp)) infoLines.Add($"║ Chat Server Ip: {options.ChatServerIp}");
 
         var maxLength = 0;
         foreach (var line in infoLines)
@@ -300,11 +253,5 @@ internal class Program
         }
 
         Console.WriteLine("╚════════════════════════════════════════╝");
-    }
-
-    private enum IrcType
-    {
-        ACS,
-        ADS
     }
 }

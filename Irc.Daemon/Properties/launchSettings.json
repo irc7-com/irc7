@@ -6,11 +6,11 @@
     },
     "irc7-redis-acs": {
       "commandName": "Project",
-      "commandLineArgs": "-t ACS -f localhost -r localhost:6379 -n TK2CHATCHATA01"
+      "commandLineArgs": "-f localhost -r localhost:6379 -n TK2CHATCHATA01"
     },
     "irc7-redis-acs2": {
       "commandName": "Project",
-      "commandLineArgs": "-t ACS -f localhost -p 6669 -r localhost:6379 -n TK2CHATCHATA02"
+      "commandLineArgs": "-f localhost -p 6669 -r localhost:6379 -n TK2CHATCHATA02"
     },
     "irc7-standalone-ads": {
       "commandName": "Project",
@@ -18,7 +18,7 @@
     },
     "irc7-standalone-acs": {
       "commandName": "Project",
-      "commandLineArgs": "-t ACS -f localhost -p 6667 -n TK2CHATCHATA01"
+      "commandLineArgs": "-f localhost -p 6667 -n TK2CHATCHATA01"
     }
   }
 }

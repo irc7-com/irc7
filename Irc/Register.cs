@@ -86,6 +86,8 @@ public static class Register
     {
         if (!server.AnonymousConnections && user.IsAnon())
         {
+            // Per Exchange 2000
+            // <- ERROR :Closing Link: Sky[127.0.0.1] (Class denied access)
             user.Disconnect(Raws.IRCX_CLOSINGLINK(server, user, "001", "No Authorization"));
             return false;
         }
@@ -139,7 +141,8 @@ public static class Register
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var authenticating = chatFrame.User.IsAuthenticated() != true && chatFrame.User.IsAnon() == false;
+        var authenticated = chatFrame.User.IsAuthenticated();
+        var authenticating = !authenticated && chatFrame.User.IsAnon() == false;
         var registered = chatFrame.User.IsRegistered();
         var nickname = chatFrame.User.GetAddress().Nickname;
         var hasNickname = !string.IsNullOrWhiteSpace(nickname);
