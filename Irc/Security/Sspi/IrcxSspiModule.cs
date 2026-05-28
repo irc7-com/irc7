@@ -28,6 +28,15 @@ public static class IrcxSspiModule
 		if (!string.Equals(libraryName, "ircx_sspi", StringComparison.OrdinalIgnoreCase))
 			return IntPtr.Zero;
 
+		// Determine the platform-specific library filename.
+		string fileName;
+		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			fileName = "ircx_sspi.dll";
+		else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+			fileName = "libircx_sspi.dylib";
+		else
+			fileName = "libircx_sspi.so"; // Linux and other Unix-like systems
+
 		// Probe upwards from the app base directory to find the repo root, then load from
 		// target/(debug|release) or targets/(debug|release).
 		var dir = new DirectoryInfo(AppContext.BaseDirectory);
@@ -38,7 +47,7 @@ public static class IrcxSspiModule
 			{
 				foreach (var config in new[] { "release", "debug" })
 				{
-					var path = Path.Combine(root, folder, config, "ircx_sspi.dll");
+					var path = Path.Combine(root, folder, config, fileName);
 					if (File.Exists(path) && NativeLibrary.TryLoad(path, out var handle))
 						return handle;
 				}

@@ -1,9 +1,5 @@
 {
   "profiles": {
-    "irc7-redis-ads": {
-      "commandName": "Project",
-      "commandLineArgs": "-t ADS -f localhost -p 6668 -r localhost:6379 -n TK2CHATWBA01"
-    },
     "irc7-redis-acs": {
       "commandName": "Project",
       "commandLineArgs": "-f localhost -r localhost:6379 -n TK2CHATCHATA01"
@@ -11,10 +7,6 @@
     "irc7-redis-acs2": {
       "commandName": "Project",
       "commandLineArgs": "-f localhost -p 6669 -r localhost:6379 -n TK2CHATCHATA02"
-    },
-    "irc7-standalone-ads": {
-      "commandName": "Project",
-      "commandLineArgs": "-t ADS -f localhost -p 6668 -s localhost:6667 -n TK2CHATWBA01"
     },
     "irc7-standalone-acs": {
       "commandName": "Project",

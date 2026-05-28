@@ -84,8 +84,6 @@ public class Server : ChatObject, IServer
         SupportPackages = _DataStore.GetAs<List<string>>(Resources.ConfigSaslPackages, IrcJsonContext.Default.ListString)?.ToArray() ??
                           Array.Empty<string>();
 
-        if (MaxAnonymousConnections > 0) _securityManager.AddSupportPackage(new ANON());
-        
         //IRCX Initialization
         _credentialProvider = credentialProvider;
         Props = new PropCollection();

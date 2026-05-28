@@ -35,7 +35,7 @@ internal class Program
 
 			var defaultPermissions = await LoadDefaultPermissions();
 			var floodProtectionManager = new FloodProtectionManager();
-			var securityManager = new SecurityManager(defaultPermissions);
+			var securityManager = new SecurityManager(new SupportPackage(defaultPermissions));
 			var dataStoreServerConfig = new DataStore("DefaultServer.json");
 
 			_server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,

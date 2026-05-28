@@ -66,7 +66,6 @@ public class SupportPackage : ISupportPackage
     private IrcxSspiNative.CtxtHandle _serverCtx;
     private IrcxSspiNative.CredHandle _serverCred;
     private byte[] _authResponse;
-    private ICredentialProvider _credentialProvider;
     private string _package;
     private readonly Dictionary<string, PermissionProfile> _permissionProfiles;
     private Session session = new();
@@ -77,15 +76,8 @@ public class SupportPackage : ISupportPackage
         _permissionProfiles = new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
     }
     
-    public SupportPackage(ICredentialProvider credentialProvider)
+    public SupportPackage(Dictionary<string, PermissionProfile>? permissionProfiles)
     {
-        _credentialProvider = credentialProvider;
-        _permissionProfiles = new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
-    }
-
-    public SupportPackage(ICredentialProvider credentialProvider, Dictionary<string, PermissionProfile>? permissionProfiles)
-    {
-        _credentialProvider = credentialProvider;
         _permissionProfiles = permissionProfiles != null
             ? new Dictionary<string, PermissionProfile>(permissionProfiles, StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
