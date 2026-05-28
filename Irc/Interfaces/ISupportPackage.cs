@@ -2,7 +2,7 @@
 
 namespace Irc.Interfaces;
 
-public interface ISupportPackage
+public interface ISaslHandler
 {
     string GetAuthResponse();
     EnumSupportPackageSequence InitializeSecurityContext(string package, string token, string ip);
@@ -11,4 +11,5 @@ public interface ISupportPackage
     string GetPackageName();
     ICredential? GetCredentials();
     bool IsAuthenticated();
+    string[] SupportedPackages { get; }
 }

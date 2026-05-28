@@ -153,9 +153,9 @@ internal class Program
         Dictionary<string, PermissionProfile> defaultPermissions, string? redisUrl)
     {
         var floodProtectionManager = new FloodProtectionManager();
-        var securityManager = new SecurityManager(new SupportPackage(defaultPermissions));
+        var securityManager = new SaslHandler(defaultPermissions);
         var dataStoreServerConfig = new DataStore("DefaultServer.json");
-        return new Server(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
+        return new Server(socketServer, () => new SaslHandler(defaultPermissions), floodProtectionManager, dataStoreServerConfig,
             null, redisUrl);
     }
 

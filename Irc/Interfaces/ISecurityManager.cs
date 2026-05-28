@@ -4,6 +4,6 @@ namespace Irc.Interfaces;
 
 public interface ISecurityManager
 {
-    SupportPackage GetSupportPackage();
+    SaslHandler GetSupportPackage();
     string GetSupportedPackages();
 }

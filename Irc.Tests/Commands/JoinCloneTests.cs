@@ -387,11 +387,12 @@ public class JoinCloneTests
         var mockDataRegulator = new Mock<IDataRegulator>();
         var mockFloodProtection = new Mock<IFloodProtectionProfile>();
         var mockSrv = new Mock<IServer>();
+        var mockSaslHandler = new Mock<ISaslHandler>();
         mockConnection.Setup(c => c.GetIp()).Returns("127.0.0.1");
 
         var user = new Irc.Objects.User.User(
             mockConnection.Object, mockProtocol.Object,
-            mockDataRegulator.Object, mockFloodProtection.Object, mockSrv.Object);
+            mockDataRegulator.Object, mockFloodProtection.Object, mockSrv.Object, () => mockSaslHandler.Object);
         user.Nickname = nickname;
         return user;
     }

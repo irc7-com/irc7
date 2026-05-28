@@ -124,7 +124,7 @@ public class DirectoryServer : Server
 
     public DirectoryServer(
         ISocketServer socketServer,
-        ISecurityManager securityManager,
+        Func<ISaslHandler> saslHandlerFactory,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
         ICredentialProvider? ntlmCredentialProvider = null,
@@ -133,7 +133,7 @@ public class DirectoryServer : Server
     )
         : base(
             socketServer,
-            securityManager,
+            saslHandlerFactory,
             floodProtectionManager,
             dataStore,
             ntlmCredentialProvider,

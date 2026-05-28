@@ -5,8 +5,6 @@ using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Modes;
-using Irc.Objects.Collections;
-using Irc.Security.Packages;
 using NLog;
 
 namespace Irc.Objects.User;
@@ -18,6 +16,8 @@ public class User : ChatObject, IUser
     private readonly IConnection _connection;
     private readonly IDataRegulator _dataRegulator;
     private readonly IFloodProtectionProfile _floodProtectionProfile;
+    private readonly Func<ISaslHandler> _saslHandlerFactory;
+    private ISaslHandler? _saslHandler;
     private readonly Queue<ModeOperation> _modeOperations = new();
     private bool _authenticated;
     public override IUserProps Props => (IUserProps)base.Props;
@@ -29,7 +29,6 @@ public class User : ChatObject, IUser
     private EnumUserAccessLevel _level;
     private IProtocol _protocol;
     private bool _registered;
-    private ISupportPackage _supportPackage;
     public IDictionary<IChannel, IChannelMember> Channels;
 
     public DateTime LastPing = DateTime.UtcNow;
@@ -42,14 +41,15 @@ public class User : ChatObject, IUser
         IProtocol protocol, 
         IDataRegulator dataRegulator,
         IFloodProtectionProfile floodProtectionProfile,
-        IServer server)
+        IServer server,
+        Func<ISaslHandler> saslHandlerFactory)
     {
         Server = server;
         _connection = connection;
         _protocol = protocol;
         _dataRegulator = dataRegulator;
         _floodProtectionProfile = floodProtectionProfile;
-        _supportPackage = new ANON();
+        _saslHandlerFactory = saslHandlerFactory;
         Channels = new ConcurrentDictionary<IChannel, IChannelMember>();
         base.Modes = new UserModes();
         base.Props = new UserProps();
@@ -159,16 +159,6 @@ public class User : ChatObject, IUser
         return _floodProtectionProfile;
     }
 
-    public ISupportPackage GetSupportPackage()
-    {
-        return _supportPackage;
-    }
-
-    public void SetSupportPackage(ISupportPackage supportPackage)
-    {
-        _supportPackage = supportPackage;
-    }
-
     public void SetProtocol(IProtocol protocol)
     {
         _protocol = protocol;
@@ -250,7 +240,7 @@ public class User : ChatObject, IUser
 
     public bool IsAnon()
     {
-        return _supportPackage is ANON;
+        return _saslHandler == null;
     }
 
     public bool IsSysop()
@@ -370,18 +360,21 @@ public class User : ChatObject, IUser
     public void Register()
     {
         var userAddress = GetAddress();
-        var credentials = GetSupportPackage().GetCredentials();
+        
+        var userhost = string.IsNullOrWhiteSpace(userAddress.User) ? userAddress.MaskedIp : userAddress.User;
+        var hostname = userAddress.MaskedIp;
 
-        if (credentials == null) throw new Exception("Register: No credentials provided");
-
-        var userHost = string.IsNullOrWhiteSpace(userAddress.User) ? userAddress.MaskedIp : userAddress.User;
-        if (GetSupportPackage() is not ANON)
+        // If user is authenticated take from the sspi handler
+        var sspiHandler = GetSspiHandler();
+        if (sspiHandler != null)
         {
-            var credUser = credentials.GetUsername();
-            userHost = string.IsNullOrWhiteSpace(credUser) ? userAddress.MaskedIp : credUser;
+            var credentials = sspiHandler.GetCredentials();
+            if (credentials == null) throw new Exception("Register: No credentials provided");
+            userhost = credentials.GetUsername();
+            hostname = credentials.GetDomain();
         }
-        userAddress.User = userHost;
-        userAddress.Host = credentials.GetDomain();
+        userAddress.User = userhost;
+        userAddress.Host = hostname;
         userAddress.Server = Server.Name;
 
         LoggedOn = DateTime.UtcNow;
@@ -397,6 +390,17 @@ public class User : ChatObject, IUser
     public Queue<ModeOperation> GetModeOperations()
     {
         return _modeOperations;
+    }
+
+    public ISaslHandler? GetSspiHandler()
+    {
+        return _saslHandler;
+    }
+
+    public ISaslHandler InitializeSspiHandler()
+    {
+        _saslHandler ??= _saslHandlerFactory();
+        return _saslHandler;
     }
 
     public IChatFrame GetNextFrame()

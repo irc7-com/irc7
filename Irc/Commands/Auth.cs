@@ -29,20 +29,15 @@ public class Auth : Command, ICommand
         {
             var parameters = chatFrame.ChatMessage.Parameters;
 
-            var supportPackage = chatFrame.User.GetSupportPackage();
             var packageName = parameters[0];
             var sequence = parameters[1].ToUpper();
             var token = parameters[2].ToLiteral();
 
             if (sequence == "I")
             {
-                try
-                {
-                    supportPackage = chatFrame.Server.GetSecurityManager().GetSupportPackage();
-
-                    chatFrame.User.SetSupportPackage(supportPackage);
-                }
-                catch (ArgumentException)
+                var saslHandler = chatFrame.User.InitializeSspiHandler();
+                var packages = saslHandler.SupportedPackages;
+                if (!packages.Contains(packageName))
                 {
                     chatFrame.User.Send(Raws.IRCX_ERR_UNKNOWNPACKAGE_912(chatFrame.Server, chatFrame.User,
                         packageName));
@@ -50,11 +45,11 @@ public class Auth : Command, ICommand
                 }
 
                 var supportPackageSequence =
-                    supportPackage.InitializeSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
+                    saslHandler.InitializeSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
 
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK || supportPackageSequence == EnumSupportPackageSequence.SSP_EXT)
                 {
-                    var authResponse = supportPackage.GetAuthResponse();
+                    var authResponse = saslHandler.GetAuthResponse();
                     var securityTokenEscaped = authResponse.ToEscape();
                     chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(packageName, securityTokenEscaped));
                     // Send reply
@@ -63,13 +58,21 @@ public class Auth : Command, ICommand
             }
             else if (sequence == "S")
             {
+                // Ironically not checking package name here is how MSN worked
+                var saslHandler = chatFrame.User.GetSspiHandler();
+                if (saslHandler == null)
+                {
+                    chatFrame.User.Disconnect(
+                        Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
+                    return;
+                }
                 var supportPackageSequence =
-                    supportPackage.AcceptSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
+                    saslHandler.AcceptSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
                 if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
                 {
                     chatFrame.User.Authenticate();
 
-                    var credentials = supportPackage.GetCredentials();
+                    var credentials = saslHandler.GetCredentials();
                     if (credentials == null)
                     {
                         // TODO: Invalid credentials handle

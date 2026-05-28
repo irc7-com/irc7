@@ -15,7 +15,7 @@ namespace Irc.Security;
 // Only diff is will have the privs of the original login via NTLM
 // e.g. :Ver|zon!4AB44E8AA2D222EA@GateKeeperPassport JOIN H,A,RXB,. %#The\bLobby
 
-public class SupportPackage : ISupportPackage
+public class SaslHandler : ISaslHandler
 {
     private sealed class Session : IDisposable
     {
@@ -71,12 +71,13 @@ public class SupportPackage : ISupportPackage
     private Session session = new();
     public bool Authenticated { get; protected set; }
 
-    public SupportPackage()
+    public SaslHandler()
     {
+        IrcxSspiModule.Initialize();
         _permissionProfiles = new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
     }
     
-    public SupportPackage(Dictionary<string, PermissionProfile>? permissionProfiles)
+    public SaslHandler(Dictionary<string, PermissionProfile>? permissionProfiles)
     {
         _permissionProfiles = permissionProfiles != null
             ? new Dictionary<string, PermissionProfile>(permissionProfiles, StringComparer.OrdinalIgnoreCase)
@@ -337,6 +338,8 @@ public class SupportPackage : ISupportPackage
     {
         return Authenticated;
     }
+
+    public string[] SupportedPackages => new[] { "GateKeeper", "NTLM" };
 
     private bool TryResolvePermissionProfile(string identity, string package, out PermissionProfile permissionProfile)
     {

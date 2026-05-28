@@ -35,10 +35,10 @@ internal class Program
 
 			var defaultPermissions = await LoadDefaultPermissions();
 			var floodProtectionManager = new FloodProtectionManager();
-			var securityManager = new SecurityManager(new SupportPackage(defaultPermissions));
+			var saslHandler = new SaslHandler(defaultPermissions);
 			var dataStoreServerConfig = new DataStore("DefaultServer.json");
 
-			_server = new DirectoryServer(socketServer, securityManager, floodProtectionManager, dataStoreServerConfig,
+			_server = new DirectoryServer(socketServer, () => new SaslHandler(defaultPermissions), floodProtectionManager, dataStoreServerConfig,
 				null, options.ChatServerIp, options.RedisUrl);
 
 			_server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0);

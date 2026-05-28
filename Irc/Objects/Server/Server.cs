@@ -14,8 +14,6 @@ using Irc.Objects.Channel;
 using Irc.Objects.Collections;
 using Irc.Objects.User;
 using Irc.Protocols;
-using Irc.Security.Credentials;
-using Irc.Security.Packages;
 using Irc.Security.Passport;
 using NLog;
 using Version = System.Version;
@@ -36,7 +34,8 @@ public class Server : ChatObject, IServer
     // Track IDs of users pending removal to avoid duplicate enqueues
     private readonly ConcurrentDictionary<Guid, byte> _pendingRemoveUserSet = new();
     private readonly Task _processingTask;
-    private readonly ISecurityManager _securityManager;
+    private readonly Func<ISaslHandler> _saslHandlerFactory;
+    private readonly string[] _saslSupportedPackages;
     private readonly ISocketServer _socketServer;
     private readonly Irc.Services.CacheManager _cacheManager;
     private System.Timers.Timer? _heartbeatTimer;
@@ -58,7 +57,7 @@ public class Server : ChatObject, IServer
     public IList<IUser> Users = new List<IUser>();
 
     public Server(ISocketServer socketServer,
-        ISecurityManager securityManager,
+        Func<ISaslHandler> saslHandlerFactory,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
         ICredentialProvider? credentialProvider = null,
@@ -67,9 +66,13 @@ public class Server : ChatObject, IServer
         Name = dataStore.Get("Name");
         Title = Name;
         _socketServer = socketServer;
-        _securityManager = securityManager;
+        _saslHandlerFactory = saslHandlerFactory;
         _floodProtectionManager = floodProtectionManager;
         _DataStore = dataStore;
+        
+        // Create a temporary instance to read supported packages
+        var tempHandler = saslHandlerFactory();
+        _saslSupportedPackages = tempHandler.SupportedPackages;
         
         _cacheManager = new Irc.Services.CacheManager(redisUrl);
         _processingTask = new Task(Process);
@@ -232,7 +235,7 @@ public class Server : ChatObject, IServer
     public int NetInvisibleCount { get; } = 0;
     public int NetServerCount { get; } = 0;
     public int NetUserCount { get; } = 0;
-    public string SecurityPackages => _securityManager.GetSupportedPackages();
+    public string SecurityPackages => string.Join(",", _saslSupportedPackages);
     public int SysopCount { get; } = 0;
     public int UnknownConnectionCount => _socketServer.CurrentConnections - NetUserCount;
     public string RemoteIp { set; get; } = string.Empty;
@@ -331,7 +334,8 @@ public class Server : ChatObject, IServer
             Protocols[EnumProtocolType.IRC],
             new DataRegulator(MaxInputBytes, MaxOutputBytes),
             new FloodProtectionProfile(),
-            this
+            this,
+            _saslHandlerFactory
         );
     }
 
@@ -443,10 +447,6 @@ public class Server : ChatObject, IServer
         return null;
     }
 
-    public ISecurityManager GetSecurityManager()
-    {
-        return _securityManager;
-    }
 
     public ICredentialProvider? GetCredentialManager()
     {
@@ -494,7 +494,7 @@ public class Server : ChatObject, IServer
         }
         else if (name == Resources.UserPropSubscriberInfo && user.IsAuthenticated() && user.IsRegistered())
         {
-            var issuedAt = user.GetSupportPackage()?.GetCredentials()?.GetIssuedAt();
+            var issuedAt = user.GetSspiHandler()?.GetCredentials()?.GetIssuedAt();
             if (!issuedAt.HasValue) return;
 
             var subscribedString =
