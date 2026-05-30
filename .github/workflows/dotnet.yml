@@ -25,6 +25,14 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends clang zlib1g-dev
 
+    - name: Add GitHub Packages NuGet source
+      run: |
+        dotnet nuget add source "https://nuget.pkg.github.com/mono-chat/index.json" \
+          --name "mono-chat" \
+          --username jyonxo \
+          --password "${{ secrets.IRCX_SSPI_TOKEN }}" \
+          --store-password-in-clear-text
+
     - name: Restore dependencies
       run: dotnet restore
 
