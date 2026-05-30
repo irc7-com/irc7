@@ -2,7 +2,8 @@
 using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Interfaces;
-using Irc.Security.Sspi;
+using IrcxSspi.Interop;
+using IrcxSspi.Native;
 using NLog;
 
 namespace Irc.Security;
@@ -73,7 +74,6 @@ public class SaslHandler : ISaslHandler
 
     public SaslHandler()
     {
-        IrcxSspiModule.Initialize();
         _permissionProfiles = new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
     }
     

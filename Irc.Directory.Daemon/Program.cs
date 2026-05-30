@@ -2,11 +2,9 @@
 using System.CommandLine.Invocation;
 using System.Net;
 using System.Reflection;
-using Irc.Directory;
 using Irc.Host;
 using Irc.Interfaces;
 using Irc.IO;
-using Irc.Logging;
 using Irc.Objects.Server;
 using Irc.Security;
 using NLog;
