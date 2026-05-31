@@ -5,6 +5,7 @@ using System.Reflection;
 using Irc.Host;
 using Irc.Interfaces;
 using Irc.IO;
+using Irc.Logging;
 using Irc.Objects.Server;
 using Irc.Security;
 using NLog;
@@ -19,12 +20,14 @@ internal class Program
 
 	private static async Task<int> Main(string[] args)
 	{
-		Irc.Logging.Logging.Attach();
+		var trace = Array.Exists(args, a => a == "--trace" || a == "-t");
+		Irc.Logging.Logging.Attach(trace: trace);
 		var (rootCommand, optionsDictionary) = CreateRootCommand();
 
-		rootCommand.SetHandler(async context =>
+		rootCommand.SetHandler((Func<InvocationContext, Task>)(async context =>
 		{
 			var options = GetOptions(context, optionsDictionary);
+			Log.Info($"Starting {AppDomain.CurrentDomain.FriendlyName} from {AppContext.BaseDirectory}");
 			var ip = !string.IsNullOrEmpty(options.BindIp) ? IPAddress.Parse(options.BindIp) : IPAddress.Any;
 
 			var socketServer = new SocketServer(ip, options.BindPort, options.Backlog, options.MaxConnections,
@@ -34,10 +37,20 @@ internal class Program
 			var defaultPermissions = await LoadDefaultPermissions();
 			var floodProtectionManager = new FloodProtectionManager();
 			var saslHandler = new SaslHandler(defaultPermissions);
-			var dataStoreServerConfig = new DataStore("DefaultServer.json");
+			var dataStoreServerConfig = new DataStore(ResolveRuntimePath("DefaultServer.json"));
 
-			_server = new DirectoryServer(socketServer, () => new SaslHandler(defaultPermissions), floodProtectionManager, dataStoreServerConfig,
-				null, options.ChatServerIp, options.RedisUrl);
+			try
+			{
+				_server = new DirectoryServer(socketServer, () => new SaslHandler(defaultPermissions), floodProtectionManager, dataStoreServerConfig,
+					null, options.ChatServerIp, options.RedisUrl);
+			}
+			catch (InvalidOperationException ex)
+			{
+				Log.Fatal(ex, $"Startup failed while binding {ip}:{options.BindPort}");
+				Console.Error.WriteLine(ex.Message);
+				context.ExitCode = 1;
+				return;
+			}
 
 			_server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0);
 			_server.RemoteIp = options.Fqdn ?? "localhost";
@@ -55,7 +68,7 @@ internal class Program
 			AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 			Console.CancelKeyPress += CurrentDomain_ProcessExit;
 			await Task.Delay(-1, _cancellationTokenSource.Token).ContinueWith(_ => { });
-		});
+		}));
 
 		return await rootCommand.InvokeAsync(args);
 	}
@@ -118,6 +131,8 @@ internal class Program
 			new Option<string>(["-n", "--name"], "The server name, overrides the Name value from DefaultServer.json")
 				{ ArgumentHelpName = "servername" };
 
+		var traceOption = new Option<bool>(["-t", "--trace"], "Enable trace logging");
+
 		var options = new Dictionary<string, Option>
 		{
 			{ "bindIp", bindIpOption },
@@ -129,7 +144,8 @@ internal class Program
 			{ "fqdn", fqdnOption },
 			{ "chatServerIp", chatServerIpOption },
 			{ "redisUrl", redisUrlOption },
-			{ "serverName", serverNameOption }
+			{ "serverName", serverNameOption },
+			{ "trace", traceOption }
 		};
 
 		foreach (var option in options.Values)
@@ -151,18 +167,20 @@ internal class Program
 			Fqdn = context.ParseResult.GetValueForOption((Option<string>)optionsDict["fqdn"]),
 			ChatServerIp = context.ParseResult.GetValueForOption((Option<string>)optionsDict["chatServerIp"]),
 			RedisUrl = context.ParseResult.GetValueForOption((Option<string>)optionsDict["redisUrl"]),
-			ServerName = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverName"])
+			ServerName = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverName"]),
+			Trace = context.ParseResult.GetValueForOption((Option<bool>)optionsDict["trace"])
 		};
 	}
 
 
 	private static async Task<Dictionary<string, PermissionProfile>> LoadDefaultPermissions()
 	{
-		if (!File.Exists("DefaultPermissions.json"))
+		var path = ResolveRuntimePath("DefaultPermissions.json");
+		if (!File.Exists(path))
 			return new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
 
 		var loaded = System.Text.Json.JsonSerializer.Deserialize(
-			await File.ReadAllTextAsync("DefaultPermissions.json"),
+			await File.ReadAllTextAsync(path),
 			DirectoryDaemonJsonContext.Default.DictionaryStringPermissionProfile) ??
 					 new Dictionary<string, PermissionProfile>();
 
@@ -183,5 +201,10 @@ internal class Program
 		Console.WriteLine($"Redis URL: {options.RedisUrl}");
 		if (!string.IsNullOrEmpty(options.ServerName)) Console.WriteLine($"Server Name: {options.ServerName}");
 		if (!string.IsNullOrEmpty(options.ChatServerIp)) Console.WriteLine($"Chat Server IP: {options.ChatServerIp}");
+	}
+
+	private static string ResolveRuntimePath(string fileName)
+	{
+		return Path.Combine(AppContext.BaseDirectory, fileName);
 	}
 }

@@ -38,8 +38,18 @@ public class SocketServer : Socket, ISocketServer
 
     public new void Listen()
     {
-        Bind(new IPEndPoint(Ip, Port));
-        Listen(Backlog);
+        try
+        {
+            Bind(new IPEndPoint(Ip, Port));
+            base.Listen(Backlog);
+        }
+        catch (SocketException ex)
+        {
+            var message = $"Cannot listen on {Ip}:{Port} (SocketError: {ex.SocketErrorCode}).";
+            Log.Fatal(ex, message);
+            Console.Error.WriteLine(message);
+            throw new InvalidOperationException(message, ex);
+        }
 
         OnListen?.Invoke(this, this);
 
@@ -50,7 +60,7 @@ public class SocketServer : Socket, ISocketServer
 
     public new void Close()
     {
-        Close();
+        base.Close();
     }
 
     public void AcceptConnection(Socket acceptSocket)

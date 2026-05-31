@@ -22,7 +22,7 @@ RUN --mount=type=secret,id=IRCX_SSPI_TOKEN \
     && if [ "$TARGETARCH" = "amd64" ]; then DOTNET_RID="linux-x64"; \
        elif [ "$TARGETARCH" = "arm64" ]; then DOTNET_RID="linux-arm64"; \
        fi \
-    && dotnet publish Irc.Daemon/Irc.Daemon.csproj \
+    && dotnet publish Irc.ChatServer.Daemon/Irc.ChatServer.Daemon.csproj \
         -c Release \
         -r "$DOTNET_RID" \
         --self-contained true \

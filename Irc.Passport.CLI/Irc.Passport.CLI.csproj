@@ -7,7 +7,7 @@
         <Nullable>enable</Nullable>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <RootNamespace>Irc.Daemon.CLI</RootNamespace>
-        <AssemblyName>Irc.Daemon.CLI</AssemblyName>
+        <PackageId>Irc.Passport.CLI</PackageId>
     </PropertyGroup>
 
     <ItemGroup>

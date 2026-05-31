@@ -15,5 +15,3 @@ set -- /app/irc7ds --ip 0.0.0.0 --port "$irc7_port" --fqdn "$irc7_fqdn"
 [ -n "$irc7_name"   ] && set -- "$@" --name   "$irc7_name"
 
 exec "$@"
-
-

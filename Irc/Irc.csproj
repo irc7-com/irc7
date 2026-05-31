@@ -13,6 +13,12 @@
         <EmbeddedResource Remove="Operations\**" />
         <None Remove="Operations\**" />
         <None Remove="Logging\" />
+        <None Update="credentials.vault">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="master.key">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

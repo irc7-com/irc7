@@ -28,18 +28,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Irc.Host\Irc.Host.csproj"/>
+        <ProjectReference Include="..\Irc.Sockets\Irc.Sockets.csproj" />
         <ProjectReference Include="..\Irc\Irc.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Remove="SocketConnection.cs" />
-        <Compile Remove="SocketServer.cs" />
-        <Compile Remove="ServerOptions.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Remove="states\"/>
+        <Compile Remove="states\"/>
         <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1"/>
         <None Update="DefaultPermissions.json">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>

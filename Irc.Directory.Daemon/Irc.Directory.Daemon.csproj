@@ -16,17 +16,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Irc.Host\Irc.Host.csproj" />
-    <ProjectReference Include="..\Irc.Directory\Irc.Directory.csproj" />
+    <ProjectReference Include="..\Irc.Sockets\Irc.Sockets.csproj" />
     <ProjectReference Include="..\Irc\Irc.csproj" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\Irc.Daemon\DefaultServer.json" Link="DefaultServer.json">
+    <None Include="..\Irc.ChatServer.Daemon\DefaultPermissions.json">
+      <Link>DefaultPermissions.json</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="..\Irc.Daemon\DefaultPermissions.json" Link="DefaultPermissions.json">
+    <None Include="..\Irc.ChatServer.Daemon\DefaultServer.json">
+      <Link>DefaultServer.json</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DefaultPermissions.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="DefaultServer.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

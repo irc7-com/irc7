@@ -3,11 +3,14 @@ using System.Net.Sockets;
 using System.Numerics;
 using Irc.Helpers;
 using Irc.Interfaces;
+using NLog;
 
 namespace Irc.Host;
 
 public class SocketConnection : IConnection
 {
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
     private readonly string _fullAddress = string.Empty;
     private readonly Socket _socket;
     private string _address = string.Empty;
@@ -81,6 +84,12 @@ public class SocketConnection : IConnection
         {
             sendAsync.Dispose();
         }
+
+        if (Irc.Logging.Logging.TraceEnabled)
+        {
+            var line = $"Send[{_address}]: {message}";
+            Log.Trace(line);
+        }
     }
 
     public void Disconnect(string message = "")
@@ -137,6 +146,11 @@ public class SocketConnection : IConnection
         data = data.Trim('\0', ' ');
         if (data.Length > 0)
         {
+            if (Irc.Logging.Logging.TraceEnabled)
+            {
+                var line = $"Recv[{_address}]: {data}";
+                Log.Trace(line);
+            }
             _received = $"{_received}{data}";
 
             if (_received.Length > 1024)
