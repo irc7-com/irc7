@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the image and container name
-HOST_MACHINE="metal"
+HOST_MACHINE=$(hostname)
 IMAGE_NAME="jyonxo/irc7d"
 CONTAINER_NAME="irc7d_cs"
 

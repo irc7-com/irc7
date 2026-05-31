@@ -20,8 +20,16 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="ircxsspi.native" Version="0.1.0" />
-      <PackageReference Include="StackExchange.Redis" Version="2.11.3" />
-    </ItemGroup>
+    <PackageReference Include="ircxsspi.native" Version="0.1.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.11.3" />
+  </ItemGroup>
+
+    <Target Name="CopyNativeIrcxSspi" AfterTargets="Build;Publish">
+        <ItemGroup>
+            <_NativeSo Include="$(NuGetPackageRoot)ircxsspi.native/**/runtimes/$(RuntimeIdentifier)/native/*.so" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_NativeSo)" DestinationFolder="$(OutputPath)" />
+        <Copy SourceFiles="@(_NativeSo)" DestinationFolder="$(PublishDir)" Condition="'$(PublishDir)' != ''" />
+    </Target>
 
 </Project>
