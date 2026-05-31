@@ -70,15 +70,16 @@ public static class Tools
     {
         if (string.IsNullOrEmpty(mask)) return false;
 
-        // 置換マッピングを辞書で定義
-        var replacements = new Dictionary<string, string>
+        // Build regex char-by-char so that:
+        //   * → .*   (wildcard: any sequence)
+        //   ? → .    (wildcard: any single char)
+        //   everything else is escaped so regex special chars like . $ ^ | are treated literally
+        var regexPattern = string.Concat(mask.Select(c => c switch
         {
-
-            { "*", ".*" }, // '*' は任意の文字列にマッチ
-            { "?", "." }   // '?' は任意の1文字にマッチ
-        };
-
-        var regexPattern = Regex.Replace(mask, @"\*|\?", match => replacements[match.Value]);
+            '*' => ".*",
+            '?' => ".",
+            _   => Regex.Escape(c.ToString())
+        }));
 
         var regex = new Regex($"^{regexPattern}$", RegexOptions.IgnoreCase);
         return regex.IsMatch(input);

@@ -36,7 +36,6 @@ internal class Access : Command, ICommand
 
         if (!Enum.TryParse(accessCommandName, true, out AccessCommand accessCommand))
         {
-            // Bad Command
             chatFrame.User.Send(Raws.IRCX_ERR_BADCOMMAND_900(chatFrame.Server, chatFrame.User, accessCommandName));
             return;
         }
@@ -44,37 +43,20 @@ internal class Access : Command, ICommand
         var targetObject = (IChatObject?)chatFrame.Server.GetChatObject(objectName);
         if (targetObject == null)
         {
-            // No such object
             chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHOBJECT_924(chatFrame.Server, chatFrame.User, objectName));
             return;
         }
 
         switch (accessCommand)
         {
-            case AccessCommand.LIST:
-            {
-                ListAccess(chatFrame, targetObject);
-                break;
-            }
-            case AccessCommand.ADD:
-            {
-                AddAccess(chatFrame, targetObject);
-                break;
-            }
-            case AccessCommand.DELETE:
-            {
-                DeleteAccess(chatFrame, targetObject);
-                break;
-            }
-            case AccessCommand.CLEAR:
-            {
-                ClearAccess(chatFrame, targetObject);
-                break;
-            }
+            case AccessCommand.LIST:   ListAccess(chatFrame, targetObject, objectName); break;
+            case AccessCommand.ADD:    AddAccess(chatFrame, targetObject, objectName); break;
+            case AccessCommand.DELETE: DeleteAccess(chatFrame, targetObject, objectName); break;
+            case AccessCommand.CLEAR:  ClearAccess(chatFrame, targetObject, objectName); break;
         }
     }
 
-    private void ClearAccess(IChatFrame chatFrame, IChatObject targetObject)
+    private void ClearAccess(IChatFrame chatFrame, IChatObject targetObject, string objectName)
     {
         var parameters = chatFrame.ChatMessage.Parameters.TakeLast(chatFrame.ChatMessage.Parameters.Count - 2).ToList();
 
@@ -107,7 +89,7 @@ internal class Access : Command, ICommand
         }
         else if (accessResult == EnumAccessError.SUCCESS)
         {
-            chatFrame.User.Send(Raws.IRCX_RPL_ACCESSCLEAR_820(chatFrame.Server, chatFrame.User, targetObject,
+            chatFrame.User.Send(Raws.IRCX_RPL_ACCESSCLEAR_820(chatFrame.Server, chatFrame.User, objectName,
                 accessLevel));
         }
         else
@@ -116,15 +98,17 @@ internal class Access : Command, ICommand
         }
     }
 
-    private void DeleteAccess(IChatFrame chatFrame, IChatObject targetObject)
+    private void DeleteAccess(IChatFrame chatFrame, IChatObject targetObject, string objectName)
     {
         // ACCESS <object> ADD|DELETE <level> <mask>
 
         var parameters = chatFrame.ChatMessage.Parameters.TakeLast(chatFrame.ChatMessage.Parameters.Count - 2).ToList();
 
         if (parameters.Count < 2)
-            // Not enough parameters
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_NEEDMOREPARAMS_461(chatFrame.Server, chatFrame.User, "ACCESS"));
             return;
+        }
 
         if (!Enum.TryParse<EnumAccessLevel>(parameters[0], true, out var accessLevel))
         {
@@ -133,7 +117,7 @@ internal class Access : Command, ICommand
             return;
         }
 
-        var mask = parameters[1];
+        var mask = NormalizeMask(parameters[1]);
         
         // Get access
         var accessEntry = targetObject.Access.Get(accessLevel, mask);
@@ -156,20 +140,21 @@ internal class Access : Command, ICommand
         if (accessError == EnumAccessError.IRCERR_NOACCESS)
             chatFrame.User.Send(Raws.IRCX_ERR_DUPACCESS_914(chatFrame.Server, chatFrame.User));
         else if (accessError == EnumAccessError.SUCCESS)
-            // RPL Access Add
-            chatFrame.User.Send(Raws.IRCX_RPL_ACCESSDELETE_802(chatFrame.Server, chatFrame.User, targetObject,
+            chatFrame.User.Send(Raws.IRCX_RPL_ACCESSDELETE_802(chatFrame.Server, chatFrame.User, objectName,
                 accessEntry.AccessLevel.ToString(), accessEntry.Mask, accessEntry.Timeout, accessEntry.EntryAddress, accessEntry.Reason));
     }
 
-    private void AddAccess(IChatFrame chatFrame, IChatObject targetObject)
+    private void AddAccess(IChatFrame chatFrame, IChatObject targetObject, string objectName)
     {
-        // ACCESS <object> ADD|DELETE <level> <mask> [< timeout > [:< reason >]]
+        // ACCESS <object> ADD|DELETE <level> <mask> [<timeout> [:<reason>]]
 
         var parameters = chatFrame.ChatMessage.Parameters.TakeLast(chatFrame.ChatMessage.Parameters.Count - 2).ToList();
 
         if (parameters.Count < 2)
-            // Not enough parameters
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_NEEDMOREPARAMS_461(chatFrame.Server, chatFrame.User, "ACCESS"));
             return;
+        }
 
         if (!Enum.TryParse<EnumAccessLevel>(parameters[0], true, out var accessLevel))
         {
@@ -184,7 +169,7 @@ internal class Access : Command, ICommand
             return;
         }
 
-        var mask = parameters[1];
+        var mask = NormalizeMask(parameters[1]);
         var timeout = 0;
         var reason = string.Empty;
 
@@ -206,12 +191,11 @@ internal class Access : Command, ICommand
             chatFrame.User.Send(Raws.IRCX_ERR_BADLEVEL_903(chatFrame.Server, chatFrame.User, targetObject));
         }
         else if (accessError == EnumAccessError.SUCCESS)
-            // RPL Access Add
-            chatFrame.User.Send(Raws.IRCX_RPL_ACCESSADD_801(chatFrame.Server, chatFrame.User, targetObject,
+            chatFrame.User.Send(Raws.IRCX_RPL_ACCESSADD_801(chatFrame.Server, chatFrame.User, objectName,
                 entry.AccessLevel.ToString(), entry.Mask, entry.Timeout, entry.EntryAddress, entry.Reason));
     }
 
-    private void ListAccess(IChatFrame chatFrame, IChatObject targetObject)
+    private void ListAccess(IChatFrame chatFrame, IChatObject targetObject, string objectName)
     {
         // If not at least host then no access
         if (!targetObject.Access.CanModifyAccessLevel((IChatObject)chatFrame.User, targetObject, EnumAccessLevel.HOST))
@@ -219,20 +203,40 @@ internal class Access : Command, ICommand
             chatFrame.User.Send(Raws.IRCX_ERR_NOACCESS_913(chatFrame.Server, chatFrame.User, targetObject));
             return;
         }
-        
-        chatFrame.User.Send(Raws.IRCX_RPL_ACCESSSTART_803(chatFrame.Server, chatFrame.User, targetObject));
+
+        chatFrame.User.Send(Raws.IRCX_RPL_ACCESSSTART_803(chatFrame.Server, chatFrame.User, objectName));
 
         // TODO: Some entries were not listed due to level restriction
         // :TK2CHATCHATA01 804 'Admin_Koach * DENY *!96E5C937AE1CEFB3@*$* 2873 Sysop_Wondrously@cg :Violation of MSN Code of Conduct - 6-US
         targetObject.Access.GetEntries().Values.ToList().ForEach(
             list => list.ForEach(entry =>
-                chatFrame.User.Send(Raws.IRCX_RPL_ACCESSLIST_804(chatFrame.Server, chatFrame.User, targetObject,
+                chatFrame.User.Send(Raws.IRCX_RPL_ACCESSLIST_804(chatFrame.Server, chatFrame.User, objectName,
                     entry.AccessLevel.ToString(), entry.Mask, (int)Math.Ceiling(entry.Ttl.TotalMinutes),
                     entry.EntryAddress, entry.Reason))
             )
         );
 
-        chatFrame.User.Send(Raws.IRCX_RPL_ACCESSEND_805(chatFrame.Server, chatFrame.User, targetObject));
+        chatFrame.User.Send(Raws.IRCX_RPL_ACCESSEND_805(chatFrame.Server, chatFrame.User, objectName));
+    }
+
+    /// <summary>
+    /// Normalizes an IRCX access mask to the full nick!user@host$server format,
+    /// defaulting any missing component to *.
+    /// e.g. "Sky"       → "Sky!*@*$*"
+    ///      "Sky!*@*"   → "Sky!*@*$*"
+    ///      "*!*@*$*"   → "*!*@*$*"  (unchanged)
+    /// </summary>
+    private static string NormalizeMask(string mask)
+    {
+        var address = new UserAddress();
+        if (!address.Parse(mask)) return mask;
+
+        if (string.IsNullOrEmpty(address.Nickname)) address.SetNickname("*");
+        if (string.IsNullOrEmpty(address.User))     address.User = "*";
+        if (string.IsNullOrEmpty(address.Host))     address.Host = "*";
+        if (string.IsNullOrEmpty(address.Server))   address.Server = "*";
+
+        return address.GetFullAddress();
     }
 
     private enum AccessCommand

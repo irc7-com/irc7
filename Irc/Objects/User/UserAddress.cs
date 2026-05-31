@@ -55,6 +55,28 @@ public class UserAddress
         return $"{Nickname}!{User}@{Host}${Server}";
     }
 
+    /// <summary>
+    /// Returns the full address using the raw RemoteIp instead of the Host field,
+    /// with IPv6-mapped IPv4 addresses normalised (::ffff:x.x.x.x → x.x.x.x).
+    /// Used for IP-based access-list matching.
+    /// </summary>
+    public string GetIpFullAddress()
+    {
+        return $"{Nickname}!{User}@{GetNormalizedIp()}${Server}";
+    }
+
+    /// <summary>
+    /// Returns RemoteIp with the IPv6-mapped prefix "::ffff:" stripped so that
+    /// both ::ffff:10.0.0.1 and 10.0.0.1 resolve to the same string.
+    /// </summary>
+    public string GetNormalizedIp()
+    {
+        const string ipv4MappedPrefix = "::ffff:";
+        if (RemoteIp.StartsWith(ipv4MappedPrefix, StringComparison.OrdinalIgnoreCase))
+            return RemoteIp.Substring(ipv4MappedPrefix.Length);
+        return RemoteIp;
+    }
+
     public bool IsAddressPopulated()
     {
         return !string.IsNullOrWhiteSpace(User) && !string.IsNullOrWhiteSpace(Host) &&
@@ -68,7 +90,7 @@ public class UserAddress
         // TODO: Check for bad characters
 
         var regex = new Regex(
-            @"((?<nick>\w+)(?:\!)(?<user>\w+)(?:\@)(?<host>\w+)(?:\$)(?<server>\w*))|((?<nick>\w+)(?:\!)(?<user>\w+)(?:\@)(?<host>\w+))|((?<user>\w+)(?:\@)(?<host>\w+))|(?<nick>\w+)");
+            @"((?<nick>[\w*?.]+)(?:\!)(?<user>[\w*?.]+)(?:\@)(?<host>[\w*?.]+)(?:\$)(?<server>[\w*?.*]*))|((?<nick>[\w*?.]+)(?:\!)(?<user>[\w*?.]+)(?:\@)(?<host>[\w*?.]+))|((?<user>[\w*?.]+)(?:\@)(?<host>[\w*?.]+))|(?<nick>[\w*?.]+)");
         var match = regex.Match(address);
 
         if (match.Groups.Count > 0)

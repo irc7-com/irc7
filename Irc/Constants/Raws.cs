@@ -626,6 +626,11 @@ public static class Raws
         return $":{server} 481 {user} :Permission Denied - You're not an IRC operator";
     }
 
+    public static string IRCX_ERR_CANTKILLSERVER_483(IServer server, IUser user, string target)
+    {
+        return $":{server} 483 {user} {target} :You can't KILL a server!";
+    }
+
     public static string IRCX_ERR_CHANOPRIVSNEEDED_482(IServer server, IUser user, IChannel channel)
     {
         return $":{server} 482 {user} {channel} :You're not channel operator";
@@ -764,32 +769,32 @@ public static class Raws
         return $":{server} 800 {user} {isircx} {ircxversion} {server.SecurityPackages} {buffsize} {options}";
     }
 
-    public static string IRCX_RPL_ACCESSADD_801(IServer server, IUser user, IChatObject targetObject,
+    public static string IRCX_RPL_ACCESSADD_801(IServer server, IUser user, string objectName,
         string accessLevel, string mask, int duration, string address, string reason)
     {
-        return $":{server} 801 {user} {targetObject} {accessLevel} {mask} {duration} {address} :{reason}";
+        return $":{server} 801 {user} {objectName} {accessLevel} {mask} {duration} {address} :{reason}";
     }
 
-    public static string IRCX_RPL_ACCESSDELETE_802(IServer server, IUser user, IChatObject targetObject,
+    public static string IRCX_RPL_ACCESSDELETE_802(IServer server, IUser user, string objectName,
         string accessLevel, string mask, int duration, string address, string reason)
     {
-        return $":{server} 802 {user} {targetObject} {accessLevel} {mask} {duration} {address} :{reason}";
+        return $":{server} 802 {user} {objectName} {accessLevel} {mask} {duration} {address} :{reason}";
     }
 
-    public static string IRCX_RPL_ACCESSSTART_803(IServer server, IUser user, IChatObject targetObject)
+    public static string IRCX_RPL_ACCESSSTART_803(IServer server, IUser user, string objectName)
     {
-        return $":{server} 803 {user} {targetObject} :Start of access entries";
+        return $":{server} 803 {user} {objectName} :Start of access entries";
     }
 
-    public static string IRCX_RPL_ACCESSLIST_804(IServer server, IUser user, IChatObject targetObject,
+    public static string IRCX_RPL_ACCESSLIST_804(IServer server, IUser user, string objectName,
         string accessLevel, string mask, int duration, string address, string reason)
     {
-        return $":{server} 804 {user} {targetObject} {accessLevel} {mask} {duration} {address} :{reason}";
+        return $":{server} 804 {user} {objectName} {accessLevel} {mask} {duration} {address} :{reason}";
     }
 
-    public static string IRCX_RPL_ACCESSEND_805(IServer server, IUser user, IChatObject targetObject)
+    public static string IRCX_RPL_ACCESSEND_805(IServer server, IUser user, string objectName)
     {
-        return $":{server} 805 {user} {targetObject} :End of access entries";
+        return $":{server} 805 {user} {objectName} :End of access entries";
     }
 
     public static string IRCX_RPL_EVENTADD_806(IServer server, IUser user)
@@ -855,11 +860,11 @@ public static class Raws
     }
 
 
-    public static string IRCX_RPL_ACCESSCLEAR_820(IServer server, IUser user, IChatObject targetObject,
+    public static string IRCX_RPL_ACCESSCLEAR_820(IServer server, IUser user, string objectName,
         EnumAccessLevel accessLevel)
     {
         var level = accessLevel == EnumAccessLevel.All ? "*" : accessLevel.ToString();
-        return $":{server} 820 {user} {targetObject} {level} :Clear";
+        return $":{server} 820 {user} {objectName} {level} :Clear";
     }
 
     public static string IRCX_RPL_USERUNAWAY_821(IServer server, IUser user)
