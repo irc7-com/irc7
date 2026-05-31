@@ -22,37 +22,44 @@ internal class Kill : Command, ICommand
         var target = chatFrame.ChatMessage.Parameters.First();
         var reason = chatFrame.ChatMessage.Parameters[1];
 
+        // ERR_NOPRIVILEGES: caller must be at least Sysop
         if (user.GetLevel() < EnumUserAccessLevel.Sysop)
         {
-            chatFrame.User.Send(Raws.IRCX_ERR_SECURITY_908(server, user));
+            user.Send(Raws.IRCX_ERR_NOPRIVILEGES_481(server, user));
             return;
         }
 
-        var channels = user.GetChannels();
-        if (channels.Count > 0)
+        // ERR_CANTKILLSERVER: target must not be the server itself
+        if (string.Equals(target, server.Name, StringComparison.OrdinalIgnoreCase))
         {
-            var channel = channels.First().Key;
-            var member = channel.GetMemberByNickname(target);
+            user.Send(Raws.IRCX_ERR_CANTKILLSERVER_483(server, user, target));
+            return;
+        }
 
-            if (member == null)
-            {
-                chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHNICK_401(server, user, target));
-                return;
-            }
+        // ERR_NOSUCHNICK: search server-wide, not just in the caller's first channel
+        var targetUser = server.GetUserByNickname(target);
+        if (targetUser == null)
+        {
+            user.Send(Raws.IRCX_ERR_NOSUCHNICK_401(server, user, target));
+            return;
+        }
 
-            var targetUser = member.GetUser();
+        // Prevent killing a user with equal or higher privileges
+        if (targetUser.GetLevel() >= user.GetLevel())
+        {
+            user.Send(Raws.IRCX_ERR_SECURITY_908(server, user));
+            return;
+        }
 
-            if (targetUser.GetLevel() > user.GetLevel())
-            {
-                chatFrame.User.Send(Raws.IRCX_ERR_SECURITY_908(server, user));
-                return;
-            }
-
+        // Remove the target from every channel they are in, then disconnect
+        foreach (var (channel, member) in targetUser.GetChannels().ToList())
+        {
             targetUser.RemoveChannel(channel);
             channel.GetMembers().Remove(member);
             channel.Send(Raws.RPL_KILL_IRC(user, targetUser, reason));
-            targetUser.Disconnect(
-                Raws.IRCX_CLOSINGLINK_007_SYSTEMKILL(server, targetUser, targetUser.GetAddress().RemoteIp));
         }
+
+        targetUser.Disconnect(
+            Raws.IRCX_CLOSINGLINK_007_SYSTEMKILL(server, targetUser, targetUser.GetAddress().RemoteIp));
     }
 }
