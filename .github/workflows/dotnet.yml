@@ -44,7 +44,7 @@ jobs:
 
   image-cs:
     name: Docker – irc7cs (Chat Server)
-    if: github.ref == 'refs/heads/master'
+    #if: github.ref == 'refs/heads/master'
     needs: build
     runs-on: ubuntu-latest
 
@@ -80,7 +80,7 @@ jobs:
 
   image-ds:
     name: Docker – irc7ds (Directory Server)
-    if: github.ref == 'refs/heads/master'
+    #if: github.ref == 'refs/heads/master'
     needs: build
     runs-on: ubuntu-latest
 
