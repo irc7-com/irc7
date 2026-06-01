@@ -28,7 +28,7 @@ public class Server : ChatObject, IServer
     private readonly ICredentialProvider? _credentialProvider;
     protected readonly IDataStore _DataStore;
     private readonly IFloodProtectionManager _floodProtectionManager;
-    private readonly PassportV4 _passport = new(string.Empty, string.Empty);
+    public PassportV4 Passport { get; } = new(string.Empty, string.Empty);
     private readonly ConcurrentQueue<IUser> _pendingNewUserQueue = new();
     private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
     // Track IDs of users pending removal to avoid duplicate enqueues
@@ -118,10 +118,7 @@ public class Server : ChatObject, IServer
         };
         socketServer.Listen();
 
-        if (SupportPackages.Contains("GateKeeper"))
-        {
-            _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
-        }
+        Passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
 
         var modes = new ChannelModes().GetSupportedModes();
         modes = new string(modes.OrderBy(c => c).ToArray());
@@ -482,7 +479,7 @@ public class Server : ChatObject, IServer
     {
         if (name == Resources.UserPropMsnRegCookie && user.IsAuthenticated() && !user.IsRegistered())
         {
-            var nickname = _passport.ValidateRegCookie(value);
+            var nickname = Passport.ValidateRegCookie(value);
             if (nickname != null)
             {
                 var encodedNickname = Encoding.Latin1.GetString(Encoding.UTF8.GetBytes(nickname));
@@ -498,7 +495,7 @@ public class Server : ChatObject, IServer
             if (!issuedAt.HasValue) return;
 
             var subscribedString =
-                _passport.ValidateSubscriberInfo(value, issuedAt.Value);
+                Passport.ValidateSubscriberInfo(value, issuedAt.Value);
             int.TryParse(subscribedString, out var subscribed);
             if ((subscribed & 1) == 1) ((User.User)user).GetProfile().Registered = true;
         }
@@ -509,7 +506,7 @@ public class Server : ChatObject, IServer
         }
         else if (name == Resources.UserPropRole && user.IsAuthenticated())
         {
-            var dict = _passport.ValidateRole(value);
+            var dict = Passport.ValidateRole(value);
             if (dict == null) return;
 
             if (dict.ContainsKey("umode"))

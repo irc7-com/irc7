@@ -2,6 +2,8 @@
 using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Interfaces;
+using Irc.Security.Credentials;
+using Irc.Security.Passport;
 using IrcxSspi.Interop;
 using IrcxSspi.Native;
 using NLog;
@@ -71,6 +73,9 @@ public class SaslHandler : ISaslHandler
     private readonly Dictionary<string, PermissionProfile> _permissionProfiles;
     private Session session = new();
     public bool Authenticated { get; protected set; }
+    public bool RequiresPassport { get; set; }
+    public bool PendingPassportCreds { get; set; }
+    public PassportProvider PassportProvider { get; set; }
 
     public SaslHandler()
     {
@@ -332,6 +337,11 @@ public class SaslHandler : ISaslHandler
     public virtual ICredential? GetCredentials()
     {
         return Credentials;
+    }
+
+    public void SetCredentials(ICredential? credentials)
+    {
+        Credentials = credentials;
     }
 
     public bool IsAuthenticated()
