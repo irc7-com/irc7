@@ -246,37 +246,49 @@ public class Join : Command, ICommand
 
     public static void SendJoinError(IServer server, IChannel channel, IUser user, EnumChannelAccessResult result)
     {
-        // Broadcast to channel if Knocks are on
-        if (channel.Modes.Knock.ModeValue)
-        {
-            channel.Send(
-                Raws.RPL_KNOCK_CHAN(server, user, channel, result.ToString()), 
-                EnumChannelAccessLevel.ChatHost);
-        }
-        
-        // Send error to user
+        string knockRaw;
+        string userError;
+
         switch (result)
         {
             case EnumChannelAccessResult.ERR_BADCHANNELKEY:
-            {
-                user.Send(Raws.IRCX_ERR_BADCHANNELKEY_475(server, user, channel));
+                knockRaw = "475";
+                userError = Raws.IRCX_ERR_BADCHANNELKEY_475(server, user, channel);
                 break;
-            }
             case EnumChannelAccessResult.ERR_INVITEONLYCHAN:
-            {
-                user.Send(Raws.IRCX_ERR_INVITEONLYCHAN_473(server, user, channel));
+                knockRaw = "473";
+                userError = Raws.IRCX_ERR_INVITEONLYCHAN_473(server, user, channel);
                 break;
-            }
             case EnumChannelAccessResult.ERR_CHANNELISFULL:
-            {
-                user.Send(Raws.IRCX_ERR_CHANNELISFULL_471(server, user, channel));
+                knockRaw = "471";
+                userError = Raws.IRCX_ERR_CHANNELISFULL_471(server, user, channel);
                 break;
-            }
+            case EnumChannelAccessResult.ERR_BANNEDFROMCHAN:
+                knockRaw = "474";
+                userError = Raws.IRCX_ERR_BANNEDFROMCHAN_474(server, user, channel);
+                break;
+            case EnumChannelAccessResult.ERR_AUTHONLYCHAN:
+                knockRaw = "556";
+                userError = Raws.IRCX_ERR_AUTHONLYCHAN_556(server, user, channel);
+                break;
+            case EnumChannelAccessResult.ERR_SECUREONLYCHAN:
+                knockRaw = "557";
+                userError = Raws.IRCX_ERR_SECUREONLYCHAN_557(server, user, channel);
+                break;
             default:
-            {
-                user.Send($"CANNOT JOIN CHANNEL {result.ToString()}");
+                knockRaw = "913";
+                userError = $"CANNOT JOIN CHANNEL {result}";
                 break;
-            }
         }
+
+        // Broadcast numeric raw to channel hosts if Knocks are on
+        if (channel.Modes.Knock.ModeValue)
+        {
+            channel.Send(
+                Raws.RPL_KNOCK_CHAN(server, user, channel, knockRaw),
+                EnumChannelAccessLevel.ChatHost);
+        }
+
+        user.Send(userError);
     }
 }
