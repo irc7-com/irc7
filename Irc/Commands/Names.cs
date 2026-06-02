@@ -25,10 +25,12 @@ internal class Names : Command, ICommand
         if (parameters.Count == 0)
         {
             var visibleChannels = server.GetChannels()
-                .Where(channel => user.IsOn(channel) || (!channel.Modes.Private.ModeValue && !channel.Modes.Secret.ModeValue))
-                .ToList();
+                .Where(channel => IsChannelVisibleToUser(user, channel));
 
-            visibleChannels.ForEach(channel => ProcessNamesReply(user, channel, false));
+            foreach (var channel in visibleChannels)
+            {
+                ProcessNamesReply(user, channel, false);
+            }
             user.Send(Raws.IRCX_RPL_ENDOFNAMES_366(server, user, "*"));
             return;
         }
@@ -43,7 +45,7 @@ internal class Names : Command, ICommand
 
             if (channel != null)
             {
-                if (user.IsOn(channel) || (!channel.Modes.Private.ModeValue && !channel.Modes.Secret.ModeValue))
+                if (IsChannelVisibleToUser(user, channel))
                 {
                     ProcessNamesReply(user, channel);
                     continue;
@@ -84,5 +86,10 @@ internal class Names : Command, ICommand
         {
             user.Send(Raws.IRCX_RPL_ENDOFNAMES_366(user.Server, user, channel));
         }
+    }
+
+    private static bool IsChannelVisibleToUser(IUser user, IChannel channel)
+    {
+        return user.IsOn(channel) || (!channel.Modes.Private.ModeValue && !channel.Modes.Secret.ModeValue);
     }
 }

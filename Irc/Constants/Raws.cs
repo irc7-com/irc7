@@ -1100,16 +1100,22 @@ public static class Raws
         }
 
         var joinUser = joinMember.GetUser();
-        var joinFormat = channelMember.GetUser().GetProtocol().GetFormat(joinUser);
-        if (joinUser is User concreteJoinUser)
-        {
-            var profile = concreteJoinUser.GetProfile();
-            joinFormat =
-                $"{profile.GetAwayString()},{profile.GetModeString()},{profile.GetGenderString()}{profile.GetRegisteredString()}{profile.GetPictureString()}";
-        }
+        var joinFormat = GetApolloJoinFormat(channelMember.GetUser(), joinUser);
 
         return
             $":{joinUser.GetAddress()} JOIN {joinFormat}{listedModeString} :{channel}";
+    }
+
+    private static string GetApolloJoinFormat(IUser recipientUser, IUser joinUser)
+    {
+        if (joinUser is User concreteJoinUser)
+        {
+            var profile = concreteJoinUser.GetProfile();
+            return
+                $"{profile.GetAwayString()},{profile.GetModeString()},{profile.GetGenderString()}{profile.GetRegisteredString()}{profile.GetPictureString()}";
+        }
+
+        return recipientUser.GetProtocol().GetFormat(joinUser);
     }
 
     public static string RPL_EPRIVMSG(IUser user, IChannel channel, string message)
