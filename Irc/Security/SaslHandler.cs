@@ -82,16 +82,47 @@ public class SaslHandler : ISaslHandler
         _permissionProfiles = new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
     }
     
-    public SaslHandler(Dictionary<string, PermissionProfile>? permissionProfiles)
+    public SaslHandler(Dictionary<string, PermissionProfile>? permissionProfiles, bool passport)
     {
         _permissionProfiles = permissionProfiles != null
             ? new Dictionary<string, PermissionProfile>(permissionProfiles, StringComparer.OrdinalIgnoreCase)
             : new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
+        RequiresPassport = passport;
     }
     
     public virtual string GetAuthResponse()
     {
         return _authResponse.ToAsciiString();
+    }
+
+    public bool ValidatePassportCredentials(string package, string ticket, string profile)
+    {
+        // Passport is always supplementary to an auth package, if no Credentials then we should bail here
+        if (Credentials == null) return false;
+        
+        var passportCredentials = PassportProvider.ValidateTokens(new Dictionary<string, string> { { "ticket", ticket }, { "profile", profile } });
+        if (passportCredentials == null)
+        {
+            PendingPassportCreds = true;
+            return false;
+        }
+
+        var permissionsFound = TryResolvePermissionProfile(passportCredentials.Domain, package, out var permissionProfile);
+        if (!permissionsFound) return false;
+        if (!IsProtocolAllowed(permissionProfile, package)) return false;
+
+        var oldPermissions = Credentials.PermissionProfile;
+        Credentials = passportCredentials;
+
+        if (Credentials.PermissionProfile != null)
+        {
+            // If the new permissions are higher than the old ones, then we should update the old permissions to the new ones
+            if (oldPermissions.Level > Credentials.PermissionProfile.Level) Credentials.PermissionProfile = oldPermissions;
+        }
+
+        // Passport users are not a guest
+        Guest = false;
+        return true;
     }
 
     public virtual EnumSupportPackageSequence InitializeSecurityContext(string package, string token, string ip)
@@ -349,7 +380,17 @@ public class SaslHandler : ISaslHandler
         return Authenticated;
     }
 
-    public string[] SupportedPackages => new[] { "GateKeeper", "NTLM" };
+
+
+    public void Reset()
+    {
+        session.Dispose();
+        session.Reset();
+        Authenticated = false;
+        Credentials = null;
+        RequiresPassport = false;
+        PendingPassportCreds = false;
+    }
 
     private bool TryResolvePermissionProfile(string identity, string package, out PermissionProfile permissionProfile)
     {

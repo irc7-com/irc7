@@ -34,8 +34,8 @@ public class Server : ChatObject, IServer
     // Track IDs of users pending removal to avoid duplicate enqueues
     private readonly ConcurrentDictionary<Guid, byte> _pendingRemoveUserSet = new();
     private readonly Task _processingTask;
-    private readonly Func<ISaslHandler> _saslHandlerFactory;
-    private readonly string[] _saslSupportedPackages;
+    private readonly Func<bool, ISaslHandler> _saslHandlerFactory;
+    private readonly IReadOnlyDictionary<string, string> _saslSupportedPackages;
     private readonly ISocketServer _socketServer;
     private readonly Irc.Services.CacheManager _cacheManager;
     private System.Timers.Timer? _heartbeatTimer;
@@ -57,7 +57,7 @@ public class Server : ChatObject, IServer
     public IList<IUser> Users = new List<IUser>();
 
     public Server(ISocketServer socketServer,
-        Func<ISaslHandler> saslHandlerFactory,
+        Func<bool, ISaslHandler> saslHandlerFactory,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
         ICredentialProvider? credentialProvider = null,
@@ -71,9 +71,6 @@ public class Server : ChatObject, IServer
         _DataStore = dataStore;
         
         // Create a temporary instance to read supported packages
-        var tempHandler = saslHandlerFactory();
-        _saslSupportedPackages = tempHandler.SupportedPackages;
-        
         _cacheManager = new Irc.Services.CacheManager(redisUrl);
         _processingTask = new Task(Process);
         _processingTask.Start();
@@ -232,7 +229,7 @@ public class Server : ChatObject, IServer
     public int NetInvisibleCount { get; } = 0;
     public int NetServerCount { get; } = 0;
     public int NetUserCount { get; } = 0;
-    public string SecurityPackages => string.Join(",", _saslSupportedPackages);
+    public string SecurityPackages => "GateKeeper,NTLM";
     public int SysopCount { get; } = 0;
     public int UnknownConnectionCount => _socketServer.CurrentConnections - NetUserCount;
     public string RemoteIp { set; get; } = string.Empty;

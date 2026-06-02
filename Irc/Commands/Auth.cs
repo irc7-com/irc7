@@ -12,6 +12,13 @@ public class Auth : Command, ICommand
     public Auth() : base(3, false)
     {
     }
+    
+    public IReadOnlyDictionary<string, string> SupportedPackages =>
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "GateKeeper", "GateKeeper" },
+            { "NTLM",       "NTLM"       }
+        };
 
     public new EnumCommandDataType GetDataType()
     {
@@ -23,138 +30,165 @@ public class Auth : Command, ICommand
         if (chatFrame.User.IsRegistered())
         {
             chatFrame.User.Send(Raws.IRCX_ERR_ALREADYREGISTERED_462(chatFrame.Server, chatFrame.User));
+            return;
         }
-        else if (chatFrame.User.IsAuthenticated())
+        
+        if (chatFrame.User.IsAuthenticated())
         {
             chatFrame.User.Send(Raws.IRCX_ERR_ALREADYAUTHENTICATED_909(chatFrame.Server, chatFrame.User));
+            return;
         }
-        else
+        
+        var parameters = chatFrame.ChatMessage.Parameters;
+        var sequence = parameters[1].ToUpper();
+        // If the sequence is invalid, return error
+        if (sequence.Length > 1 || (new[] { 'I', 'S', '*' }).Contains(sequence[0]) == false)
         {
-            var parameters = chatFrame.ChatMessage.Parameters;
+            chatFrame.User.Send(Raws.IRCX_ERR_BADCOMMAND_900(chatFrame.Server, chatFrame.User, "AUTH"));
+            return;
+        }
+        
+        var clientPackageName = parameters[0];
+        // Check Passport Mode
+        var usingPassport = false;
+        if (clientPackageName.ToUpper().EndsWith(Resources.Passport.ToUpper()))
+        {
+            clientPackageName = clientPackageName.Substring(0, clientPackageName.Length - 8);
+            usingPassport = true;
+        }
+        
+        // Resolve the package and see if it is supported, if not return error
+        if (!SupportedPackages.TryGetValue(clientPackageName, out var resolvedPackageName))
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_UNKNOWNPACKAGE_912(chatFrame.Server, chatFrame.User, clientPackageName));
+            return;
+        }
 
-            var packageName = parameters[0];
-            var sequence = parameters[1].ToUpper();
-            var token = parameters[2].ToLiteral();
-
-            if (sequence == "I")
+        var token = parameters[2].ToLiteral();
+        switch (sequence)
+        {
+            case "I":
             {
-                var saslHandler = chatFrame.User.InitializeSspiHandler();
-                var packages = saslHandler.SupportedPackages;
-                
-                // Filter out Passport, but set it if suffix
-                if (packageName.ToUpper().EndsWith("PASSPORT"))
-                {
-                    packageName = packageName.Substring(0, packageName.Length - 8);
-                    saslHandler.RequiresPassport = true;
-                }
-                
-                if (!packages.Contains(packageName))
-                {
-                    chatFrame.User.Send(Raws.IRCX_ERR_UNKNOWNPACKAGE_912(chatFrame.Server, chatFrame.User,
-                        packageName));
-                    return;
-                }
-
-                var supportPackageSequence =
-                    saslHandler.InitializeSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
-
-                if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK || supportPackageSequence == EnumSupportPackageSequence.SSP_EXT)
-                {
-                    var authResponse = saslHandler.GetAuthResponse();
-                    var securityTokenEscaped = authResponse.ToEscape();
-                    chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(packageName, securityTokenEscaped));
-                    // Send reply
-                    return;
-                }
+                HandleInitialAuthMessage(chatFrame, token, ref resolvedPackageName, usingPassport);
+                return;
             }
-            else if (sequence == "S")
+            case "S":
             {
-                // Ironically not checking package name here is how MSN worked
-                var saslHandler = chatFrame.User.GetSspiHandler();
-                if (saslHandler == null)
-                {
-                    chatFrame.User.Disconnect(
-                        Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
-                    return;
-                }
-
-                if (saslHandler.PendingPassportCreds)
-                {
-                    var ticket = ExtractCookie(token);
-                    if (string.IsNullOrWhiteSpace(ticket))
-                    {
-                        // auth failed
-                        chatFrame.User.Disconnect(
-                            Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
-                        return;
-                    }
-
-                    var profile = ExtractCookie(token.Substring(8 + ticket.Length));
-                    if (string.IsNullOrWhiteSpace(profile))
-                    {
-                        // auth failed
-                        chatFrame.User.Disconnect(
-                            Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
-                        return;
-                    }
-
-                    var credentials = saslHandler.PassportProvider.ValidateTokens(
-                        new Dictionary<string, string>
-                        {
-                            { "ticket", ticket },
-                            { "profile", profile }
-                        });
-
-                    if (credentials == null)
-                    {
-                        // auth failed
-                        chatFrame.User.Disconnect(
-                            Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
-                        return;
-                    }
-                    
-                    // If OK
-                    // TODO: Need to find a better way of doing this because packageName could be anything
-                    var previousPermissions = saslHandler.GetCredentials().PermissionProfile;
-                    
-                    // Overwrite new permissions with previous if previous was more elevated
-                    if (previousPermissions.Level > credentials.PermissionProfile.Level)
-                    {
-                        credentials.PermissionProfile = previousPermissions;
-                    }
-                    saslHandler.SetCredentials(credentials);
-                    
-                    // Finally auth the user
-                    AuthenticateUser(chatFrame, saslHandler, packageName);
-                    return;
-                }
-                
-                var supportPackageSequence =
-                    saslHandler.AcceptSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
-
-                // Passport sequence block
-                if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK && 
-                    saslHandler.RequiresPassport)
-                {
-                    saslHandler.PassportProvider = new PassportProvider(((Server)chatFrame.Server).Passport);
-                    saslHandler.PendingPassportCreds = true;
-                    chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(packageName, "OK"));
-                    return;
-                }
-                
-                if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
-                {
-                    AuthenticateUser(chatFrame, saslHandler, packageName);
-                    return;
-                }
+                HandleSubsequentAuthMessage(chatFrame, token, ref resolvedPackageName, usingPassport);
+                return;
             }
-
-            // auth failed
-            chatFrame.User.Disconnect(
-                Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
+            case "*":
+            {
+                HandleAbortAuthentication(chatFrame, ref resolvedPackageName);
+                return;
+            }
         }
     }
     
+    // The 'I' value is specified for the initial AUTH message
+    private static bool HandleInitialAuthMessage(IChatFrame chatFrame, string token, ref string packageName, bool usingPassport)
+    {
+        var saslHandler = chatFrame.User.InitializeSspiHandler(usingPassport);
+        var outgoingPackageName = usingPassport ? $"{packageName}Passport" : packageName;
+        
+        var supportPackageSequence =
+            saslHandler.InitializeSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
+
+        if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK || supportPackageSequence == EnumSupportPackageSequence.SSP_EXT)
+        {
+            var authResponse = saslHandler.GetAuthResponse();
+            var securityTokenEscaped = authResponse.ToEscape();
+            chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(outgoingPackageName, securityTokenEscaped));
+            // Send reply
+            return true;
+        }
+
+        chatFrame.User.Send(
+            Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
+        return false;
+    }
+    
+    // the 'S' value is specified for all subsequent AUTH messages
+    private bool HandleSubsequentAuthMessage(IChatFrame chatFrame, string token, ref string packageName, bool usingPassport)
+    {
+        var outgoingPackageName = usingPassport ? $"{packageName}Passport" : packageName;
+        
+        // Ironically not checking package name here is how MSN worked
+        var saslHandler = chatFrame.User.GetSspiHandler();
+        if (saslHandler == null)
+        {
+            chatFrame.User.Disconnect(
+                Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, outgoingPackageName));
+            return true;
+        }
+        
+        if (saslHandler.PendingPassportCreds)
+        {
+            var ticket = ExtractCookie(token);
+            if (string.IsNullOrWhiteSpace(ticket))
+            {
+                // auth failed
+                chatFrame.User.Disconnect(
+                    Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, outgoingPackageName));
+                return true;
+            }
+
+            var profile = ExtractCookie(token.Substring(8 + ticket.Length));
+            if (string.IsNullOrWhiteSpace(profile))
+            {
+                // auth failed
+                chatFrame.User.Disconnect(
+                    Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, outgoingPackageName));
+                return true;
+            }
+
+            if (!saslHandler.ValidatePassportCredentials(outgoingPackageName, ticket, profile))
+            {
+                // auth failed
+                chatFrame.User.Disconnect(
+                    Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, outgoingPackageName));
+                return true;
+            }
+                    
+            // Finally auth the user
+            AuthenticateUser(chatFrame, saslHandler, outgoingPackageName);
+            return true;
+        }
+        
+        var supportPackageSequence =
+            saslHandler.AcceptSecurityContext(packageName, token, chatFrame.Server.RemoteIp);
+
+        // Passport sequence block
+        if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK && 
+            saslHandler.RequiresPassport)
+        {
+            saslHandler.PassportProvider = new PassportProvider(((Server)chatFrame.Server).Passport);
+            saslHandler.PendingPassportCreds = true;
+            chatFrame.User.Send(Raws.RPL_AUTH_SEC_REPLY(outgoingPackageName, "OK"));
+            return true;
+        }
+                
+        if (supportPackageSequence == EnumSupportPackageSequence.SSP_OK)
+        {
+            AuthenticateUser(chatFrame, saslHandler, outgoingPackageName);
+            return true;
+        }
+
+        chatFrame.User.Send(
+            Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, outgoingPackageName));
+        return false;
+    }
+
+    // If the client specifies '*' for the sequence, the server will abort
+    // the authentication sequence and return IRCERR_AUTHENTICATIONFAILED
+    private static void HandleAbortAuthentication(IChatFrame chatFrame, ref string packageName)
+    {
+        chatFrame.User.GetSspiHandler()?.Reset();
+        chatFrame.User.Send(
+            Raws.IRCX_ERR_AUTHENTICATIONFAILED_910(chatFrame.Server, chatFrame.User, packageName));
+        return;
+    }
+
     private string ExtractCookie(string cookie)
     {
         if (cookie.Length < 8) return string.Empty;
