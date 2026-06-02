@@ -1078,12 +1078,54 @@ public static class Raws
         return $":{user.GetAddress()} QUIT :{message}";
     }
 
-    public static string RPL_JOIN_MSN(IChannelMember channelMember, IChannel channel, IChannelMember joinMember)
+    public static string RPL_JOIN_MSN(IChannelMember channelMember, IChannel channel, IChannelMember joinMember,
+        bool multiPrefix = false)
     {
-        var listedMode = joinMember.GetListedMode();
-        var listedModeString = !string.IsNullOrWhiteSpace(listedMode) ? $",{listedMode}" : "";
+        string listedModeString;
+        if (multiPrefix)
+        {
+            var allModes = joinMember.GetAllListedModes();
+            listedModeString = allModes.Length > 0 ? $",{allModes}" : "";
+        }
+        else
+        {
+            var listedMode = joinMember.GetListedMode();
+            listedModeString = !string.IsNullOrWhiteSpace(listedMode) ? $",{listedMode}" : "";
+        }
+
         return
             $":{joinMember.GetUser().GetAddress()} JOIN {channelMember.GetUser().GetProtocol().GetFormat(joinMember.GetUser())}{listedModeString} :{channel}";
+    }
+
+    // IRCv3 CAP negotiation responses
+    public static string CAP_LS(IServer server, IUser user, string caps)
+    {
+        var target = CapTarget(user);
+        return $":{server} CAP {target} LS :{caps}";
+    }
+
+    public static string CAP_LIST(IServer server, IUser user, string caps)
+    {
+        var target = CapTarget(user);
+        return $":{server} CAP {target} LIST :{caps}";
+    }
+
+    public static string CAP_ACK(IServer server, IUser user, string caps)
+    {
+        var target = CapTarget(user);
+        return $":{server} CAP {target} ACK :{caps}";
+    }
+
+    public static string CAP_NAK(IServer server, IUser user, string caps)
+    {
+        var target = CapTarget(user);
+        return $":{server} CAP {target} NAK :{caps}";
+    }
+
+    private static string CapTarget(IUser user)
+    {
+        var nick = user.GetAddress().Nickname;
+        return string.IsNullOrWhiteSpace(nick) ? "*" : nick;
     }
 
     public static string RPL_EPRIVMSG(IUser user, IChannel channel, string message)

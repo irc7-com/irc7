@@ -6,6 +6,7 @@ public interface IMemberModes
 {
     string GetModeString();
     string GetListedMode();
+    string GetAllListedModes();
     char GetModeChar();
     bool HasModes();
     void ResetModes();

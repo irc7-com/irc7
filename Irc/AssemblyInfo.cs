@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // このような SDK スタイルのプロジェクトの場合、以前はこのファイルで定義していたいくつかのアセンブリ属性がビルド時に自動的に追加されて、プロジェクトのプロパティで定義されている値がそれに設定されるようになりました。組み込まれる属性と、このプロセスをカスタマイズする方法の詳細については、次を参照してください:
@@ -12,3 +13,5 @@ using System.Runtime.InteropServices;
 // このプロジェクトが COM に公開される場合、次の GUID が typelib の ID になります。
 
 [assembly: Guid("a752244e-a368-468c-a6a0-771615fde05d")]
+
+[assembly: InternalsVisibleTo("Irc.Tests")]

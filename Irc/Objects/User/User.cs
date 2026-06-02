@@ -30,7 +30,9 @@ public class User : ChatObject, IUser
     private IProtocol _protocol;
     private bool _registered;
     private ISupportPackage _supportPackage;
+    private readonly HashSet<string> _capabilities = new(StringComparer.OrdinalIgnoreCase);
     public IDictionary<IChannel, IChannelMember> Channels;
+    public bool CapNegotiating { get; set; }
 
     public DateTime LastPing = DateTime.UtcNow;
     public long PingCount;
@@ -391,6 +393,14 @@ public class User : ChatObject, IUser
     {
         return _modeOperations;
     }
+
+    public bool HasCapability(string capability) => _capabilities.Contains(capability);
+
+    public void EnableCapability(string capability) => _capabilities.Add(capability);
+
+    public void DisableCapability(string capability) => _capabilities.Remove(capability);
+
+    public IReadOnlySet<string> GetCapabilities() => _capabilities;
 
     public IChatFrame GetNextFrame()
     {

@@ -14,6 +14,7 @@ public interface IUser
     string Client { get; set; }
     string Pass { get; set; }
     bool Away { get; set; }
+    bool CapNegotiating { get; set; }
     DateTime LastIdle { get; set; }
     DateTime LoggedOn { get; }
     IModeCollection Modes { get; }
@@ -61,4 +62,8 @@ public interface IUser
     void Authenticate();
     void DisconnectIfInactive();
     Queue<ModeOperation> GetModeOperations();
+    bool HasCapability(string capability);
+    void EnableCapability(string capability);
+    void DisableCapability(string capability);
+    IReadOnlySet<string> GetCapabilities();
 }

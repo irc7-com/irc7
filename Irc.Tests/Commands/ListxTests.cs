@@ -279,7 +279,7 @@ public class ListxTests
         mockChannel.Setup(c => c.GetMembers()).Returns(new List<IChannelMember>(new IChannelMember[memberCount]));
         
         // チャンネルプロパティのモック設定
-        mockChannelProps.SetupGet(p => p.Topic).Returns(new Topic { Value = topic });
+        mockChannelProps.SetupGet(p => p.Topic).Returns(new Irc.Objects.Channel.Topic { Value = topic });
         mockChannelProps.SetupGet(p => p.Subject).Returns(
             new PropRule(
                 Resources.ChannelPropSubject, 
