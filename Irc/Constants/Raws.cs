@@ -2,6 +2,7 @@
 using Irc.Enumerations;
 using Irc.Interfaces;
 using Irc.Objects;
+using Irc.Objects.User;
 
 namespace Irc.Constants;
 
@@ -403,6 +404,11 @@ public static class Raws
 
     public static string IRCX_RPL_ENDOFNAMES_366(IServer server, IUser user, IChannel channel)
     {
+        return IRCX_RPL_ENDOFNAMES_366(server, user, channel.ToString());
+    }
+
+    public static string IRCX_RPL_ENDOFNAMES_366(IServer server, IUser user, string channel)
+    {
         return $":{server} 366 {user} {channel} :End of /NAMES list.";
     }
 
@@ -629,6 +635,11 @@ public static class Raws
     public static string IRCX_ERR_CHANOPRIVSNEEDED_482(IServer server, IUser user, IChannel channel)
     {
         return $":{server} 482 {user} {channel} :You're not channel operator";
+    }
+
+    public static string IRCX_ERR_CANTKILLSERVER_483(IServer server, IUser user)
+    {
+        return $":{server} 483 {user} :You can't kill a server!";
     }
 
     public static string IRCX_ERR_CHANQPRIVSNEEDED_485(IServer server, IUser user, IChatObject channel)
@@ -1080,10 +1091,25 @@ public static class Raws
 
     public static string RPL_JOIN_MSN(IChannelMember channelMember, IChannel channel, IChannelMember joinMember)
     {
+        var protocolType = channelMember.GetUser().GetProtocol().GetProtocolType();
         var listedMode = joinMember.GetListedMode();
         var listedModeString = !string.IsNullOrWhiteSpace(listedMode) ? $",{listedMode}" : "";
+        if (protocolType < EnumProtocolType.IRC5)
+        {
+            return $":{joinMember.GetUser().GetAddress()} JOIN %S{listedModeString} :{channel}";
+        }
+
+        var joinUser = joinMember.GetUser();
+        var joinFormat = channelMember.GetUser().GetProtocol().GetFormat(joinUser);
+        if (joinUser is User concreteJoinUser)
+        {
+            var profile = concreteJoinUser.GetProfile();
+            joinFormat =
+                $"{profile.GetAwayString()},{profile.GetModeString()},{profile.GetGenderString()}{profile.GetRegisteredString()}{profile.GetPictureString()}";
+        }
+
         return
-            $":{joinMember.GetUser().GetAddress()} JOIN {channelMember.GetUser().GetProtocol().GetFormat(joinMember.GetUser())}{listedModeString} :{channel}";
+            $":{joinUser.GetAddress()} JOIN {joinFormat}{listedModeString} :{channel}";
     }
 
     public static string RPL_EPRIVMSG(IUser user, IChannel channel, string message)
