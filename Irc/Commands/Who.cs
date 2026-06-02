@@ -100,8 +100,8 @@ public class Who : Command, ICommand
                 var goneHome = chatUser.Away ? "G" : "H";
 
                 var chanMode = string.Empty;
-                var channelMember = channel?.GetMember(user);
-                if (channelMember != null) chanMode = channel?.GetMember(user)?.GetModeString();
+                var channelMember = channel?.GetMember(chatUser);
+                if (channelMember != null) chanMode = channel?.GetMember(chatUser)?.GetModeString();
 
                 var modeString = chatUser.Modes.ToString();
 
