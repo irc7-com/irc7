@@ -149,7 +149,8 @@ public class Channel : ChatObject, IChannel
             }
             else
             {
-                channelUser.Send(Raws.RPL_JOIN_MSN(channelMember, this, joinMember));
+                channelUser.Send(Raws.RPL_JOIN_MSN(channelMember, this, joinMember,
+                    channelUser.HasCapability(Resources.CapMultiPrefix)));
             }
         }
 

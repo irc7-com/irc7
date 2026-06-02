@@ -10,6 +10,7 @@ public class Irc : Protocol, IProtocol
     public Irc()
     {
         AddCommand(new Auth());
+        AddCommand(new Cap());
         AddCommand(new Ircvers());
         AddCommand(new Ircx());
         AddCommand(new Prop());

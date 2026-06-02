@@ -7,6 +7,7 @@ public static class Resources
     public static string CommandAdmin = "ADMIN";
     public static string CommandAway = "AWAY";
     public static string CommandAuth = "AUTH";
+    public static string CommandCap = "CAP";
     public static string CommandEvent = "EVENT";
     public static string CommandGoto = "GOTO";
     public static string CommandInfo = "INFO";
@@ -80,6 +81,12 @@ public static class Resources
     public static string Delete = "DELETE";
     public static string IRCXOptions = "*";
     public static string ServerError = "Server Error. Please report this to the Administrator";
+
+    #region "CAP Capabilities"
+
+    public static string CapMultiPrefix = "multi-prefix";
+
+    #endregion
 
 
     public static string UserAccessGroupService = "Service Accounts";
