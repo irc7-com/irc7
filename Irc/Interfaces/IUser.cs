@@ -37,8 +37,6 @@ public interface IUser
     void Disconnect(string message);
     IDataRegulator GetDataRegulator();
     IFloodProtectionProfile GetFloodProtectionProfile();
-    ISupportPackage GetSupportPackage();
-    void SetSupportPackage(ISupportPackage supportPackage);
     void SetProtocol(IProtocol protocol);
     IProtocol GetProtocol();
     IConnection GetConnection();
@@ -61,4 +59,6 @@ public interface IUser
     void Authenticate();
     void DisconnectIfInactive();
     Queue<ModeOperation> GetModeOperations();
+    ISaslHandler? GetSspiHandler();
+    ISaslHandler InitializeSspiHandler();
 }

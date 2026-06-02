@@ -1,0 +1,58 @@
+[
+  {
+    "Name": "The Lobby",
+    "Topic": "Welcome to The Lobby",
+    "Modes": {
+      "n": 1,
+      "t": 1,
+      "l": 50
+    },
+    "Props": {
+      "OWNERKEY": "OWNERKEY",
+      "HOSTKEY": "HOSTKEY"
+    },
+    "Category": "GN"
+  },
+  {
+    "Name": "Test",
+    "Topic": "Test",
+    "Modes": {
+      "n": 1,
+      "t": 1,
+      "l": 10000
+    },
+    "Props": {
+      "OWNERKEY": "OWNERKEY",
+      "HOSTKEY": "HOSTKEY"
+    }
+  },
+  {
+    "Name": "OnStage",
+    "Topic": "OnStage",
+    "Modes": {
+      "n": 1,
+      "t": 1,
+      "l": 50,
+      "g": 1,
+      "r": 1
+    },
+    "Props": {
+      "OWNERKEY": "OWNERKEY",
+      "HOSTKEY": "HOSTKEY"
+    }
+  },
+  {
+    "Name": "My Channel, especially fun!",
+    "Topic": "Welcome to My Channel, especially fun!",
+    "Modes": {
+      "n": 1,
+      "t": 1,
+      "l": 50,
+      "S": 1
+    },
+    "Props": {
+      "OWNERKEY": "OWNERKEY",
+      "HOSTKEY": "HOSTKEY"
+    }
+  }
+]

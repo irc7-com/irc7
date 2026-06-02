@@ -1,17 +1,15 @@
 ﻿using Irc.Enumerations;
-using Irc.Security;
 
 namespace Irc.Interfaces;
 
-public interface ISupportPackage
+public interface ISaslHandler
 {
-    SupportPackage CreateInstance(ICredentialProvider credentialProvider);
-    string CreateSecurityChallenge();
-    EnumSupportPackageSequence InitializeSecurityContext(string token, string ip);
-    EnumSupportPackageSequence AcceptSecurityContext(string token, string ip);
+    string GetAuthResponse();
+    EnumSupportPackageSequence InitializeSecurityContext(string package, string token, string ip);
+    EnumSupportPackageSequence AcceptSecurityContext(string package, string token, string ip);
     string GetDomain();
     string GetPackageName();
     ICredential? GetCredentials();
     bool IsAuthenticated();
-    void SetChallenge(byte[] newChallenge);
+    string[] SupportedPackages { get; }
 }

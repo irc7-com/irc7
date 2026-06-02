@@ -1,0 +1,280 @@
+using System.CommandLine;
+using System.CommandLine.Invocation;
+using System.Net;
+using System.Reflection;
+using Irc.Helpers;
+using Irc.Host;
+using Irc.Interfaces;
+using Irc.IO;
+using Irc.Logging;
+using Irc.Objects.Server;
+using Irc.Security;
+using NLog;
+
+namespace Irc7d;
+
+internal class Program
+{
+    public static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
+    private static IServer? _server;
+    private static CancellationTokenSource _cancellationTokenSource = new();
+
+    private static async Task<int> Main(string[] args)
+    {
+        var trace = Array.Exists(args, a => a == "--trace" || a == "-t");
+        Logging.Attach(trace: trace);
+        var (rootCommand, optionsDictionary) = CreateRootCommand();
+
+        rootCommand.SetHandler(async context =>
+        {
+            var options = GetOptions(context, optionsDictionary);
+            Log.Info($"Starting {AppDomain.CurrentDomain.FriendlyName} from {AppContext.BaseDirectory}");
+
+            var ip = !string.IsNullOrEmpty(options.BindIp) ? IPAddress.Parse(options.BindIp) : IPAddress.Any;
+
+            var socketServer = new SocketServer(ip, options.BindPort, options.Backlog, options.MaxConnections, options.MaxConnectionsPerIp,
+                options.BufferSize);
+            socketServer.OnListen += (_, __) => DisplayStartupInfo(options, ip);
+
+            var defaultPermissions = await LoadDefaultPermissions();
+
+            try
+            {
+                _server = ConfigureServer(socketServer, defaultPermissions, options.RedisUrl);
+            }
+            catch (InvalidOperationException ex)
+            {
+                Log.Fatal(ex, $"Startup failed while binding {ip}:{options.BindPort}");
+                Console.Error.WriteLine(ex.Message);
+                context.ExitCode = 1;
+                return;
+            }
+
+            _server.ServerVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0);
+            _server.RemoteIp = options.Fqdn ?? "localhost";
+
+            if (!string.IsNullOrEmpty(options.ServerName))
+                _server.Name = options.ServerName;
+
+            InitializeDefaultChannels(_server);
+
+            if (_server is Server baseServer)
+            {
+                baseServer.RecoverChannels();
+                baseServer.SetupHeartbeat();
+            }
+
+            _cancellationTokenSource = new CancellationTokenSource();
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+            Console.CancelKeyPress += CurrentDomain_ProcessExit;
+            await Task.Delay(-1, _cancellationTokenSource.Token).ContinueWith(t => { });
+        });
+
+        return await rootCommand.InvokeAsync(args);
+    }
+
+    private static void CurrentDomain_ProcessExit(object? sender, EventArgs e)
+    {
+        Log.Info("Shutting down...");
+        _server?.Shutdown();
+        _cancellationTokenSource.Cancel();
+    }
+
+    private static (RootCommand, Dictionary<string, Option>) CreateRootCommand()
+    {
+        var rootCommand = new RootCommand("irc7 daemon")
+        {
+            Name = AppDomain.CurrentDomain.FriendlyName
+        };
+
+        var configOption =
+            new Option<string>(["-c", "--config"], "The path to the configuration json file (default ./config.json)")
+                { ArgumentHelpName = "configfile" };
+        configOption.SetDefaultValue("./config.json");
+        var bindIpOption = new Option<string>(["-i", "--ip"], "The ip for the server to bind on (default 0.0.0.0)")
+            { ArgumentHelpName = "bindip" };
+        bindIpOption.SetDefaultValue("0.0.0.0");
+        var bindPortOption = new Option<int>(["-p", "--port"], "The port for the server to bind on (default 6667)")
+            { ArgumentHelpName = "bindport" };
+        bindPortOption.SetDefaultValue(6667);
+        var backlogOption = new Option<int>(["-k", "--backlog"], "The backlog for connecting sockets (default 512)")
+            { ArgumentHelpName = "backlogsize" };
+        backlogOption.SetDefaultValue(512);
+        var bufferSizeOption = new Option<int>(["-z", "--buffer"], "The incoming buffer size in bytes (default 512)")
+            { ArgumentHelpName = "buffersize" };
+        bufferSizeOption.SetDefaultValue(512);
+        
+        var maxConnectionsOption =
+            new Option<int>(["-m", "--maxConn"], "The maximum overall connections that can connect (default 1000)")
+                { ArgumentHelpName = "maxconnections" };
+        maxConnectionsOption.SetDefaultValue(1000);
+        
+        var maxConnectionsPerIpOption =
+            new Option<int>(["-mip", "--maxConnPerIp"], "The maximum connections per IP that can connect (default 128)")
+                { ArgumentHelpName = "maxconnectionsperip" };
+        maxConnectionsPerIpOption.SetDefaultValue(128);
+        
+        var fqdnOption = new Option<string>(["-f", "--fqdn"], "The FQDN of the machine (default localhost)")
+            { ArgumentHelpName = "fqdn" };
+        fqdnOption.SetDefaultValue("localhost");
+        var redisUrlOption =
+            new Option<string>(["-r", "--redis"], "The Redis/KeyDB connection string (optional, enables caching and ADS/ACS load balancing)")
+                { ArgumentHelpName = "redisurl" };
+        var serverNameOption =
+            new Option<string>(["-n", "--name"], "The server name, overrides the Name value from DefaultServer.json")
+                { ArgumentHelpName = "servername" };
+
+        var traceOption = new Option<bool>(["-t", "--trace"], "Enable trace logging");
+
+        var options = new Dictionary<string, Option>
+        {
+            { "config", configOption },
+            { "bindIp", bindIpOption },
+            { "bindPort", bindPortOption },
+            { "backlog", backlogOption },
+            { "bufferSize", bufferSizeOption },
+            { "maxConnections", maxConnectionsOption },
+            { "maxConnectionsPerIp", maxConnectionsPerIpOption },
+            { "fqdn", fqdnOption },
+            { "redisUrl", redisUrlOption },
+            { "serverName", serverNameOption },
+            { "trace", traceOption }
+        };
+
+        foreach (var option in options.Values) rootCommand.AddOption(option);
+
+        return (rootCommand, options);
+    }
+
+    private static ServerOptions GetOptions(InvocationContext context, Dictionary<string, Option> optionsDict)
+    {
+        return new ServerOptions
+        {
+            ConfigPath = context.ParseResult.GetValueForOption((Option<string>)optionsDict["config"]),
+            BindIp = context.ParseResult.GetValueForOption((Option<string>)optionsDict["bindIp"]),
+            BindPort = context.ParseResult.GetValueForOption((Option<int>)optionsDict["bindPort"]),
+            Backlog = context.ParseResult.GetValueForOption((Option<int>)optionsDict["backlog"]),
+            BufferSize = context.ParseResult.GetValueForOption((Option<int>)optionsDict["bufferSize"]),
+            MaxConnections = context.ParseResult.GetValueForOption((Option<int>)optionsDict["maxConnections"]),
+            MaxConnectionsPerIp = context.ParseResult.GetValueForOption((Option<int>)optionsDict["maxConnectionsPerIp"]),
+            Fqdn = context.ParseResult.GetValueForOption((Option<string>)optionsDict["fqdn"]),
+            RedisUrl = context.ParseResult.GetValueForOption((Option<string>)optionsDict["redisUrl"]),
+            ServerName = context.ParseResult.GetValueForOption((Option<string>)optionsDict["serverName"]),
+            Trace = context.ParseResult.GetValueForOption((Option<bool>)optionsDict["trace"])
+        };
+    }
+
+    private static Server ConfigureServer(SocketServer socketServer,
+        Dictionary<string, PermissionProfile> defaultPermissions, string? redisUrl)
+    {
+        var floodProtectionManager = new FloodProtectionManager();
+        var securityManager = new SaslHandler(defaultPermissions);
+        var dataStoreServerConfig = new DataStore(ResolveRuntimePath("DefaultServer.json"));
+        return new Server(socketServer, () => new SaslHandler(defaultPermissions), floodProtectionManager, dataStoreServerConfig,
+            null, redisUrl);
+    }
+
+    private static async Task<Dictionary<string, PermissionProfile>> LoadDefaultPermissions()
+    {
+        var path = ResolveRuntimePath("DefaultPermissions.json");
+        if (!File.Exists(path))
+            return new Dictionary<string, PermissionProfile>(StringComparer.OrdinalIgnoreCase);
+
+        var loaded = System.Text.Json.JsonSerializer.Deserialize(
+            await File.ReadAllTextAsync(path),
+            IrcDaemonJsonContext.Default.DictionaryStringPermissionProfile) ?? new Dictionary<string, PermissionProfile>();
+
+        return new Dictionary<string, PermissionProfile>(loaded, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static void InitializeDefaultChannels(IServer server)
+    {
+        var path = ResolveRuntimePath("DefaultChannels.json");
+        var defaultChannels =
+            System.Text.Json.JsonSerializer.Deserialize(
+                File.ReadAllText(path),
+                IrcDaemonJsonContext.Default.ListDefaultChannel);
+        if (defaultChannels == null) return;
+
+        foreach (var defaultChannel in defaultChannels)
+        {
+            var name = $"%#{defaultChannel.Name.ToEscape()}";
+
+            // If we're an ACS and connected to Redis, check if another ACS already hosts this channel
+            if (server.IsChannelHostedElsewhere(name, out var existingServerId))
+            {
+                Log.Info($"Skipping default channel {name}, already hosted on {existingServerId}");
+                continue;
+            }
+
+            var channel = server.CreateChannel(name);
+            if (channel == null)
+            {
+                Log.Info($"Skipping default channel {name}, could not create channel (maybe race condition?)");
+                continue;
+            }
+            channel.Store = true;
+
+            channel.Props.Topic.Value = $"%{defaultChannel.Topic.ToEscape()}";
+            foreach (var keyValuePair in defaultChannel.Modes)
+                channel.Modes.SetModeValue(keyValuePair.Key, keyValuePair.Value);
+
+            foreach (var keyValuePair in defaultChannel.Props)
+            {
+                var prop = channel.Props.GetProp(keyValuePair.Key);
+                prop?.SetValue(keyValuePair.Value);
+            }
+
+            if (!string.IsNullOrEmpty(defaultChannel.Category))
+            {
+                var categoryProp = channel.Props.GetProp("CATEGORY");
+                categoryProp?.SetValue(defaultChannel.Category);
+            }
+
+            server.AddChannel(channel);
+        }
+    }
+
+    private static string ResolveRuntimePath(string fileName)
+    {
+        return Path.Combine(AppContext.BaseDirectory, fileName);
+    }
+
+    private static void DisplayStartupInfo(ServerOptions options, IPAddress ip)
+    {
+        Console.WriteLine("╔════════════════════════════════════════╗");
+        Console.WriteLine("║            IRC7 Server Info            ║");
+        Console.WriteLine("╠════════════════════════════════════════╣");
+
+        var infoLines = new List<string>
+        {
+            $"║ Server Version: {Assembly.GetExecutingAssembly().GetName().Version}",
+            $"║ Listening on IP: {ip}",
+            $"║ Port: {options.BindPort}",
+            $"║ Max Connections: {options.MaxConnections}",
+            $"║ Max Connections Per IP: {options.MaxConnectionsPerIp}",
+            $"║ FQDN: {options.Fqdn}",
+            $"║ Buffer Size: {options.BufferSize} bytes",
+            $"║ Backlog Size: {options.Backlog}",
+            $"║ Redis URL: {options.RedisUrl}"
+        };
+        if (!string.IsNullOrEmpty(options.ServerName)) infoLines.Add($"║ Server Name: {options.ServerName}");
+
+        var maxLength = 0;
+        foreach (var line in infoLines)
+        {
+            maxLength = Math.Max(maxLength, line.Length);
+            maxLength = maxLength < 40 ? 40 : maxLength;
+        }
+
+        foreach (var line in infoLines)
+        {
+            var spacesToAdd = maxLength - line.Length;
+            var formattedLine = line + new string(' ', spacesToAdd) + " ║";
+            Console.WriteLine(formattedLine);
+        }
+
+        Console.WriteLine("╚════════════════════════════════════════╝");
+    }
+}
