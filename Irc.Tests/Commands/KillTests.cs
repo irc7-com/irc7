@@ -46,17 +46,9 @@ public class KillTests
     }
 
     [Test]
-    public void Execute_TargetNickNotInAdminChannel_SendsNoSuchNick()
+    public void Execute_TargetNickNotOnServer_SendsNoSuchNick()
     {
-        var sourceChannel = new Mock<IChannel>();
-        var sourceMember = new Mock<IChannelMember>();
-        var otherUser = CreateMockUser("OtherNick").Object;
-
-        sourceMember.Setup(m => m.GetUser()).Returns(otherUser);
-        sourceChannel.Setup(c => c.GetMembers()).Returns(new List<IChannelMember> { sourceMember.Object });
-        _adminChannels.Add(sourceChannel.Object, sourceMember.Object);
-
-        _mockServer.Setup(s => s.GetUsers()).Returns(new List<IUser> { CreateMockUser("DupNick").Object });
+        _mockServer.Setup(s => s.GetUsers()).Returns(new List<IUser> { CreateMockUser("OtherNick").Object });
 
         var kill = new Kill();
         kill.Execute(_mockChatFrame.Object);
@@ -65,26 +57,26 @@ public class KillTests
     }
 
     [Test]
-    public void Execute_AdminNotInChannel_SendsUserNotInChannel()
+    public void Execute_AdminNotInChannel_KillsMatchingUsersServerWide()
     {
-        _mockServer.Setup(s => s.GetUsers()).Returns(new List<IUser> { CreateMockUser("DupNick").Object });
+        var firstTarget = CreateMockUser("DupNick");
+        var secondTarget = CreateMockUser("DupNick");
+        _mockServer.Setup(s => s.GetUsers()).Returns(new List<IUser> { firstTarget.Object, secondTarget.Object });
+
+        var disconnectCount = 0;
+        firstTarget.Setup(u => u.Disconnect(It.IsAny<string>())).Callback(() => disconnectCount++);
+        secondTarget.Setup(u => u.Disconnect(It.IsAny<string>())).Callback(() => disconnectCount++);
 
         var kill = new Kill();
         kill.Execute(_mockChatFrame.Object);
 
-        _mockAdmin.Verify(u => u.Send(It.Is<string>(raw => raw.Contains(" 928 "))), Times.Once);
+        Assert.That(disconnectCount, Is.EqualTo(2));
     }
 
     [Test]
-    public void Execute_TargetNickInAdminChannel_KillsAllMatchingNicknameConnections()
+    public void Execute_TargetNickOnServer_KillsAllMatchingNicknameConnections()
     {
-        var sourceChannel = new Mock<IChannel>();
-        var sourceMember = new Mock<IChannelMember>();
         var sourceTarget = CreateMockUser("DupNick");
-
-        sourceMember.Setup(m => m.GetUser()).Returns(sourceTarget.Object);
-        sourceChannel.Setup(c => c.GetMembers()).Returns(new List<IChannelMember> { sourceMember.Object });
-        _adminChannels.Add(sourceChannel.Object, sourceMember.Object);
 
         var duplicateTarget = CreateMockUser("DupNick");
         var otherUser = CreateMockUser("OtherNick");
