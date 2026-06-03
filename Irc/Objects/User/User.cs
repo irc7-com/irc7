@@ -201,7 +201,7 @@ public class User : ChatObject, IUser
 
     public bool Away { get; set; }
 
-    public UserAddress GetAddress()
+    public IUserAddress GetAddress()
     {
         return UserAddress;
     }

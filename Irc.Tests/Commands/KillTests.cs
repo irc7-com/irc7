@@ -23,16 +23,14 @@ public class KillTests
         _mockChatMessage = new Mock<IChatMessage>();
         _adminChannels = new Dictionary<IChannel, IChannelMember>();
 
-        var adminAddress = new UserAddress
-        {
-            RemoteIp = "127.0.0.1",
-            User = "admin",
-            Host = "localhost"
-        };
-        adminAddress.SetNickname("Administrator");
+        var adminAddress = new Mock<IUserAddress>();
+        adminAddress.SetupGet(a => a.RemoteIp).Returns("127.0.0.1");
+        adminAddress.SetupGet(a => a.User).Returns("user");
+        adminAddress.SetupGet(a => a.Nickname).Returns("Administrator");
+        adminAddress.SetupGet(a => a.Host).Returns("localhost");
 
         _mockAdmin.Setup(u => u.GetLevel()).Returns(Enumerations.EnumUserAccessLevel.Sysop);
-        _mockAdmin.Setup(u => u.GetAddress()).Returns(adminAddress);
+        _mockAdmin.Setup(u => u.GetAddress()).Returns(adminAddress.Object);
         _mockAdmin.Setup(u => u.GetChannels()).Returns(_adminChannels);
         _mockAdmin.Setup(u => u.ToString()).Returns("Administrator");
 
@@ -105,15 +103,13 @@ public class KillTests
         var user = new Mock<IUser>();
         var channels = new Dictionary<IChannel, IChannelMember>();
 
-        var address = new UserAddress
-        {
-            RemoteIp = "127.0.0.1",
-            User = "user",
-            Host = "localhost"
-        };
-        address.SetNickname(nickname);
+        var address = new Mock<IUserAddress>();
+        address.SetupGet(a => a.RemoteIp).Returns("127.0.0.1");
+        address.SetupGet(a => a.User).Returns("user");
+        address.SetupGet(a => a.Nickname).Returns(nickname);
+        address.SetupGet(a => a.Host).Returns("localhost");
 
-        user.Setup(u => u.GetAddress()).Returns(address);
+        user.Setup(u => u.GetAddress()).Returns(address.Object);
         user.Setup(u => u.GetLevel()).Returns(Enumerations.EnumUserAccessLevel.None);
         user.Setup(u => u.GetChannels()).Returns(channels);
         user.Setup(u => u.RemoveChannel(It.IsAny<IChannel>()))

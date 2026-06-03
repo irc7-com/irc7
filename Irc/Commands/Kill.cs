@@ -1,12 +1,13 @@
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Objects.Channel;
 
 namespace Irc.Commands;
 
-internal class Kill : Command, ICommand
+public class Kill : Command, ICommand
 {
-    public Kill() : base(2)
+    public Kill() : base(1)
     {
     }
 
@@ -15,20 +16,63 @@ internal class Kill : Command, ICommand
         return EnumCommandDataType.Standard;
     }
 
+    // Exchange 5.5 KILL <nickname/channel> [<comment>]
     public new void Execute(IChatFrame chatFrame)
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
         var target = chatFrame.ChatMessage.Parameters.First();
-        var reason = chatFrame.ChatMessage.Parameters[1];
-
+        var reason = string.Empty;
+        
         // ERR_NOPRIVILEGES: caller must be at least Sysop
         if (user.GetLevel() < EnumUserAccessLevel.Sysop)
         {
             user.Send(Raws.IRCX_ERR_NOPRIVILEGES_481(server, user));
             return;
         }
+        
+        if (chatFrame.ChatMessage.Parameters.Count > 1)
+        {
+            reason = chatFrame.ChatMessage.Parameters[1];
+        }
+        
+        // If target is a channel (prefix: #, %, &), kill the channel
+        if (Channel.ValidName(target))
+        {
+            KillChannel(server, target, user, reason);
+            return;
+        }
 
+        // Otherwise target must be treated as a user
+        KillUser(server, target, user, reason);
+    }
+
+    private static void KillChannel(IServer server, string target, IUser user, string reason)
+    {
+        var channel = server.GetChannelByName(target);
+
+        if (channel == null)
+        {
+            user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, target));
+            return;
+        }
+
+        var members = channel.GetMembers().ToList();
+
+        // Notify and disconnect every member
+        foreach (var member in members)
+        {
+            var targetUser = member.GetUser();
+            targetUser.Send(Raws.RPL_SERVER_KICK_IRC(channel, targetUser, reason));
+            targetUser.RemoveChannel(channel);
+        }
+
+        // Remove the channel from the server (also synchronizes via Redis Cache Manager)
+        server.RemoveChannel(channel);
+    }
+
+    private static void KillUser(IServer server, string target, IUser user, string reason)
+    {
         var targetUsers = server.GetUsers()
             .Where(targetUser => NicknameMatches(targetUser, target))
             .ToList();
