@@ -29,13 +29,6 @@ internal class Kill : Command, ICommand
             return;
         }
 
-        // ERR_CANTKILLSERVER: target must not be the server itself
-        if (string.Equals(target, server.Name, StringComparison.OrdinalIgnoreCase))
-        {
-            user.Send(Raws.IRCX_ERR_CANTKILLSERVER_483(server, user, target));
-            return;
-        }
-
         // ERR_NOSUCHNICK: search server-wide, not just in the caller's first channel
         var targetUser = server.GetUserByNickname(target);
         if (targetUser == null)
