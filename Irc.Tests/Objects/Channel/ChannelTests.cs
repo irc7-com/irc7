@@ -21,11 +21,11 @@ public class ChannelTests
         mockConnection.Setup(x => x.GetIp()).Returns("127.0.0.1");
 
         var channel = new Irc.Objects.Channel.Channel("TestChannel");
-        var user1 = new User(mockConnection.Object, mockProtocol.Object, mockDataRegulator.Object, mockFloodProtectionProfile.Object, mockServer.Object, () => mockSaslHandler.Object)
+        var user1 = new User(mockConnection.Object, mockProtocol.Object, mockDataRegulator.Object, mockFloodProtectionProfile.Object, mockServer.Object, (passport) => mockSaslHandler.Object)
         {
             Nickname = "TestUser",
         };
-        var user2 = new User(mockConnection.Object, mockProtocol.Object, mockDataRegulator.Object, mockFloodProtectionProfile.Object, mockServer.Object, () => mockSaslHandler.Object)
+        var user2 = new User(mockConnection.Object, mockProtocol.Object, mockDataRegulator.Object, mockFloodProtectionProfile.Object, mockServer.Object, (passport) => mockSaslHandler.Object)
         {
             Nickname = "AnotherUser",
         };

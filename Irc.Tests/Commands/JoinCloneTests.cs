@@ -392,7 +392,7 @@ public class JoinCloneTests
 
         var user = new Irc.Objects.User.User(
             mockConnection.Object, mockProtocol.Object,
-            mockDataRegulator.Object, mockFloodProtection.Object, mockSrv.Object, () => mockSaslHandler.Object);
+            mockDataRegulator.Object, mockFloodProtection.Object, mockSrv.Object, (passport) => mockSaslHandler.Object);
         user.Nickname = nickname;
         return user;
     }

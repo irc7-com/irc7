@@ -28,7 +28,8 @@ RUN --mount=type=secret,id=IRCX_SSPI_TOKEN \
         --self-contained true \
         -p:PublishAot=true \
         -o /app/output \
-    && mv /app/output/Irc.Directory.Daemon /app/output/irc7ds
+    && mv /app/output/Irc.Directory.Daemon /app/output/irc7ds \
+    && dotnet nuget remove source "mono-chat"
 
 # ─────────────────────────────────────────────────────────────
 # Stage 2 – Minimal runtime image

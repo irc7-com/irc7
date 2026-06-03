@@ -16,7 +16,7 @@ public class User : ChatObject, IUser
     private readonly IConnection _connection;
     private readonly IDataRegulator _dataRegulator;
     private readonly IFloodProtectionProfile _floodProtectionProfile;
-    private readonly Func<ISaslHandler> _saslHandlerFactory;
+    private readonly Func<bool, ISaslHandler> _saslHandlerFactory;
     private ISaslHandler? _saslHandler;
     private readonly Queue<ModeOperation> _modeOperations = new();
     private bool _authenticated;
@@ -42,7 +42,7 @@ public class User : ChatObject, IUser
         IDataRegulator dataRegulator,
         IFloodProtectionProfile floodProtectionProfile,
         IServer server,
-        Func<ISaslHandler> saslHandlerFactory)
+        Func<bool, ISaslHandler> saslHandlerFactory)
     {
         Server = server;
         _connection = connection;
@@ -397,9 +397,9 @@ public class User : ChatObject, IUser
         return _saslHandler;
     }
 
-    public ISaslHandler InitializeSspiHandler()
+    public ISaslHandler InitializeSspiHandler(bool passport)
     {
-        _saslHandler ??= _saslHandlerFactory();
+        _saslHandler ??= _saslHandlerFactory(passport);
         return _saslHandler;
     }
 

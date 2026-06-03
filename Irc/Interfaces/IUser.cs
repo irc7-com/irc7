@@ -60,5 +60,5 @@ public interface IUser
     void DisconnectIfInactive();
     Queue<ModeOperation> GetModeOperations();
     ISaslHandler? GetSspiHandler();
-    ISaslHandler InitializeSspiHandler();
+    ISaslHandler InitializeSspiHandler(bool passport);
 }
