@@ -28,14 +28,14 @@ public class Server : ChatObject, IServer
     private readonly ICredentialProvider? _credentialProvider;
     protected readonly IDataStore _DataStore;
     private readonly IFloodProtectionManager _floodProtectionManager;
-    private readonly PassportV4 _passport = new(string.Empty, string.Empty);
+    public PassportV4 Passport { get; } = new(string.Empty, string.Empty);
     private readonly ConcurrentQueue<IUser> _pendingNewUserQueue = new();
     private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
     // Track IDs of users pending removal to avoid duplicate enqueues
     private readonly ConcurrentDictionary<Guid, byte> _pendingRemoveUserSet = new();
     private readonly Task _processingTask;
-    private readonly Func<ISaslHandler> _saslHandlerFactory;
-    private readonly string[] _saslSupportedPackages;
+    private readonly Func<bool, ISaslHandler> _saslHandlerFactory;
+    private readonly IReadOnlyDictionary<string, string> _saslSupportedPackages;
     private readonly ISocketServer _socketServer;
     private readonly Irc.Services.CacheManager _cacheManager;
     private System.Timers.Timer? _heartbeatTimer;
@@ -57,7 +57,7 @@ public class Server : ChatObject, IServer
     public IList<IUser> Users = new List<IUser>();
 
     public Server(ISocketServer socketServer,
-        Func<ISaslHandler> saslHandlerFactory,
+        Func<bool, ISaslHandler> saslHandlerFactory,
         IFloodProtectionManager floodProtectionManager,
         IDataStore dataStore,
         ICredentialProvider? credentialProvider = null,
@@ -71,9 +71,6 @@ public class Server : ChatObject, IServer
         _DataStore = dataStore;
         
         // Create a temporary instance to read supported packages
-        var tempHandler = saslHandlerFactory();
-        _saslSupportedPackages = tempHandler.SupportedPackages;
-        
         _cacheManager = new Irc.Services.CacheManager(redisUrl);
         _processingTask = new Task(Process);
         _processingTask.Start();
@@ -118,10 +115,7 @@ public class Server : ChatObject, IServer
         };
         socketServer.Listen();
 
-        if (SupportPackages.Contains("GateKeeper"))
-        {
-            _passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
-        }
+        Passport = new PassportV4(dataStore.Get("Passport.V4.AppID"), dataStore.Get("Passport.V4.Secret"));
 
         var modes = new ChannelModes().GetSupportedModes();
         modes = new string(modes.OrderBy(c => c).ToArray());
@@ -235,7 +229,7 @@ public class Server : ChatObject, IServer
     public int NetInvisibleCount { get; } = 0;
     public int NetServerCount { get; } = 0;
     public int NetUserCount { get; } = 0;
-    public string SecurityPackages => string.Join(",", _saslSupportedPackages);
+    public string SecurityPackages => "GateKeeper,NTLM";
     public int SysopCount { get; } = 0;
     public int UnknownConnectionCount => _socketServer.CurrentConnections - NetUserCount;
     public string RemoteIp { set; get; } = string.Empty;
@@ -482,7 +476,7 @@ public class Server : ChatObject, IServer
     {
         if (name == Resources.UserPropMsnRegCookie && user.IsAuthenticated() && !user.IsRegistered())
         {
-            var nickname = _passport.ValidateRegCookie(value);
+            var nickname = Passport.ValidateRegCookie(value);
             if (nickname != null)
             {
                 var encodedNickname = Encoding.Latin1.GetString(Encoding.UTF8.GetBytes(nickname));
@@ -498,7 +492,7 @@ public class Server : ChatObject, IServer
             if (!issuedAt.HasValue) return;
 
             var subscribedString =
-                _passport.ValidateSubscriberInfo(value, issuedAt.Value);
+                Passport.ValidateSubscriberInfo(value, issuedAt.Value);
             int.TryParse(subscribedString, out var subscribed);
             if ((subscribed & 1) == 1) ((User.User)user).GetProfile().Registered = true;
         }
@@ -509,7 +503,7 @@ public class Server : ChatObject, IServer
         }
         else if (name == Resources.UserPropRole && user.IsAuthenticated())
         {
-            var dict = _passport.ValidateRole(value);
+            var dict = Passport.ValidateRole(value);
             if (dict == null) return;
 
             if (dict.ContainsKey("umode"))
