@@ -30,21 +30,24 @@ internal class Kill : Command, ICommand
         }
 
         var sourceChannel = user.GetChannels().FirstOrDefault().Key;
-        var sourceChannelTarget = sourceChannel?.GetMembers()
-            .Select(member => member.GetUser())
-            .FirstOrDefault(targetUser =>
-                string.Equals(targetUser.GetAddress().Nickname.Trim(), target, StringComparison.InvariantCultureIgnoreCase));
+        if (sourceChannel == null)
+        {
+            user.Send(Raws.IRCX_ERR_U_NOTINCHANNEL_928(server, user));
+            return;
+        }
 
-        if (sourceChannelTarget == null)
+        var targetUserInChannel = sourceChannel.GetMembers()
+            .Select(member => member.GetUser())
+            .FirstOrDefault(targetUser => NicknameMatches(targetUser, target));
+
+        if (targetUserInChannel == null)
         {
             user.Send(Raws.IRCX_ERR_NOSUCHNICK_401(server, user, target));
             return;
         }
 
         var targetUsers = server.GetUsers()
-            .Where(targetUser =>
-                string.Equals(targetUser.GetAddress().Nickname.Trim(), sourceChannelTarget.GetAddress().Nickname.Trim(),
-                    StringComparison.InvariantCultureIgnoreCase))
+            .Where(targetUser => NicknameMatches(targetUser, targetUserInChannel.GetAddress().Nickname))
             .ToList();
 
         // Prevent killing a user with equal or higher privileges
@@ -67,5 +70,10 @@ internal class Kill : Command, ICommand
             targetUser.Disconnect(
                 Raws.IRCX_CLOSINGLINK_007_SYSTEMKILL(server, targetUser, targetUser.GetAddress().RemoteIp));
         }
+    }
+
+    private static bool NicknameMatches(IUser user, string nickname)
+    {
+        return string.Equals(user.GetAddress().Nickname.Trim(), nickname.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 }

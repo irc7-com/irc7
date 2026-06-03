@@ -65,6 +65,17 @@ public class KillTests
     }
 
     [Test]
+    public void Execute_AdminNotInChannel_SendsUserNotInChannel()
+    {
+        _mockServer.Setup(s => s.GetUsers()).Returns(new List<IUser> { CreateMockUser("DupNick").Object });
+
+        var kill = new Kill();
+        kill.Execute(_mockChatFrame.Object);
+
+        _mockAdmin.Verify(u => u.Send(It.Is<string>(raw => raw.Contains(" 928 "))), Times.Once);
+    }
+
+    [Test]
     public void Execute_TargetNickInAdminChannel_KillsAllMatchingNicknameConnections()
     {
         var sourceChannel = new Mock<IChannel>();
