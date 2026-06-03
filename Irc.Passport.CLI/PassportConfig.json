@@ -1,4 +1,4 @@
 {
-  "AppId": "id",
-  "Secret": "mysecret"
+  "AppId": "<appid>",
+  "Secret": "<secret>"
 }
