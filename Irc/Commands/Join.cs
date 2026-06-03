@@ -252,31 +252,31 @@ public class Join : Command, ICommand
         switch (result)
         {
             case EnumChannelAccessResult.ERR_BADCHANNELKEY:
-                knockRaw = "475";
+                knockRaw = Resources.Raw475;
                 userError = Raws.IRCX_ERR_BADCHANNELKEY_475(server, user, channel);
                 break;
             case EnumChannelAccessResult.ERR_INVITEONLYCHAN:
-                knockRaw = "473";
+                knockRaw = Resources.Raw473;
                 userError = Raws.IRCX_ERR_INVITEONLYCHAN_473(server, user, channel);
                 break;
             case EnumChannelAccessResult.ERR_CHANNELISFULL:
-                knockRaw = "471";
+                knockRaw = Resources.Raw471;
                 userError = Raws.IRCX_ERR_CHANNELISFULL_471(server, user, channel);
                 break;
             case EnumChannelAccessResult.ERR_BANNEDFROMCHAN:
-                knockRaw = "474";
+                knockRaw = Resources.Raw474;
                 userError = Raws.IRCX_ERR_BANNEDFROMCHAN_474(server, user, channel);
                 break;
             case EnumChannelAccessResult.ERR_AUTHONLYCHAN:
-                knockRaw = "556";
+                knockRaw = Resources.Raw556;
                 userError = Raws.IRCX_ERR_AUTHONLYCHAN_556(server, user, channel);
                 break;
             case EnumChannelAccessResult.ERR_SECUREONLYCHAN:
-                knockRaw = "557";
+                knockRaw = Resources.Raw557;
                 userError = Raws.IRCX_ERR_SECUREONLYCHAN_557(server, user, channel);
                 break;
             default:
-                knockRaw = "913";
+                knockRaw = Resources.Raw913;
                 userError = $"CANNOT JOIN CHANNEL {result}";
                 break;
         }
