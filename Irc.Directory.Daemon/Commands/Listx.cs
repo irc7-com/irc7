@@ -34,25 +34,7 @@ internal class Listx : Command, ICommand
             var queryTerms = Tools.CSVToArray(firstParam);
             foreach (var term in queryTerms)
             {
-                if (term.StartsWith("<") && int.TryParse(term.Substring(1), out var lessThan))
-                {
-                    rooms = rooms.Where(r => r.CurrentUsers < lessThan).ToList();
-                }
-                else if (term.StartsWith(">") && int.TryParse(term.Substring(1), out var greaterThan))
-                {
-                    rooms = rooms.Where(r => r.CurrentUsers > greaterThan).ToList();
-                }
-                else if (term.StartsWith("L="))
-                {
-                    var mask = term.Substring(2);
-                    rooms = rooms.Where(r => Tools.MatchesMask(r.Language, mask)).ToList();
-                }
-                else if (term.StartsWith("N="))
-                {
-                    var mask = term.Substring(2);
-                    rooms = rooms.Where(r => Tools.MatchesMask(r.Name, mask)).ToList();
-                }
-                else if (term == "R=0")
+                if (term == "R=0")
                 {
                     rooms = rooms.Where(r => !r.Managed).ToList();
                 }
@@ -60,12 +42,17 @@ internal class Listx : Command, ICommand
                 {
                     rooms = rooms.Where(r => r.Managed).ToList();
                 }
+                else if (term.StartsWith("N="))
+                {
+                    var mask = term.Substring(2);
+                    rooms = rooms.Where(r => Tools.MatchesMask(r.Name, mask)).ToList();
+                }
                 else if (term.StartsWith("T="))
                 {
                     var mask = term.Substring(2);
                     rooms = rooms.Where(r => Tools.MatchesMask(r.Topic, mask)).ToList();
                 }
-                else if (int.TryParse(term, out var queryLimit))
+                else if (term.StartsWith("Q=") && int.TryParse(term.Substring(2), out var queryLimit))
                 {
                     rooms = rooms.Take(queryLimit).ToList();
                 }
