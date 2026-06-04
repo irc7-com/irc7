@@ -192,6 +192,26 @@ public static class Resources
         ChannelCategoryUnlisted
     };
 
+    public static readonly Dictionary<string, string> ChannelCategoryNames = new Dictionary<string, string>
+    {
+        { ChannelCategoryTeens, "Teens" },
+        { ChannelCategoryComputing, "Computing" },
+        { ChannelCategoryEvents, "Events" },
+        { ChannelCategoryGeneral, "General" },
+        { ChannelCategoryHealth, "Health" },
+        { ChannelCategoryCityChats, "City\bChats" },
+        { ChannelCategoryEntertainment, "Entertainment" },
+        { ChannelCategoryInterests, "Interests" },
+        { ChannelCategoryLifestyles, "Lifestyles" },
+        { ChannelCategoryMusic, "Music" },
+        { ChannelCategoryPeers, "Peers" },
+        { ChannelCategoryNews, "News" },
+        { ChannelCategoryReligion, "Religion" },
+        { ChannelCategoryRomance, "Romance" },
+        { ChannelCategorySports, "Sports" },
+        { ChannelCategoryUnlisted, "Unlisted" }
+    };
+
     #endregion
 
     #region Channel Country & Language

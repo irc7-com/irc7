@@ -169,5 +169,6 @@ public class DirectoryServer : Server
         AddCommand(new Pong());
         AddCommand(new Version());
         AddCommand(new WebIrc());
+        AddCommand(new Listc());
     }
 }
