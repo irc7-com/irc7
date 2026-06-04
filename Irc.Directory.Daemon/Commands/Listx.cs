@@ -1,6 +1,7 @@
 using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
+using Irc.Helpers;
 using Irc.Interfaces;
 using Irc.Services;
 
@@ -24,20 +25,56 @@ internal class Listx : Command, ICommand
             return;
         }
 
-        var substring = chatFrame.ChatMessage.Parameters.FirstOrDefault();
+        var parameters = chatFrame.ChatMessage.Parameters;
+        var rooms = server.CacheManager.GetAllRooms().ToList();
+        var firstParam = parameters.FirstOrDefault();
 
-        IEnumerable<AcsRoomInfo> rooms = server.CacheManager.GetAllRooms();
-
-        if (!string.IsNullOrEmpty(substring))
+        if (firstParam != null)
         {
-            rooms = rooms.Where(r => r.Name.Contains(substring, StringComparison.OrdinalIgnoreCase));
+            var queryTerms = Tools.CSVToArray(firstParam);
+            foreach (var term in queryTerms)
+            {
+                if (term.StartsWith("<") && int.TryParse(term.Substring(1), out var lessThan))
+                {
+                    rooms = rooms.Where(r => r.CurrentUsers < lessThan).ToList();
+                }
+                else if (term.StartsWith(">") && int.TryParse(term.Substring(1), out var greaterThan))
+                {
+                    rooms = rooms.Where(r => r.CurrentUsers > greaterThan).ToList();
+                }
+                else if (term.StartsWith("L="))
+                {
+                    var mask = term.Substring(2);
+                    rooms = rooms.Where(r => Tools.MatchesMask(r.Language, mask)).ToList();
+                }
+                else if (term.StartsWith("N="))
+                {
+                    var mask = term.Substring(2);
+                    rooms = rooms.Where(r => Tools.MatchesMask(r.Name, mask)).ToList();
+                }
+                else if (term == "R=0")
+                {
+                    rooms = rooms.Where(r => !r.Managed).ToList();
+                }
+                else if (term == "R=1")
+                {
+                    rooms = rooms.Where(r => r.Managed).ToList();
+                }
+                else if (term.StartsWith("T="))
+                {
+                    var mask = term.Substring(2);
+                    rooms = rooms.Where(r => Tools.MatchesMask(r.Topic, mask)).ToList();
+                }
+                else if (int.TryParse(term, out var queryLimit))
+                {
+                    rooms = rooms.Take(queryLimit).ToList();
+                }
+            }
         }
-
-        var roomList = rooms.ToList();
 
         user.Send(Raws.IRCX_RPL_LISTXSTART_811(server, user));
 
-        foreach (var room in roomList)
+        foreach (var room in rooms)
         {
             user.Send(Raws.IRCX_RPL_LISTXLIST_812(
                 server,
