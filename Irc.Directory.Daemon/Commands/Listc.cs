@@ -31,7 +31,8 @@ internal class Listc : Command, ICommand
         {
             if (isIrc4Plus)
             {
-                var name = Resources.ChannelCategoryNames[category];
+                if (!Resources.ChannelCategoryNames.TryGetValue(category, out var name))
+                    name = category;
                 user.Send(Raws.IRCX_RPL_LISTCLIST_IRC4_611(server, user, category, name));
             }
             else
