@@ -36,12 +36,11 @@ internal class Program
 
 			var defaultPermissions = await LoadDefaultPermissions();
 			var floodProtectionManager = new FloodProtectionManager();
-			var saslHandler = new SaslHandler(defaultPermissions);
 			var dataStoreServerConfig = new DataStore(ResolveRuntimePath("DefaultServer.json"));
 
 			try
 			{
-				_server = new DirectoryServer(socketServer, () => new SaslHandler(defaultPermissions), floodProtectionManager, dataStoreServerConfig,
+				_server = new DirectoryServer(socketServer, (passport) => new SaslHandler(defaultPermissions, passport), floodProtectionManager, dataStoreServerConfig,
 					null, options.ChatServerIp, options.RedisUrl);
 			}
 			catch (InvalidOperationException ex)

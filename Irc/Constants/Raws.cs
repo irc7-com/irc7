@@ -82,6 +82,11 @@ public static class Raws
     {
         return $":{user.GetAddress()} PROP {chatObject} {propName} :{propValue}";
     }
+    
+    public static string RPL_SERVER_KICK_IRC(IChannel channel, IUser target, string reason)
+    {
+        return $":Server KICK {channel} {target} :{reason}";
+    }
 
     public static string RPL_KICK_IRC(IUser user, IChannel channel, IUser target, string reason)
     {

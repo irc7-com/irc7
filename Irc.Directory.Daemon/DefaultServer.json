@@ -4,7 +4,7 @@
   "Title": "Default Chat Service",
   "Motd": "[\"*** Welcome to the Server ***\"]",
   "SASL.Packages": "[\"ANON\",\"GateKeeper\",\"NTLM\"]",
-  "Passport.V4.Secret": "mysecret",
+  "Passport.V4.Secret": "<secret>",
   "WebIrc.User": "user",
   "WebIrc.Password": "password",
   "WebIrc.Whitelisted.IP": "::ffff:127.0.0.1",

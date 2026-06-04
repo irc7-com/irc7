@@ -1,12 +1,13 @@
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Objects.Channel;
 
 namespace Irc.Commands;
 
-internal class Kill : Command, ICommand
+public class Kill : Command, ICommand
 {
-    public Kill() : base(2)
+    public Kill() : base(1)
     {
     }
 
@@ -15,51 +16,97 @@ internal class Kill : Command, ICommand
         return EnumCommandDataType.Standard;
     }
 
+    // Exchange 5.5 KILL <nickname/channel> [<comment>]
     public new void Execute(IChatFrame chatFrame)
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
         var target = chatFrame.ChatMessage.Parameters.First();
-        var reason = chatFrame.ChatMessage.Parameters[1];
-
+        var reason = string.Empty;
+        
         // ERR_NOPRIVILEGES: caller must be at least Sysop
         if (user.GetLevel() < EnumUserAccessLevel.Sysop)
         {
             user.Send(Raws.IRCX_ERR_NOPRIVILEGES_481(server, user));
             return;
         }
-
-        // ERR_CANTKILLSERVER: target must not be the server itself
-        if (string.Equals(target, server.Name, StringComparison.OrdinalIgnoreCase))
+        
+        if (chatFrame.ChatMessage.Parameters.Count > 1)
         {
-            user.Send(Raws.IRCX_ERR_CANTKILLSERVER_483(server, user, target));
+            reason = chatFrame.ChatMessage.Parameters[1];
+        }
+        
+        // If target is a channel (prefix: #, %, &), kill the channel
+        if (Channel.ValidName(target))
+        {
+            KillChannel(server, target, user, reason);
             return;
         }
 
-        // ERR_NOSUCHNICK: search server-wide, not just in the caller's first channel
-        var targetUser = server.GetUserByNickname(target);
-        if (targetUser == null)
+        // Otherwise target must be treated as a user
+        KillUser(server, target, user, reason);
+    }
+
+    private static void KillChannel(IServer server, string target, IUser user, string reason)
+    {
+        var channel = server.GetChannelByName(target);
+
+        if (channel == null)
+        {
+            user.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(server, user, target));
+            return;
+        }
+
+        var members = channel.GetMembers().ToList();
+
+        // Notify and disconnect every member
+        foreach (var member in members)
+        {
+            var targetUser = member.GetUser();
+            targetUser.Send(Raws.RPL_SERVER_KICK_IRC(channel, targetUser, reason));
+            targetUser.RemoveChannel(channel);
+        }
+
+        // Remove the channel from the server (also synchronizes via Redis Cache Manager)
+        server.RemoveChannel(channel);
+    }
+
+    private static void KillUser(IServer server, string target, IUser user, string reason)
+    {
+        var targetUsers = server.GetUsers()
+            .Where(targetUser => NicknameMatches(targetUser, target))
+            .ToList();
+
+        if (targetUsers.Count == 0)
         {
             user.Send(Raws.IRCX_ERR_NOSUCHNICK_401(server, user, target));
             return;
         }
 
         // Prevent killing a user with equal or higher privileges
-        if (targetUser.GetLevel() >= user.GetLevel())
+        if (targetUsers.Any(targetUser => targetUser.GetLevel() >= user.GetLevel()))
         {
             user.Send(Raws.IRCX_ERR_SECURITY_908(server, user));
             return;
         }
 
-        // Remove the target from every channel they are in, then disconnect
-        foreach (var (channel, member) in targetUser.GetChannels().ToList())
+        // Remove all matching nickname connections from every channel, then disconnect
+        foreach (var targetUser in targetUsers)
         {
-            targetUser.RemoveChannel(channel);
-            channel.GetMembers().Remove(member);
-            channel.Send(Raws.RPL_KILL_IRC(user, targetUser, reason));
-        }
+            foreach (var (channel, member) in targetUser.GetChannels().ToList())
+            {
+                targetUser.RemoveChannel(channel);
+                channel.GetMembers().Remove(member);
+                channel.Send(Raws.RPL_KILL_IRC(user, targetUser, reason));
+            }
 
-        targetUser.Disconnect(
-            Raws.IRCX_CLOSINGLINK_007_SYSTEMKILL(server, targetUser, targetUser.GetAddress().RemoteIp));
+            targetUser.Disconnect(
+                Raws.IRCX_CLOSINGLINK_007_SYSTEMKILL(server, targetUser, targetUser.GetAddress().RemoteIp));
+        }
+    }
+
+    private static bool NicknameMatches(IUser user, string nickname)
+    {
+        return string.Equals(user.GetAddress().Nickname.Trim(), nickname.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 }
