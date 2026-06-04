@@ -170,5 +170,6 @@ public class DirectoryServer : Server
         AddCommand(new Version());
         AddCommand(new WebIrc());
         AddCommand(new Listc());
+        AddCommand(new Listx());
     }
 }
