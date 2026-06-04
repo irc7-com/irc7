@@ -672,6 +672,26 @@ public static class Raws
         return $":{server} 557 {user} {channel} :Only secure users may join channel.";
     }
     
+    public static string IRCX_RPL_LISTCSTART_610(IServer server, IUser user)
+    {
+        return $":{server} 610 {user} :LISTC Start";
+    }
+
+    public static string IRCX_RPL_LISTCLIST_611(IServer server, IUser user, string category)
+    {
+        return $":{server} 611 {user} :{category}";
+    }
+
+    public static string IRCX_RPL_LISTCLIST_IRC4_611(IServer server, IUser user, string category, string name)
+    {
+        return $":{server} 611 {user} {category} :{name}";
+    }
+
+    public static string IRCX_RPL_LISTCEND_612(IServer server, IUser user)
+    {
+        return $":{server} 612 {user} :End of /LISTC";
+    }
+
     public static string RPL_FINDS_MSN(IServer server, IUser user, string ip, string port)
     {
         return $":{server} 613 {user} :{ip} {port}";
