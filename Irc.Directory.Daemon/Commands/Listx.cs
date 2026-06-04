@@ -3,9 +3,8 @@ using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Interfaces;
-using Irc.Services;
 
-namespace Irc.Directory.Commands;
+namespace Irc.Directory.Daemon.Commands;
 
 internal class Listx : Command, ICommand
 {
@@ -56,24 +55,27 @@ internal class Listx : Command, ICommand
                 {
                     rooms = rooms.Take(queryLimit).ToList();
                 }
+                else
+                {
+                    // If it is a category
+                    var category = Resources.ChannelCategoryNames.FirstOrDefault(c => c.Key == term);
+                    if (category.Key != null)
+                    {
+                        // Process category
+                        rooms = rooms.Where(r => r.Category == category.Key).ToList();
+                    }
+                }
             }
         }
 
-        user.Send(Raws.IRCX_RPL_LISTXSTART_811(server, user));
+        // For some reason, don't ask me why, they implemented LISTX as LIST on the Directory Server
+        user.Send($":{server} 321 {user} Channel :Users Name");
 
         foreach (var room in rooms)
         {
-            user.Send(Raws.IRCX_RPL_LISTXLIST_812(
-                server,
-                user,
-                room.Name,
-                room.Modes,
-                room.CurrentUsers,
-                room.MaxUsers,
-                room.Topic
-            ));
+            user.Send($":{server} 322 {user} {room.Name} {room.CurrentUsers} :{room.Topic}");
         }
 
-        user.Send(Raws.IRCX_RPL_LISTXEND_817(server, user));
+        user.Send($":{server} 323 {user} :End of /LIST");
     }
 }
