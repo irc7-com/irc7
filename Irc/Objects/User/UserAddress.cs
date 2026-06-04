@@ -4,9 +4,9 @@ using System.Text.RegularExpressions;
 
 namespace Irc.Objects.User;
 
-public class UserAddress
+public class UserAddress : IUserAddress
 {
-    public UserHostPair UserHost = new();
+    public UserHostPair UserHost { get; set; } = new();
 
     public string Nickname { private set; get; } = string.Empty;
 

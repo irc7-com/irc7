@@ -41,7 +41,7 @@ public interface IUser
     IProtocol GetProtocol();
     IConnection GetConnection();
     EnumUserAccessLevel GetLevel();
-    UserAddress GetAddress();
+    IUserAddress GetAddress();
     bool IsGuest();
     bool IsRegistered();
     bool IsAuthenticated();
