@@ -674,7 +674,7 @@ public static class Raws
     
     public static string IRCX_RPL_LISTCSTART_610(IServer server, IUser user)
     {
-        return $":{server} 610 {user} :LISTC start";
+        return $":{server} 610 {user} :LISTC Start";
     }
 
     public static string IRCX_RPL_LISTCLIST_611(IServer server, IUser user, string category)
@@ -689,7 +689,7 @@ public static class Raws
 
     public static string IRCX_RPL_LISTCEND_612(IServer server, IUser user)
     {
-        return $":{server} 612 {user} :end of /LISTC";
+        return $":{server} 612 {user} :End of /LISTC";
     }
 
     public static string RPL_FINDS_MSN(IServer server, IUser user, string ip, string port)
