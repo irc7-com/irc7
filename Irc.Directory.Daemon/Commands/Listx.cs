@@ -82,7 +82,7 @@ internal class Listx : Command, ICommand
                     chatFrame.User.Send(Raws.IRCX_ERR_BADCOMMAND_900(server, user, "LISTX"));
                     return false;
                 }
-                rooms = rooms.Take((int)queryLimit).ToList();
+                rooms = rooms.Take(queryLimit > int.MaxValue ? int.MaxValue : (int)queryLimit).ToList();
             }
             else
             {
