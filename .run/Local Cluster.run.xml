@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Local Cluster" type="CompoundRunConfigurationType">
-    <toRun name="Irc.Daemon: irc7-standalone-acs" type="LaunchSettings" />
+    <toRun name="Irc.ChatServer.Daemon" type="DotNetProject" />
     <toRun name="Irc.Directory.Daemon" type="DotNetProject" />
     <method v="2" />
   </configuration>
