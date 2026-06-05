@@ -15,6 +15,7 @@ public class UserModes : ModeCollection, IModeCollection, IUserModes
     public Isircx Isircx { get; } = new();
     public GagRule Gag { get; } = new();
     public HostRule Host { get; } = new();
+    public BotRule Bot { get; } = new();
     
     
     public UserModes()
@@ -33,5 +34,8 @@ public class UserModes : ModeCollection, IModeCollection, IUserModes
 
         // Apollo Modes
         Modes.Add(Resources.UserModeHost, new HostRule());
+
+        // IRCv3 Modes
+        Modes.Add(Resources.UserModeBot, Bot);
     }
 }
