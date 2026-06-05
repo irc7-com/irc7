@@ -12,7 +12,7 @@ public class UserModes : ModeCollection, IModeCollection, IUserModes
     public InvisibleRule Invisible { get; } = new();
     public SecureRule Secure { get; } = new();
     public AdminRule Admin { get; } = new();
-    public Isircx Isircx { get; } = new();
+    public IsIrcxRule Isircx { get; } = new();
     public GagRule Gag { get; } = new();
     public HostRule Host { get; } = new();
     
@@ -27,11 +27,11 @@ public class UserModes : ModeCollection, IModeCollection, IUserModes
         //modes.Add(Resources.UserModeWallops, new Modes.User.WallOps());
 
         // IRCX Modes
-        Modes.Add(Resources.UserModeAdmin, new AdminRule());
-        Modes.Add(Resources.UserModeIrcx, new Modes.User.IsIrcxRule());
-        Modes.Add(Resources.UserModeGag, new GagRule());
+        Modes.Add(Resources.UserModeAdmin, Admin);
+        Modes.Add(Resources.UserModeIrcx, Isircx);
+        Modes.Add(Resources.UserModeGag, Gag);
 
         // Apollo Modes
-        Modes.Add(Resources.UserModeHost, new HostRule());
+        Modes.Add(Resources.UserModeHost, Host);
     }
 }

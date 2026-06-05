@@ -101,7 +101,7 @@ public class Who : Command, ICommand
 
                 var chanMode = string.Empty;
                 var channelMember = channel?.GetMember(chatUser);
-                if (channelMember != null) chanMode = channelMember.GetModeString();
+                if (channelMember != null) chanMode = channelMember.GetListedMode();
 
                 var modeString = chatUser.Modes.ToString();
 
