@@ -3,8 +3,6 @@ using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
-using Irc.Objects.Channel;
-using Irc.Objects.Server;
 using Irc.Objects.User;
 
 internal class Access : Command, ICommand
@@ -117,7 +115,14 @@ internal class Access : Command, ICommand
             return;
         }
 
-        var mask = NormalizeMask(parameters[1]);
+        var isValidAddress = UserAddress.Parse(parameters[1], out var address);
+        if (!isValidAddress)
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_NOTSUPPORTED_925(chatFrame.Server, chatFrame.User, targetObject));
+            return;
+        }
+        
+        var mask = address.GetFullAddress();
         
         // Get access
         var accessEntry = targetObject.Access.Get(accessLevel, mask);
@@ -169,7 +174,14 @@ internal class Access : Command, ICommand
             return;
         }
 
-        var mask = NormalizeMask(parameters[1]);
+        var isValidAddress = UserAddress.Parse(parameters[1], out var address);
+        if (!isValidAddress)
+        {
+            chatFrame.User.Send(Raws.IRCX_ERR_NOTSUPPORTED_925(chatFrame.Server, chatFrame.User, targetObject));
+            return;
+        }
+        
+        var mask = address.GetFullAddress();
         var timeout = 0;
         var reason = string.Empty;
 
@@ -217,26 +229,6 @@ internal class Access : Command, ICommand
         );
 
         chatFrame.User.Send(Raws.IRCX_RPL_ACCESSEND_805(chatFrame.Server, chatFrame.User, objectName));
-    }
-
-    /// <summary>
-    /// Normalizes an IRCX access mask to the full nick!user@host$server format,
-    /// defaulting any missing component to *.
-    /// e.g. "Sky"       → "Sky!*@*$*"
-    ///      "Sky!*@*"   → "Sky!*@*$*"
-    ///      "*!*@*$*"   → "*!*@*$*"  (unchanged)
-    /// </summary>
-    private static string NormalizeMask(string mask)
-    {
-        var address = new UserAddress();
-        if (!address.Parse(mask)) return mask;
-
-        if (string.IsNullOrEmpty(address.Nickname)) address.SetNickname("*");
-        if (string.IsNullOrEmpty(address.User))     address.User = "*";
-        if (string.IsNullOrEmpty(address.Host))     address.Host = "*";
-        if (string.IsNullOrEmpty(address.Server))   address.Server = "*";
-
-        return address.GetFullAddress();
     }
 
     private enum AccessCommand

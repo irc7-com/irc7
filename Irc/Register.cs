@@ -1,8 +1,8 @@
 ﻿using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
-using Irc.Helpers;
 using Irc.Interfaces;
+using Irc.Objects.User;
 
 namespace Irc;
 
@@ -142,26 +142,19 @@ public static class Register
     private static bool IsUserDeniedByServerAccess(IServer server, IUser user)
     {
         var addr = user.GetAddress();
-        var fullAddress   = addr.GetFullAddress();    // nick!user@host$server
-        var ipFullAddress = addr.GetIpFullAddress();  // nick!user@ip$server  (normalised)
-
         var accessEntries = server.Access.GetEntries();
-
-        bool Matches(string mask) =>
-            Tools.MatchesMask(fullAddress, mask) ||
-            Tools.MatchesMask(ipFullAddress, mask);
-
+        
         // Check DENY entries
         if (accessEntries.TryGetValue(EnumAccessLevel.DENY, out var denyList))
         {
-            if (denyList.Any(entry => Matches(entry.Mask)))
+            if (denyList.Any(entry => UserAddress.Matches(addr, entry.Mask)))
                 return true;
         }
 
         // Check GRANT entries — if any GRANTs exist and none match, deny
         if (accessEntries.TryGetValue(EnumAccessLevel.GRANT, out var grantList) && grantList.Count > 0)
         {
-            if (!grantList.Any(entry => Matches(entry.Mask)))
+            if (!grantList.Any(entry => UserAddress.Matches(addr, entry.Mask)))
                 return true;
         }
 

@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
+using Irc.Constants;
+using Irc.Helpers;
 
 namespace Irc.Objects.User;
 
@@ -83,26 +84,83 @@ public class UserAddress : IUserAddress
                !string.IsNullOrWhiteSpace(Server) && RealName != null;
     }
 
-    public bool Parse(string address)
+    public static bool Parse(string address, out UserAddress? parsedAddress)
     {
+        parsedAddress = null;
         if (string.IsNullOrWhiteSpace(address)) return false;
 
-        // TODO: Check for bad characters
+        var nickname = string.Empty;
+        var userhost = string.Empty;
+        var hostname =  string.Empty;
+        var server = string.Empty;
+        
+        // Count occurrences — reject if more than one
+        int bangCount = address.Count(c => c == '!');
+        int atCount = address.Count(c => c == '@');
+        int dollarCount = address.Count(c => c == '$');
 
-        var regex = new Regex(
-            @"((?<nick>[\w*?.]+)(?:\!)(?<user>[\w*?.]+)(?:\@)(?<host>[\w*?.]+)(?:\$)(?<server>[\w*?.*]*))|((?<nick>[\w*?.]+)(?:\!)(?<user>[\w*?.]+)(?:\@)(?<host>[\w*?.]+))|((?<user>[\w*?.]+)(?:\@)(?<host>[\w*?.]+))|(?<nick>[\w*?.]+)");
-        var match = regex.Match(address);
+        if (bangCount > 1 || atCount > 1 || dollarCount > 1)
+            return false;
 
-        if (match.Groups.Count > 0)
+        int bang = address.IndexOf('!');
+        int at = address.IndexOf('@');
+        int dollar = address.IndexOf('$');
+
+        // Enforce ordering
+        if (bang != -1 && at != -1 && bang > at)
+            return false;
+
+        if (at != -1 && dollar != -1 && at > dollar)
+            return false;
+
+        // nickname
+        int firstSep = new[] { bang, at, dollar }
+            .Where(i => i != -1)
+            .DefaultIfEmpty(address.Length)
+            .Min();
+
+        nickname = address[..firstSep];
+
+        // userhost
+        if (bang != -1)
         {
-            if (match.Groups.ContainsKey("nick")) Nickname = match.Groups["nick"].Value;
-            if (match.Groups.ContainsKey("user")) User = match.Groups["user"].Value;
-            if (match.Groups.ContainsKey("host")) Host = match.Groups["host"].Value;
-            if (match.Groups.ContainsKey("server")) Server = match.Groups["server"].Value;
-            return true;
+            int start = bang + 1;
+            int end = (at != -1) ? at : (dollar != -1 ? dollar : address.Length);
+            if (start > end) return false;
+            
+            userhost = address[start..end];
         }
 
-        return false;
+        // hostname
+        if (at != -1)
+        {
+            int start = at + 1;
+            int end = (dollar != -1) ? dollar : address.Length;
+            hostname = address[start..end];
+        }
+
+        // server
+        if (dollar != -1)
+        {
+            server = address[(dollar + 1)..];
+        }
+
+        // Explicitly reject "!@$"
+        if (string.IsNullOrWhiteSpace(nickname) &&
+            string.IsNullOrWhiteSpace(userhost) &&
+            string.IsNullOrWhiteSpace(hostname) &&
+            string.IsNullOrWhiteSpace(server)) return false;
+        
+        // NICK!USERHOST@HOSTNAME$SERVER
+        var outputParsedAddress = new UserAddress();
+        outputParsedAddress.Nickname = string.IsNullOrWhiteSpace(nickname) ? Resources.Wildcard : nickname;
+        outputParsedAddress.User = string.IsNullOrWhiteSpace(userhost) ? Resources.Wildcard : userhost;
+        outputParsedAddress.Host = string.IsNullOrWhiteSpace(hostname) ? Resources.Wildcard : hostname;
+        outputParsedAddress.Server = string.IsNullOrWhiteSpace(server) ? Resources.Wildcard : server;
+        
+        parsedAddress = outputParsedAddress;
+        
+        return true;
     }
 
     public static string ObfuscatedAddress(string address)
@@ -114,6 +172,17 @@ public class UserAddress : IUserAddress
         var hexStr = string.Concat(hash.Select(b => $"{b:x2}"));
 
         return hexStr.Substring(8, address.Length - 8);
+    }
+
+    public static bool Matches(IUserAddress address, string mask)
+    {
+        var fullAddress   = address.GetFullAddress();    // nick!user@host$server
+        var ipFullAddress = address.GetIpFullAddress();  // nick!user@ip$server  (normalised)
+        
+        var match = Tools.MatchesMask(fullAddress, mask) ||
+                    Tools.MatchesMask(ipFullAddress, mask);
+
+        return match;
     }
 
     public override string ToString()

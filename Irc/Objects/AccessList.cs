@@ -1,4 +1,5 @@
 ﻿using Irc.Enumerations;
+using Irc.Helpers;
 using Irc.Interfaces;
 
 namespace Irc.Access;
@@ -76,7 +77,7 @@ public class AccessList : IAccessList
         var accessList = Get(accessLevel);
         if (accessList == null) return null;
 
-        return accessList.FirstOrDefault(entry => entry.Mask == mask);
+        return accessList.FirstOrDefault(entry => Tools.MatchesMask(entry.Mask, mask));
     }
 
     public Dictionary<EnumAccessLevel, List<AccessEntry>> GetEntries()

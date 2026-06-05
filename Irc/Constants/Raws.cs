@@ -1006,6 +1006,11 @@ public static class Raws
     {
         return $":{server} 924 {user} {objectName} :No such object found";
     }
+    
+    public static string IRCX_ERR_NOTSUPPORTED_925(IServer server, IUser user, IChatObject objectName)
+    {
+        return $":{server} 924 {user} {objectName} :Command not supported by object";
+    }
 
     public static string IRCX_ERR_ALREADYONCHANNEL_927(IServer server, IUser user, IChannel channel)
     {
