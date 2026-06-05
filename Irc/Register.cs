@@ -2,6 +2,7 @@
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Objects.User;
 
 namespace Irc;
 
@@ -84,6 +85,13 @@ public static class Register
 
     public static bool ConnectionIsPermitted(IServer server, IUser user)
     {
+        // Check server-level DENY / GRANT access list
+        if (IsUserDeniedByServerAccess(server, user))
+        {
+            user.Disconnect(Raws.IRCX_CLOSINGLINK(server, user, "001", "You are banned from this server"));
+            return false;
+        }
+
         if (!server.AnonymousConnections && user.IsAnon())
         {
             // Per Exchange 2000
@@ -122,6 +130,35 @@ public static class Register
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Checks the server's DENY and GRANT access entries against the connecting user's
+    /// full address (nick!user@host$server). Mirrors the spec behaviour:
+    ///   - If a DENY entry matches → denied.
+    ///   - If GRANT entries exist but none match → denied (server is restricted).
+    ///   - Otherwise → permitted.
+    /// </summary>
+    private static bool IsUserDeniedByServerAccess(IServer server, IUser user)
+    {
+        var addr = user.GetAddress();
+        var accessEntries = server.Access.GetEntries();
+        
+        // Check DENY entries
+        if (accessEntries.TryGetValue(EnumAccessLevel.DENY, out var denyList))
+        {
+            if (denyList.Any(entry => UserAddress.Matches(addr, entry.Mask)))
+                return true;
+        }
+
+        // Check GRANT entries — if any GRANTs exist and none match, deny
+        if (accessEntries.TryGetValue(EnumAccessLevel.GRANT, out var grantList) && grantList.Count > 0)
+        {
+            if (!grantList.Any(entry => UserAddress.Matches(addr, entry.Mask)))
+                return true;
+        }
+
+        return false;
     }
 
     public static bool BasicAuthentication(IServer server, IUser user)

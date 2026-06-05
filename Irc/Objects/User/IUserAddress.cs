@@ -14,8 +14,8 @@ public interface IUserAddress
     string GetUserHost();
     string GetAddress();
     string GetFullAddress();
+    string GetIpFullAddress();
     bool IsAddressPopulated();
-    bool Parse(string address);
     string ToString();
     UserAddress.UserHostPair UserHost { get; set; }
 }

@@ -19,9 +19,9 @@ public class ServerAccess : AccessList
     
     public override bool CanModifyAccessLevel(IChatObject source,
         IChatObject target,
-        EnumAccessLevel accessLevel) => source is IUser && ((IUser)source).GetLevel() >= EnumUserAccessLevel.Administrator;
+        EnumAccessLevel accessLevel) => source is IUser && ((IUser)source).GetLevel() >= EnumUserAccessLevel.Sysop;
     
     public override bool CanModifyAccessEntry(IChatObject source,
         IChatObject target,
-        AccessEntry entry) => source is IUser && ((IUser)source).GetLevel() >= EnumUserAccessLevel.Administrator;
+        AccessEntry entry) => source is IUser && ((IUser)source).GetLevel() >= EnumUserAccessLevel.Sysop;
 }
