@@ -3,7 +3,10 @@
     <LangVersion>latest</LangVersion>
     <TargetFrameworkVersion>net10.0</TargetFrameworkVersion>
     <Prefer32Bit>false</Prefer32Bit>
-    <!-- Enable trim analysis across all projects so warnings surface early -->
+  </PropertyGroup>
+
+  <!-- Only enable trim analysis and trimming in Release builds -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>

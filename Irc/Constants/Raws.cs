@@ -82,6 +82,11 @@ public static class Raws
     {
         return $":{user.GetAddress()} PROP {chatObject} {propName} :{propValue}";
     }
+    
+    public static string RPL_SERVER_KICK_IRC(IChannel channel, IUser target, string reason)
+    {
+        return $":Server KICK {channel} {target} :{reason}";
+    }
 
     public static string RPL_KICK_IRC(IUser user, IChannel channel, IUser target, string reason)
     {
@@ -667,6 +672,26 @@ public static class Raws
         return $":{server} 557 {user} {channel} :Only secure users may join channel.";
     }
     
+    public static string IRCX_RPL_LISTCSTART_610(IServer server, IUser user)
+    {
+        return $":{server} 610 {user} :LISTC Start";
+    }
+
+    public static string IRCX_RPL_LISTCLIST_611(IServer server, IUser user, string category)
+    {
+        return $":{server} 611 {user} :{category}";
+    }
+
+    public static string IRCX_RPL_LISTCLIST_IRC4_611(IServer server, IUser user, string category, string name)
+    {
+        return $":{server} 611 {user} {category} :{name}";
+    }
+
+    public static string IRCX_RPL_LISTCEND_612(IServer server, IUser user)
+    {
+        return $":{server} 612 {user} :End of /LISTC";
+    }
+
     public static string RPL_FINDS_MSN(IServer server, IUser user, string ip, string port)
     {
         return $":{server} 613 {user} :{ip} {port}";
@@ -826,6 +851,12 @@ public static class Raws
         int memberCount, int memberLimit, string topic)
     {
         return $":{server} 812 {user} {channel.ToString()} {modes} {memberCount} {memberLimit} :{topic}";
+    }
+
+    public static string IRCX_RPL_LISTXLIST_812(IServer server, IUser user, string channelName, string modes,
+        int memberCount, int memberLimit, string topic)
+    {
+        return $":{server} 812 {user} {channelName} {modes} {memberCount} {memberLimit} :{topic}";
     }
 
     public static string IRCX_RPL_LISTXPICS_813(IServer server, IUser user)
