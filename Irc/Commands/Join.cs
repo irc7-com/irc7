@@ -277,7 +277,7 @@ public class Join : Command, ICommand
                 break;
             default:
                 knockRaw = Resources.Raw913;
-                userError = $"CANNOT JOIN CHANNEL {result}";
+                userError = Raws.IRCX_ERR_NOACCESS_913(server, user, channel);
                 break;
         }
 
