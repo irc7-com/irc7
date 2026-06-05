@@ -4,12 +4,9 @@ namespace Irc.Helpers;
 
 public static class ByteExtensions
 {
-    // Because ASCIIEncoding.ASCII.GetString(bytes); is unreliable and returns ????
     public static string ToAsciiString(this byte[] bytes)
     {
-        var sb = new StringBuilder(bytes.Length);
-        foreach (var b in bytes) sb.Append((char)b);
-        return sb.ToString();
+        return Encoding.Latin1.GetString(bytes);
     }
 
     public static string ToUnicodeString(this byte[] bytes)

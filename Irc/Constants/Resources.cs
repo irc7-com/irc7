@@ -81,6 +81,7 @@ public static class Resources
     public static string Delete = "DELETE";
     public static string IRCXOptions = "*";
     public static string ServerError = "Server Error. Please report this to the Administrator";
+    public static string Passport = "Passport";
 
 
     public static string UserAccessGroupService = "Service Accounts";
@@ -190,6 +191,26 @@ public static class Resources
         ChannelCategoryRomance,
         ChannelCategorySports,
         ChannelCategoryUnlisted
+    };
+
+    public static readonly Dictionary<string, string> ChannelCategoryNames = new Dictionary<string, string>
+    {
+        { ChannelCategoryTeens, "Teens" },
+        { ChannelCategoryComputing, "Computing" },
+        { ChannelCategoryEvents, "Events" },
+        { ChannelCategoryGeneral, "General" },
+        { ChannelCategoryHealth, "Health" },
+        { ChannelCategoryCityChats, "City\bChats" },
+        { ChannelCategoryEntertainment, "Entertainment" },
+        { ChannelCategoryInterests, "Interests" },
+        { ChannelCategoryLifestyles, "Lifestyles" },
+        { ChannelCategoryMusic, "Music" },
+        { ChannelCategoryPeers, "Peers" },
+        { ChannelCategoryNews, "News" },
+        { ChannelCategoryReligion, "Religion" },
+        { ChannelCategoryRomance, "Romance" },
+        { ChannelCategorySports, "Sports" },
+        { ChannelCategoryUnlisted, "Unlisted" }
     };
 
     #endregion

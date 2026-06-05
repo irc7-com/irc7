@@ -11,9 +11,11 @@ public class Credential : ICredential
     public string Nickname { get; set; } = string.Empty;
     public string UserGroup { get; set; } = string.Empty;
     public string Modes { get; set; } = string.Empty;
+    public string Prefix { get; set; } = string.Empty;
     public bool Guest { get; set; }
     public long IssuedAt { get; set; }
     public EnumUserAccessLevel Level { get; set; }
+    public PermissionProfile? PermissionProfile { get; set; }
 
     public string GetDomain()
     {

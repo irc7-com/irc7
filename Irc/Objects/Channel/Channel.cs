@@ -132,10 +132,18 @@ public class Channel : ChatObject, IChannel
         foreach (var channelMember in GetMembers())
         {
             var channelUser = channelMember.GetUser();
-            if (channelUser.GetProtocol().GetProtocolType() <= EnumProtocolType.IRC3)
+            var channelUserProtocol = channelUser.GetProtocol().GetProtocolType();
+            if (channelUserProtocol <= EnumProtocolType.IRC3)
             {
                 channelMember.GetUser().Send(Raws.RPL_JOIN(user, this));
+            }
+            else
+            {
+                channelUser.Send(Raws.RPL_JOIN_MSN(channelMember, this, joinMember));
+            }
 
+            if (channelUserProtocol <= EnumProtocolType.IRC6)
+            {
                 if (joinMember.HasModes())
                 {
                     var modeChar = joinMember.Owner.ModeValue ? 
@@ -145,11 +153,7 @@ public class Channel : ChatObject, IChannel
 
                     ModeRule.DispatchModeChange((ChatObject)channelUser, modeChar,
                         (ChatObject)user, this, true, user.ToString());
-                }
-            }
-            else
-            {
-                channelUser.Send(Raws.RPL_JOIN_MSN(channelMember, this, joinMember));
+                }   
             }
         }
 

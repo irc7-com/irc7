@@ -1,0 +1,57 @@
+# ─────────────────────────────────────────────────────────────
+# Stage 1 – Build native AOT binary (Directory Server)
+# ─────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends clang zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY . .
+
+# TARGETARCH is injected automatically by buildx (amd64 | arm64)
+ARG TARGETARCH
+RUN --mount=type=secret,id=IRCX_SSPI_TOKEN \
+    dotnet nuget add source "https://nuget.pkg.github.com/mono-chat/index.json" \
+      --name "mono-chat" \
+      --username jyonxo \
+      --password "$(cat /run/secrets/IRCX_SSPI_TOKEN)" \
+      --store-password-in-clear-text \
+    && DOTNET_RID="linux-${TARGETARCH}" \
+    && if [ "$TARGETARCH" = "amd64" ]; then DOTNET_RID="linux-x64"; \
+       elif [ "$TARGETARCH" = "arm64" ]; then DOTNET_RID="linux-arm64"; \
+       fi \
+    && dotnet publish Irc.Directory.Daemon/Irc.Directory.Daemon.csproj \
+        -c Release \
+        -r "$DOTNET_RID" \
+        --self-contained true \
+        -p:PublishAot=true \
+        -o /app/output \
+    && mv /app/output/Irc.Directory.Daemon /app/output/irc7ds \
+    && dotnet nuget remove source "mono-chat"
+
+# ─────────────────────────────────────────────────────────────
+# Stage 2 – Minimal runtime image
+# ─────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0
+WORKDIR /app
+COPY --from=build /app/output /app
+
+ENV irc7_port=6667
+ENV irc7_fqdn=""
+ENV irc7_redis=""
+ENV irc7_server=""
+ENV irc7_name=""
+
+COPY entrypoint_ds.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+EXPOSE ${irc7_port}
+
+
+
+
+
+
+
