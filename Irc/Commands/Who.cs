@@ -29,7 +29,7 @@ public class Who : Command, ICommand
 
         if (chatFrame.ChatMessage.Parameters.Count > 1)
         {
-            if (chatFrame.ChatMessage.Parameters[1] == "o")
+            if (chatFrame.ChatMessage.Parameters[1] == Resources.UserModeOper.ToString())
             {
                 operOnly = true;
             }
@@ -97,7 +97,7 @@ public class Who : Command, ICommand
                 var channels = chatUser.GetChannels();
                 var channel = channels.Count > 0 ? channels.First().Key : null;
                 var channelStoredName = channels.Count > 0 ? channel?.GetName() ?? string.Empty : string.Empty;
-                var goneHome = chatUser.Away ? "G" : "H";
+                var goneHome = chatUser.Away ? Resources.Gone : Resources.Home;
 
                 var chanMode = string.Empty;
                 var channelMember = channel?.GetMember(chatUser);
