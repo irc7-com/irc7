@@ -71,6 +71,7 @@ public static class Resources
     public static string Raw557 = "557";
     public static string Raw812 = "812";
     public static string Raw817 = "817";
+    public static string Raw913 = "913";
     public static string FlagOwner = ".";
     public static string FlagHost = "@";
     public static string FlagVoice = "+";
