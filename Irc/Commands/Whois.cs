@@ -18,12 +18,6 @@ public class Whois : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
-        /*
-         <- :sky-8a15b323126 311 Sky Sky ~no 192.168.88.131 * :Sky
-         <- :sky-8a15b323126 319 Sky Sky :.#test
-         <- :sky-8a15b323126 312 Sky Sky sky-8a15b323126 :Microsoft Exchange Chat Service
-         <- :sky-8a15b323126 318 Sky Sky :End of /WHOIS list
-        */
         var server = chatFrame.Server;
         var user = chatFrame.User;
         var nicknameString = chatFrame.ChatMessage.Parameters.First();
@@ -44,6 +38,7 @@ public class Whois : Command, ICommand
         }
 
         user.Send(Raws.IRC_RAW_311(server, user, targetUser));
+        user.Send(Raws.IRC_RAW_312(server, user, targetUser));
 
         if (targetUser.GetChannels().Count > 0)
         {

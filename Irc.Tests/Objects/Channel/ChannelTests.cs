@@ -1,5 +1,4 @@
 ﻿using Irc.Interfaces;
-using Irc.Objects.User;
 using Moq;
 
 namespace Irc.Tests.Objects.Channel;
@@ -16,15 +15,16 @@ public class ChannelTests
         var mockDataRegulator = new Mock<IDataRegulator>();
         var mockFloodProtectionProfile = new Mock<IFloodProtectionProfile>();
         var mockServer = new Mock<IServer>();
+        var mockSaslHandler = new Mock<ISaslHandler>();
 
         mockConnection.Setup(x => x.GetIp()).Returns("127.0.0.1");
 
         var channel = new Irc.Objects.Channel.Channel("TestChannel");
-        var user1 = new User(mockConnection.Object, mockProtocol.Object, mockDataRegulator.Object, mockFloodProtectionProfile.Object, mockServer.Object)
+        var user1 = new Irc.Objects.User.User(mockConnection.Object, mockProtocol.Object, mockDataRegulator.Object, mockFloodProtectionProfile.Object, mockServer.Object, (passport) => mockSaslHandler.Object)
         {
             Nickname = "TestUser",
         };
-        var user2 = new User(mockConnection.Object, mockProtocol.Object, mockDataRegulator.Object, mockFloodProtectionProfile.Object, mockServer.Object)
+        var user2 = new Irc.Objects.User.User(mockConnection.Object, mockProtocol.Object, mockDataRegulator.Object, mockFloodProtectionProfile.Object, mockServer.Object, (passport) => mockSaslHandler.Object)
         {
             Nickname = "AnotherUser",
         };

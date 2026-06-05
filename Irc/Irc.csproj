@@ -13,15 +13,29 @@
         <EmbeddedResource Remove="Operations\**" />
         <None Remove="Operations\**" />
         <None Remove="Logging\" />
+        <None Update="credentials.vault">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="master.key">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Irc.Helpers\Irc.Helpers.csproj" />
-        <ProjectReference Include="..\SSPI.NTLM\SSPI.NTLM.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="StackExchange.Redis" Version="2.11.3" />
-    </ItemGroup>
+    <PackageReference Include="ircxsspi.native" Version="0.1.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.11.3" />
+  </ItemGroup>
+
+    <Target Name="CopyNativeIrcxSspi" AfterTargets="Build;Publish">
+        <ItemGroup>
+            <_NativeSo Include="$(NuGetPackageRoot)ircxsspi.native/**/runtimes/$(RuntimeIdentifier)/native/*.so" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_NativeSo)" DestinationFolder="$(OutputPath)" />
+        <Copy SourceFiles="@(_NativeSo)" DestinationFolder="$(PublishDir)" Condition="'$(PublishDir)' != ''" />
+    </Target>
 
 </Project>

@@ -4,7 +4,6 @@ namespace Irc.Interfaces;
 
 public interface ISecurityManager
 {
-    void AddSupportPackage(SupportPackage supportPackage);
-    SupportPackage CreatePackageInstance(string name, ICredentialProvider credentialProvider);
+    SaslHandler GetSupportPackage();
     string GetSupportedPackages();
 }

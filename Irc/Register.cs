@@ -2,6 +2,7 @@
 using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
+using Irc.Objects.User;
 
 namespace Irc;
 
@@ -20,6 +21,7 @@ public static class Register
             chatFrame.User.Send(Raws.IRCX_RPL_WELCOME_003(chatFrame.Server, chatFrame.User));
             chatFrame.User.Send(Raws.IRCX_RPL_WELCOME_004(chatFrame.Server, chatFrame.User,
                 chatFrame.Server.ServerVersion));
+            
             chatFrame.User.Send(Raws.IRCX_RPL_ISUPPORT_005(
                 chatFrame.Server, 
                 chatFrame.User,
@@ -28,7 +30,7 @@ public static class Register
                 ".@+", // temporary
                 "b,k,l,SWadefghimnprstuwxz", // temporary
                 chatFrame.Server.MaxChannels
-                ));
+            ));
             
             chatFrame.User.Send(Raws.IRCX_RPL_LUSERCLIENT_251(chatFrame.Server, chatFrame.User, 0, 0, 0));
             chatFrame.User.Send(Raws.IRCX_RPL_LUSEROP_252(chatFrame.Server, chatFrame.User, 0));
@@ -55,31 +57,45 @@ public static class Register
                 chatFrame.User.Send(Raws.IRCX_RPL_RPL_ENDOFMOTD_376(chatFrame.Server, chatFrame.User));
             }
 
-            switch (chatFrame.User.GetLevel())
+            // Note: Directory Server does not send user modes,
+            // This causes the MSN CAC to disconnect
+            if (!chatFrame.Server.IsDirectoryServer)
             {
-                case EnumUserAccessLevel.Administrator:
+                switch (chatFrame.User.GetLevel())
                 {
-                    chatFrame.User.PromoteToAdministrator();
-                    break;
-                }
-                case EnumUserAccessLevel.Sysop:
-                {
-                    chatFrame.User.PromoteToSysop();
-                    break;
-                }
-                case EnumUserAccessLevel.Guide:
-                {
-                    chatFrame.User.PromoteToGuide();
-                    break;
-                }
+                    case EnumUserAccessLevel.Administrator:
+                    {
+                        chatFrame.User.PromoteToAdministrator();
+                        break;
+                    }
+                    case EnumUserAccessLevel.Sysop:
+                    {
+                        chatFrame.User.PromoteToSysop();
+                        break;
+                    }
+                    case EnumUserAccessLevel.Guide:
+                    {
+                        chatFrame.User.PromoteToGuide();
+                        break;
+                    }
+                }   
             }
         }
     }
 
     public static bool ConnectionIsPermitted(IServer server, IUser user)
     {
+        // Check server-level DENY / GRANT access list
+        if (IsUserDeniedByServerAccess(server, user))
+        {
+            user.Disconnect(Raws.IRCX_CLOSINGLINK(server, user, "001", "You are banned from this server"));
+            return false;
+        }
+
         if (!server.AnonymousConnections && user.IsAnon())
         {
+            // Per Exchange 2000
+            // <- ERROR :Closing Link: Sky[127.0.0.1] (Class denied access)
             user.Disconnect(Raws.IRCX_CLOSINGLINK(server, user, "001", "No Authorization"));
             return false;
         }
@@ -116,6 +132,35 @@ public static class Register
         return true;
     }
 
+    /// <summary>
+    /// Checks the server's DENY and GRANT access entries against the connecting user's
+    /// full address (nick!user@host$server). Mirrors the spec behaviour:
+    ///   - If a DENY entry matches → denied.
+    ///   - If GRANT entries exist but none match → denied (server is restricted).
+    ///   - Otherwise → permitted.
+    /// </summary>
+    private static bool IsUserDeniedByServerAccess(IServer server, IUser user)
+    {
+        var addr = user.GetAddress();
+        var accessEntries = server.Access.GetEntries();
+        
+        // Check DENY entries
+        if (accessEntries.TryGetValue(EnumAccessLevel.DENY, out var denyList))
+        {
+            if (denyList.Any(entry => UserAddress.Matches(addr, entry.Mask)))
+                return true;
+        }
+
+        // Check GRANT entries — if any GRANTs exist and none match, deny
+        if (accessEntries.TryGetValue(EnumAccessLevel.GRANT, out var grantList) && grantList.Count > 0)
+        {
+            if (!grantList.Any(entry => UserAddress.Matches(addr, entry.Mask)))
+                return true;
+        }
+
+        return false;
+    }
+
     public static bool BasicAuthentication(IServer server, IUser user)
     {
         // TODO: Do basic auth
@@ -133,7 +178,8 @@ public static class Register
     {
         var server = chatFrame.Server;
         var user = chatFrame.User;
-        var authenticating = chatFrame.User.IsAuthenticated() != true && chatFrame.User.IsAnon() == false;
+        var authenticated = chatFrame.User.IsAuthenticated();
+        var authenticating = !authenticated && chatFrame.User.IsAnon() == false;
         var registered = chatFrame.User.IsRegistered();
         var nickname = chatFrame.User.GetAddress().Nickname;
         var hasNickname = !string.IsNullOrWhiteSpace(nickname);

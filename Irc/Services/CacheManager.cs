@@ -218,6 +218,24 @@ public class CacheManager
         }
     }
 
+    public IEnumerable<AcsRoomInfo> GetAllRooms()
+    {
+        if (_db == null) yield break;
+
+        var entries = _db.HashGetAll("acs:rooms");
+        foreach (var entry in entries)
+        {
+            if (entry.Value.HasValue)
+            {
+                var roomInfo = JsonSerializer.Deserialize(entry.Value.ToString(), IrcJsonContext.Default.AcsRoomInfo);
+                if (roomInfo != null)
+                {
+                    yield return roomInfo;
+                }
+            }
+        }
+    }
+
     // Gets all active ACS servers
     public IEnumerable<AcsServerInfo> GetActiveServers()
     {

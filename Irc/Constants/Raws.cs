@@ -82,6 +82,11 @@ public static class Raws
     {
         return $":{user.GetAddress()} PROP {chatObject} {propName} :{propValue}";
     }
+    
+    public static string RPL_SERVER_KICK_IRC(IChannel channel, IUser target, string reason)
+    {
+        return $":Server KICK {channel} {target} :{reason}";
+    }
 
     public static string RPL_KICK_IRC(IUser user, IChannel channel, IUser target, string reason)
     {
@@ -626,6 +631,11 @@ public static class Raws
         return $":{server} 481 {user} :Permission Denied - You're not an IRC operator";
     }
 
+    public static string IRCX_ERR_CANTKILLSERVER_483(IServer server, IUser user, string target)
+    {
+        return $":{server} 483 {user} {target} :You can't KILL a server!";
+    }
+
     public static string IRCX_ERR_CHANOPRIVSNEEDED_482(IServer server, IUser user, IChannel channel)
     {
         return $":{server} 482 {user} {channel} :You're not channel operator";
@@ -667,6 +677,26 @@ public static class Raws
         return $":{server} 557 {user} {channel} :Only secure users may join channel.";
     }
     
+    public static string IRCX_RPL_LISTCSTART_610(IServer server, IUser user)
+    {
+        return $":{server} 610 {user} :LISTC Start";
+    }
+
+    public static string IRCX_RPL_LISTCLIST_611(IServer server, IUser user, string category)
+    {
+        return $":{server} 611 {user} :{category}";
+    }
+
+    public static string IRCX_RPL_LISTCLIST_IRC4_611(IServer server, IUser user, string category, string name)
+    {
+        return $":{server} 611 {user} {category} :{name}";
+    }
+
+    public static string IRCX_RPL_LISTCEND_612(IServer server, IUser user)
+    {
+        return $":{server} 612 {user} :End of /LISTC";
+    }
+
     public static string RPL_FINDS_MSN(IServer server, IUser user, string ip, string port)
     {
         return $":{server} 613 {user} :{ip} {port}";
@@ -764,32 +794,32 @@ public static class Raws
         return $":{server} 800 {user} {isircx} {ircxversion} {server.SecurityPackages} {buffsize} {options}";
     }
 
-    public static string IRCX_RPL_ACCESSADD_801(IServer server, IUser user, IChatObject targetObject,
+    public static string IRCX_RPL_ACCESSADD_801(IServer server, IUser user, string objectName,
         string accessLevel, string mask, int duration, string address, string reason)
     {
-        return $":{server} 801 {user} {targetObject} {accessLevel} {mask} {duration} {address} :{reason}";
+        return $":{server} 801 {user} {objectName} {accessLevel} {mask} {duration} {address} :{reason}";
     }
 
-    public static string IRCX_RPL_ACCESSDELETE_802(IServer server, IUser user, IChatObject targetObject,
+    public static string IRCX_RPL_ACCESSDELETE_802(IServer server, IUser user, string objectName,
         string accessLevel, string mask, int duration, string address, string reason)
     {
-        return $":{server} 802 {user} {targetObject} {accessLevel} {mask} {duration} {address} :{reason}";
+        return $":{server} 802 {user} {objectName} {accessLevel} {mask} {duration} {address} :{reason}";
     }
 
-    public static string IRCX_RPL_ACCESSSTART_803(IServer server, IUser user, IChatObject targetObject)
+    public static string IRCX_RPL_ACCESSSTART_803(IServer server, IUser user, string objectName)
     {
-        return $":{server} 803 {user} {targetObject} :Start of access entries";
+        return $":{server} 803 {user} {objectName} :Start of access entries";
     }
 
-    public static string IRCX_RPL_ACCESSLIST_804(IServer server, IUser user, IChatObject targetObject,
+    public static string IRCX_RPL_ACCESSLIST_804(IServer server, IUser user, string objectName,
         string accessLevel, string mask, int duration, string address, string reason)
     {
-        return $":{server} 804 {user} {targetObject} {accessLevel} {mask} {duration} {address} :{reason}";
+        return $":{server} 804 {user} {objectName} {accessLevel} {mask} {duration} {address} :{reason}";
     }
 
-    public static string IRCX_RPL_ACCESSEND_805(IServer server, IUser user, IChatObject targetObject)
+    public static string IRCX_RPL_ACCESSEND_805(IServer server, IUser user, string objectName)
     {
-        return $":{server} 805 {user} {targetObject} :End of access entries";
+        return $":{server} 805 {user} {objectName} :End of access entries";
     }
 
     public static string IRCX_RPL_EVENTADD_806(IServer server, IUser user)
@@ -828,6 +858,12 @@ public static class Raws
         return $":{server} 812 {user} {channel.ToString()} {modes} {memberCount} {memberLimit} :{topic}";
     }
 
+    public static string IRCX_RPL_LISTXLIST_812(IServer server, IUser user, string channelName, string modes,
+        int memberCount, int memberLimit, string topic)
+    {
+        return $":{server} 812 {user} {channelName} {modes} {memberCount} {memberLimit} :{topic}";
+    }
+
     public static string IRCX_RPL_LISTXPICS_813(IServer server, IUser user)
     {
         return $":{server} 813 {user} :%s";
@@ -855,11 +891,11 @@ public static class Raws
     }
 
 
-    public static string IRCX_RPL_ACCESSCLEAR_820(IServer server, IUser user, IChatObject targetObject,
+    public static string IRCX_RPL_ACCESSCLEAR_820(IServer server, IUser user, string objectName,
         EnumAccessLevel accessLevel)
     {
         var level = accessLevel == EnumAccessLevel.All ? "*" : accessLevel.ToString();
-        return $":{server} 820 {user} {targetObject} {level} :Clear";
+        return $":{server} 820 {user} {objectName} {level} :Clear";
     }
 
     public static string IRCX_RPL_USERUNAWAY_821(IServer server, IUser user)
@@ -995,6 +1031,11 @@ public static class Raws
     public static string IRCX_ERR_NOSUCHOBJECT_924(IServer server, IUser user, string objectName)
     {
         return $":{server} 924 {user} {objectName} :No such object found";
+    }
+    
+    public static string IRCX_ERR_NOTSUPPORTED_925(IServer server, IUser user, IChatObject objectName)
+    {
+        return $":{server} 924 {user} {objectName} :Command not supported by object";
     }
 
     public static string IRCX_ERR_ALREADYONCHANNEL_927(IServer server, IUser user, IChannel channel)

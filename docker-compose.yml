@@ -1,7 +1,52 @@
 version: "3.9"
 
 services:
-  keydb:
-    image: eqalpha/keydb:latest
+
+  redis:
+    image: redis:latest
+    container_name: irc7_redis
+    restart: unless-stopped
     ports:
-      - "7001:6379"
+      - "6397:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  irc7cs:
+    image: jyonxo/irc7cs:latest
+    container_name: irc7cs
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "6667:6667"
+    volumes:
+      - ./config/cs:/incoming-config-cs
+    environment:
+      irc7_port: 6667
+      irc7_fqdn: ${irc7_fqdn:-${HOSTNAME}}
+      irc7_redis: redis:6379
+      irc7_name: ${irc7_name:-}_cs
+
+  irc7ds:
+    image: jyonxo/irc7ds:latest
+    container_name: irc7ds
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      irc7cs:
+        condition: service_started
+    ports:
+      - "6668:6668"
+    volumes:
+      - ./config/ds:/incoming-config-ds
+    environment:
+      irc7_port: 6668
+      irc7_fqdn: ${irc7_fqdn:-${HOSTNAME}}
+      irc7_server: ${irc7_fqdn:-${HOSTNAME}}:6667
+      irc7_redis: redis:6379
+      irc7_name: ${irc7_name:-}_ds

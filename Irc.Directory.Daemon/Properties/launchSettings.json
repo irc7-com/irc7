@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "irc7-redis-ads": {
+      "commandName": "Project",
+      "commandLineArgs": "-f localhost -p 6668 -r localhost:6379 -n irc7-directory --trace"
+    },
+    "irc7-standalone-ads": {
+      "commandName": "Project",
+      "commandLineArgs": "-f localhost -p 6668 -s localhost:6667 -n irc7-directory --trace"
+    }
+  }
+}
