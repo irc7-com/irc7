@@ -853,6 +853,12 @@ public static class Raws
         return $":{server} 812 {user} {channel.ToString()} {modes} {memberCount} {memberLimit} :{topic}";
     }
 
+    public static string IRCX_RPL_LISTXLIST_812(IServer server, IUser user, string channelName, string modes,
+        int memberCount, int memberLimit, string topic)
+    {
+        return $":{server} 812 {user} {channelName} {modes} {memberCount} {memberLimit} :{topic}";
+    }
+
     public static string IRCX_RPL_LISTXPICS_813(IServer server, IUser user)
     {
         return $":{server} 813 {user} :%s";
