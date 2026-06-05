@@ -402,7 +402,7 @@ public class JoinCloneTests
     {
         var mockProtocol = new Mock<IProtocol>();
         // Use IRC4+ to avoid the (ChatObject) cast in Channel.Join for modes dispatch
-        mockProtocol.Setup(p => p.GetProtocolType()).Returns(EnumProtocolType.IRC4);
+        mockProtocol.Setup(p => p.GetProtocolType()).Returns(EnumProtocolType.IRC8);
         mockProtocol.Setup(p => p.GetFormat(It.IsAny<IUser>())).Returns(nickname);
 
         var mockU = new Mock<IUser>();
