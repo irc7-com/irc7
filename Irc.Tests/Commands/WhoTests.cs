@@ -101,8 +101,8 @@ public class WhoTests
         var whoReply = sentMessages.SingleOrDefault(m => m.Contains(" 352 "));
         Assert.That(whoReply, Is.Not.Null, "Expected exactly one RPL_WHOREPLY (352) line.");
 
-        Assert.That(whoReply, Does.Contain("q"),
-            "Owner member's 352 reply must contain the owner mode char 'q'.");
+        Assert.That(whoReply, Does.Contain("."),
+            "Owner member's 352 reply must contain the owner mode char '.'");
     }
 
     // -------------------------------------------------------------------------
@@ -110,7 +110,7 @@ public class WhoTests
     private Mock<IUser> CreateMockUser(string nickname, string username, string host)
     {
         var mockProtocol = new Mock<IProtocol>();
-        mockProtocol.Setup(p => p.GetProtocolType()).Returns(EnumProtocolType.IRC4);
+        mockProtocol.Setup(p => p.GetProtocolType()).Returns(EnumProtocolType.IRC8);
         mockProtocol.Setup(p => p.GetFormat(It.IsAny<IUser>())).Returns(nickname);
 
         var mockU = new Mock<IUser>();
