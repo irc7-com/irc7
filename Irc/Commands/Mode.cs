@@ -73,10 +73,16 @@ internal class Mode : Command, ICommand
         -> sky-8a15b323126 MODE #test
         <- :sky-8a15b323126 324 Sky #test +tnl 50*/
         if (chatObject is IChannel)
+        {
+            var modes = ((IChannel)chatObject).Modes.ToString();
             chatFrame.User.Send(Raws.IRCX_RPL_MODE_324(chatFrame.Server, chatFrame.User, (IChannel)chatObject,
-                ((IChannel)chatObject).Modes.ToString()));
+                $"+{modes}"));
+        }
         else if (chatObject is IUser)
+        {
+            var modes = chatObject.Modes.ToString();
             chatFrame.User.Send(Raws.IRCX_RPL_UMODEIS_221(chatFrame.Server, chatFrame.User,
-                chatObject.Modes.ToString()));
+                $"+{modes}"));
+        }
     }
 }

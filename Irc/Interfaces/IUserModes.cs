@@ -9,7 +9,7 @@ public interface IUserModes: IModeCollection
     InvisibleRule Invisible { get; }
     SecureRule Secure { get; }
     AdminRule Admin { get; }
-    Isircx Isircx { get; }
+    IsIrcxRule Isircx { get; }
     GagRule Gag { get; }
     HostRule Host { get; }
 }
