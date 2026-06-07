@@ -2,10 +2,9 @@
 using Irc.Commands;
 using Irc.Constants;
 using Irc.Enumerations;
-using Irc.Helpers;
 using Irc.Interfaces;
 using Irc.Modes;
-using Irc.Modes.Channel.Member;
+using Irc.Objects.User;
 
 namespace Irc.Objects.Channel;
 
@@ -430,7 +429,7 @@ public class Channel : ChatObject, IChannel
     public EnumAccessLevel GetChannelAccess(IUser user)
     {
         var userAccessLevel = EnumAccessLevel.NONE;
-        var addressString = user.GetAddress().GetFullAddress();
+        var addr = user.GetAddress();
         var accessEntries = Access.GetEntries();
 
         foreach (var accessKvp in accessEntries)
@@ -438,15 +437,10 @@ public class Channel : ChatObject, IChannel
             var accessLevel = accessKvp.Key;
             var accessList = accessKvp.Value;
 
-            foreach (var accessEntry in accessList)
+            if (accessList.Any(entry => UserAddress.Matches(addr, entry.Mask)))
             {
-                var maskAddress = accessEntry.Mask;
-
-                var regExStr = maskAddress.Replace("*", ".*").Replace("?", ".");
-                var regEx = new Regex(regExStr, RegexOptions.IgnoreCase);
-                if (regEx.Match(addressString).Success)
-                    if ((int)accessLevel > (int)userAccessLevel)
-                        userAccessLevel = accessLevel;
+                if ((int)accessLevel > (int)userAccessLevel)
+                    userAccessLevel = accessLevel;
             }
         }
 
