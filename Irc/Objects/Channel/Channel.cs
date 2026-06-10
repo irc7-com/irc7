@@ -512,13 +512,15 @@ public class Channel : ChatObject, IChannel
         var keyCheck = CheckMemberKey(user, key);
         var inviteOnlyCheck = CheckInviteOnly(user);
         var userLimitCheck = CheckUserLimit(IsGoto);
+        var authOnlyCheck = CheckAuthOnly(user);
 
         var accessPermissions = (EnumChannelAccessResult)new[]
         {
             (int)operCheck,
             (int)keyCheck,
             (int)inviteOnlyCheck,
-            (int)userLimitCheck
+            (int)userLimitCheck,
+            (int)authOnlyCheck
         }.Max();
 
         return accessPermissions;
@@ -550,6 +552,20 @@ public class Channel : ChatObject, IChannel
                 : EnumChannelAccessResult.ERR_INVITEONLYCHAN;
 
         return EnumChannelAccessResult.NONE;
+    }
+
+    protected EnumChannelAccessResult CheckAuthOnly(IUser user)
+    {
+        if (!Modes.AuthOnly.ModeValue) return EnumChannelAccessResult.NONE;
+
+        var sasl = user.GetSspiHandler();
+        var authenticatedViaNtlm = sasl != null
+            && sasl.IsAuthenticated()
+            && string.Equals(sasl.GetPackageName(), "NTLM", StringComparison.OrdinalIgnoreCase);
+
+        return authenticatedViaNtlm
+            ? EnumChannelAccessResult.NONE
+            : EnumChannelAccessResult.ERR_AUTHONLYCHAN;
     }
 
     protected EnumChannelAccessResult CheckUserLimit(bool IsGoto)

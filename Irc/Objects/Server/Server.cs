@@ -760,14 +760,7 @@ public class Server : ChatObject, IServer
         return false;
     }
 
-    // IRCX 
-    protected EnumChannelAccessResult CheckAuthOnly()
-    {
-        if (Modes.GetModeValue(Resources.ChannelModeAuthOnly) == 1)
-            return EnumChannelAccessResult.ERR_AUTHONLYCHAN;
-        return EnumChannelAccessResult.NONE;
-    }
-
+    // IRCX
     protected EnumChannelAccessResult CheckSecureOnly()
     {
         // TODO: Whatever this is...

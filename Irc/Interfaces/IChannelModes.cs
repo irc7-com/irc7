@@ -31,4 +31,6 @@ public interface IChannelModes : IModeCollection
     NoGuestWhisperRule NoGuestWhisper { get; }
     OnStageRule OnStage { get; }
     SubscriberRule Subscriber { get; }
+
+    string GetModeString(IUser requester, IChannel channel);
 }
