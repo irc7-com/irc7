@@ -6,6 +6,7 @@ public interface IPropRule
 {
     EnumChannelAccessLevel ReadAccessLevel { get; }
     EnumChannelAccessLevel WriteAccessLevel { get; }
+    EnumChannelAccessLevel BroadcastAccessLevel { get; }
     string Name { get; }
     string Value { get; set; }
     bool ReadOnly { get; }

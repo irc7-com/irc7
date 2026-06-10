@@ -118,7 +118,8 @@ internal class ChannelProps : PropCollection, IChannelProps
         EnumChannelAccessLevel.None,
         EnumChannelAccessLevel.ChatOwner, 
         Resources.GenericProps, 
-        string.Empty
+        string.Empty,
+        broadcastAccessLevel: EnumChannelAccessLevel.ChatOwner
     );
 
     // The HOSTKEY channel property is the host keyword that will provide host (channel op) access when entering the channel. 
@@ -128,7 +129,8 @@ internal class ChannelProps : PropCollection, IChannelProps
         EnumChannelAccessLevel.None,
         EnumChannelAccessLevel.ChatOwner, 
         Resources.GenericProps, 
-        string.Empty
+        string.Empty,
+        broadcastAccessLevel: EnumChannelAccessLevel.ChatOwner
     );
     
     // MEMBERKEY

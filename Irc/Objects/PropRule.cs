@@ -9,11 +9,13 @@ public class PropRule : IPropRule
     private readonly string validationMask;
 
     public PropRule(string name, EnumChannelAccessLevel readAccessLevel, EnumChannelAccessLevel writeAccessLevel,
-        string validationMask, string initialValue, bool readOnly = false)
+        string validationMask, string initialValue, bool readOnly = false,
+        EnumChannelAccessLevel? broadcastAccessLevel = null)
     {
         Name = name;
         ReadAccessLevel = readAccessLevel;
         WriteAccessLevel = writeAccessLevel;
+        BroadcastAccessLevel = broadcastAccessLevel ?? readAccessLevel;
         this.validationMask = validationMask;
         Value = initialValue;
         ReadOnly = readOnly;
@@ -26,10 +28,13 @@ public class PropRule : IPropRule
     // TODO: Figure out how to refactor to also accommodate User props access levels
     public EnumChannelAccessLevel ReadAccessLevel { get; }
     public EnumChannelAccessLevel WriteAccessLevel { get; }
+    public EnumChannelAccessLevel BroadcastAccessLevel { get; }
     public bool ReadOnly { get; }
 
     public virtual EnumIrcError EvaluateSet(IChatObject source, IChatObject target, string propValue)
     {
+        if (WriteAccessLevel == EnumChannelAccessLevel.None) return EnumIrcError.ERR_NOPERMS;
+
         if (target is IChannel)
         {
             var channel = (IChannel)target;
@@ -39,7 +44,7 @@ public class PropRule : IPropRule
 
             if (member.GetLevel() < WriteAccessLevel) return EnumIrcError.ERR_NOPERMS;
         }
-        else if (WriteAccessLevel == EnumChannelAccessLevel.None || (target is IUser && source != target))
+        else if (target is IUser && source != target)
         {
             return EnumIrcError.ERR_NOPERMS;
         }
@@ -54,6 +59,8 @@ public class PropRule : IPropRule
 
     public virtual EnumIrcError EvaluateGet(IChatObject source, IChatObject target)
     {
+        if (ReadAccessLevel == EnumChannelAccessLevel.None) return EnumIrcError.ERR_NOPERMS;
+
         if (target is IChannel)
         {
             var channel = (IChannel)target;
@@ -63,7 +70,7 @@ public class PropRule : IPropRule
 
             if (member.GetLevel() < ReadAccessLevel) return EnumIrcError.ERR_NOPERMS;
         }
-        else if (ReadAccessLevel == EnumChannelAccessLevel.None || (target is IUser && source != target))
+        else if (target is IUser && source != target)
         {
             return EnumIrcError.ERR_NOPERMS;
         }

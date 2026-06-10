@@ -132,7 +132,7 @@ public class Prop : Command, ICommand
                                 prop.SetValue(propValue);
                                 chatObject.Send(
                                     Raws.RPL_PROP_IRCX(chatFrame.Server, chatFrame.User, (ChatObject)chatObject,
-                                        prop.Name, propValue), prop.ReadAccessLevel);
+                                        prop.Name, propValue), prop.BroadcastAccessLevel);
                             }
                         }
                         else
