@@ -39,7 +39,10 @@
     "Props": {
       "OWNERKEY": "OWNERKEY",
       "HOSTKEY": "HOSTKEY"
-    }
+    },
+    "Locale": "EN-US",
+    "Language": 1,
+    "Category": "GN"
   },
   {
     "Name": "My Channel, especially fun!",

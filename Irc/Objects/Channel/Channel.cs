@@ -81,8 +81,12 @@ public class Channel : ChatObject, IChannel
         // Set locale
         // 1:+ST!EN-US!AV
         // 1:+ST 1:ST 1:-ST -- No idea
+        var isRegistered = inMemoryChannel.Modes.Contains('r');
+        var registeredToken = isRegistered ? "+ST" : "-ST";
+        var locale = string.IsNullOrWhiteSpace(inMemoryChannel.Locale) ? "EN-US" : inMemoryChannel.Locale;
+        var category = string.IsNullOrWhiteSpace(inMemoryChannel.Category) ? "GN" : inMemoryChannel.Category;
         channel.Locale = inMemoryChannel.Locale;
-        channel.Props.Subject.Value = $"1:ST:{inMemoryChannel.Locale}:{inMemoryChannel.Category}";
+        channel.Props.Subject.Value = $"{inMemoryChannel.Language}:{registeredToken}:{locale}:{category}";
         
         // Set language
         channel.Props.Language.Value = inMemoryChannel.Language.ToString();
