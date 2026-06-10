@@ -2,11 +2,11 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Net;
 using System.Reflection;
-using Irc.Helpers;
 using Irc.Host;
 using Irc.Interfaces;
 using Irc.IO;
 using Irc.Logging;
+using Irc.Objects.Channel;
 using Irc.Objects.Server;
 using Irc.Security;
 using NLog;
@@ -198,7 +198,8 @@ internal class Program
 
         foreach (var defaultChannel in defaultChannels)
         {
-            var name = $"%#{defaultChannel.Name.ToEscape()}";
+            var inMemoryChannel = defaultChannel.ToInMemoryChannel();
+            var name = inMemoryChannel.ChannelName;
 
             // If we're an ACS and connected to Redis, check if another ACS already hosts this channel
             if (server.IsChannelHostedElsewhere(name, out var existingServerId))
@@ -207,17 +208,12 @@ internal class Program
                 continue;
             }
 
-            var channel = server.CreateChannel(name);
-            if (channel == null)
+            var channel = Channel.FromInMemoryChannel(inMemoryChannel);
+            if (!server.AddChannel(channel))
             {
                 Log.Info($"Skipping default channel {name}, could not create channel (maybe race condition?)");
                 continue;
             }
-            channel.Store = true;
-
-            channel.Props.Topic.Value = $"%{defaultChannel.Topic.ToEscape()}";
-            foreach (var keyValuePair in defaultChannel.Modes)
-                channel.Modes.SetModeValue(keyValuePair.Key, keyValuePair.Value);
 
             foreach (var keyValuePair in defaultChannel.Props)
             {
@@ -225,13 +221,7 @@ internal class Program
                 prop?.SetValue(keyValuePair.Value);
             }
 
-            if (!string.IsNullOrEmpty(defaultChannel.Category))
-            {
-                var categoryProp = channel.Props.GetProp("CATEGORY");
-                categoryProp?.SetValue(defaultChannel.Category);
-            }
-
-            server.AddChannel(channel);
+            channel.Store = true;
         }
     }
 
