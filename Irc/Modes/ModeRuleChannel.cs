@@ -42,4 +42,6 @@ public class ModeRuleChannel : ModeRule, IModeRule
         channelModes[ModeChar].Set(Convert.ToInt32(flag));
         DispatchModeChange(source, (ChatObject)target, flag, parameter);
     }
+
+    public virtual bool CanRead(IUser user, IChannel channel) => true;
 }

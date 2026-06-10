@@ -1,5 +1,6 @@
 ﻿using Irc.Constants;
 using Irc.Interfaces;
+using Irc.Modes;
 using Irc.Modes.Channel;
 using Irc.Modes.Channel.Member;
 using Irc.Objects.Collections;
@@ -96,4 +97,15 @@ k - set a channel key (password).
         return
             $"{new string(Modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}{limit}{key}";
     }
+
+    public string GetModeString(IUser requester, IChannel channel)
+    {
+        var limit = UserLimit.ModeValue ? $" {UserLimit.Value}" : string.Empty;
+        var key = Key.ModeValue ? $" {Keypass}" : string.Empty;
+
+        return $"{new string(Modes.Where(mode => mode.Value.Get() > 0 && IsReadable(requester, channel, mode.Value)).Select(mode => mode.Key).ToArray())}{limit}{key}";
+    }
+
+    private static bool IsReadable(IUser requester, IChannel channel, IModeRule mode)
+        => mode is not ModeRuleChannel channelMode || channelMode.CanRead(requester, channel);
 }

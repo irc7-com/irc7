@@ -364,7 +364,7 @@ public static class Raws
 
     public static string IRCX_RPL_MODE_324(IServer server, IUser user, IChannel channel, string modes)
     {
-        return $":{server} 324 {user} {channel} +{modes}";
+        return $":{server} 324 {user} {channel} {modes}";
     }
 
     public static string IRCX_RPL_NOTOPIC_331(IServer server, IUser user, IChannel channel)
