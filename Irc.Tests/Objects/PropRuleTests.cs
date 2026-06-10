@@ -41,8 +41,22 @@ public class PropRuleTests
         var ownerKey = channel.Props.GetProp(Resources.ChannelPropOwnerkey);
 
         Assert.That(ownerKey, Is.Not.Null);
-        Assert.That(ownerKey!.BroadcastAccessLevel, Is.EqualTo(EnumChannelAccessLevel.ChatMember));
+        Assert.That(ownerKey!.BroadcastAccessLevel, Is.EqualTo(EnumChannelAccessLevel.ChatOwner));
         Assert.That(ownerKey.EvaluateGet(user, channel), Is.EqualTo(EnumIrcError.ERR_NOPERMS));
+    }
+    
+    [Test]
+    public void HostKey_ShouldBroadcastToMembers_ButRemainUnreadable()
+    {
+        var user = CreateUser();
+        var channel = new Irc.Objects.Channel.Channel("TestChannel");
+        channel.Join(user);
+
+        var hostkey = channel.Props.GetProp(Resources.ChannelPropHostkey);
+
+        Assert.That(hostkey, Is.Not.Null);
+        Assert.That(hostkey!.BroadcastAccessLevel, Is.EqualTo(EnumChannelAccessLevel.ChatOwner));
+        Assert.That(hostkey.EvaluateGet(user, channel), Is.EqualTo(EnumIrcError.ERR_NOPERMS));
     }
 
     private static Irc.Objects.User.User CreateUser()
