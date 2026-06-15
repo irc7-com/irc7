@@ -314,7 +314,7 @@ public static class Raws
 
     public static string IRC_RAW_312(IServer server, IUser user, IUser targetUser)
     {
-        return $":{server} 312 {user} {targetUser} {server} :{server.Info}";
+        return $":{server} 312 {user} {targetUser} {server} :{server.Title}";
     }
 
     public static string IRC_RAW_313(IServer server, IUser user, IUser targetUser)
