@@ -32,8 +32,8 @@ public static class Register
                 chatFrame.Server.MaxChannels
             ));
             
-            var operatorCount = chatFrame.Server.GetUsers()
-                .Count(u => u.GetLevel() >= EnumUserAccessLevel.Guide);
+            var users = chatFrame.Server.GetUsers();
+            var operatorCount = users.Count(u => u.GetLevel() >= EnumUserAccessLevel.Guide);
 
             chatFrame.User.Send(Raws.IRCX_RPL_LUSERCLIENT_251(chatFrame.Server, chatFrame.User, 0, 0, 0));
             chatFrame.User.Send(Raws.IRCX_RPL_LUSEROP_252(chatFrame.Server, chatFrame.User, operatorCount));
@@ -41,9 +41,9 @@ public static class Register
             chatFrame.User.Send(Raws.IRCX_RPL_LUSERCHANNELS_254(chatFrame.Server, chatFrame.User));
             chatFrame.User.Send(Raws.IRCX_RPL_LUSERME_255(chatFrame.Server, chatFrame.User, 0, 1));
             chatFrame.User.Send(Raws.IRCX_RPL_LUSERS_265(chatFrame.Server, chatFrame.User,
-                chatFrame.Server.GetUsers().Count, 10000));
+                users.Count, 10000));
             chatFrame.User.Send(Raws.IRCX_RPL_GUSERS_266(chatFrame.Server, chatFrame.User,
-                chatFrame.Server.GetUsers().Count, 10000));
+                users.Count, 10000));
 
             var motd = chatFrame.Server.GetMotd();
             if (motd == null)
