@@ -40,6 +40,7 @@ public interface IServer: IChatObject
     Version ServerVersion { set; get; }
     void AddUser(IUser user);
     void RemoveUser(IUser user);
+    void UpdateOperatorStatus(IUser user);
     bool AddChannel(IChannel channel);
     void RemoveChannel(IChannel channel);
     IChannel? CreateChannel(string name);

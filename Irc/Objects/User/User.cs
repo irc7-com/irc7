@@ -221,6 +221,7 @@ public class User : ChatObject, IUser
     public void SetLevel(EnumUserAccessLevel level)
     {
         _level = level;
+        Server.UpdateOperatorStatus(this);
     }
 
     public bool IsRegistered()
@@ -285,6 +286,7 @@ public class User : ChatObject, IUser
         Modes.Admin.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Administrator;
         UserProfile.Level = EnumUserAccessLevel.Administrator;
+        Server.UpdateOperatorStatus(this);
         Send(Raws.IRCX_RPL_YOUREADMIN_386(Server, this));
     }
 
@@ -294,6 +296,7 @@ public class User : ChatObject, IUser
         Modes.Oper.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Sysop;
         UserProfile.Level = EnumUserAccessLevel.Sysop;
+        Server.UpdateOperatorStatus(this);
         Send(Raws.IRCX_RPL_YOUREOPER_381(Server, this));
     }
 
@@ -303,6 +306,7 @@ public class User : ChatObject, IUser
         Modes.Oper.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Guide;
         UserProfile.Level = EnumUserAccessLevel.Guide;
+        Server.UpdateOperatorStatus(this);
         Send(Raws.IRCX_RPL_YOUREGUIDE_629(Server, this));
     }
 
