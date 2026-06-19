@@ -33,9 +33,6 @@ public class Server : ChatObject, IServer
     private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
     // Track IDs of users pending removal to avoid duplicate enqueues
     private readonly ConcurrentDictionary<Guid, byte> _pendingRemoveUserSet = new();
-    // Track IDs of currently online operators (level >= Guide) so the operator
-    // tally is maintained incrementally instead of being recomputed on each connect.
-    private readonly ConcurrentDictionary<Guid, byte> _operators = new();
     private readonly Task _processingTask;
     private readonly Func<bool, ISaslHandler> _saslHandlerFactory;
     private readonly IReadOnlyDictionary<string, string> _saslSupportedPackages;
@@ -233,7 +230,7 @@ public class Server : ChatObject, IServer
     public int NetServerCount { get; } = 0;
     public int NetUserCount { get; } = 0;
     public string SecurityPackages => "GateKeeper,NTLM";
-    public int SysopCount => _operators.Count;
+    public int SysopCount { get; } = 0;
     public int UnknownConnectionCount => _socketServer.CurrentConnections - NetUserCount;
     public string RemoteIp { set; get; } = string.Empty;
     public bool DisableGuestMode { set; get; }
@@ -278,20 +275,6 @@ public class Server : ChatObject, IServer
         {
             _pendingRemoveUserQueue.Enqueue(user);
         }
-    }
-
-    /// <summary>
-    /// Keeps the online operator tally (<see cref="SysopCount"/>) in sync with a user's
-    /// current access level. Backed by a set keyed on the user's id, so repeated calls for
-    /// the same user are counted only once. Called whenever a user's level changes; the
-    /// entry is removed when the user disconnects.
-    /// </summary>
-    public void UpdateOperatorStatus(IUser user)
-    {
-        if (user.GetLevel() >= EnumUserAccessLevel.Guide)
-            _operators[user.Id] = 0;
-        else
-            _operators.TryRemove(user.Id, out _);
     }
 
     public virtual bool AddChannel(IChannel channel)
@@ -692,7 +675,6 @@ public class Server : ChatObject, IServer
 
                 // Successful removal: clear the pending set entry and perform channel cleanup
                 _pendingRemoveUserSet.TryRemove(user.Id, out _);
-                _operators.TryRemove(user.Id, out _);
                 Quit.QuitChannels(user, "Connection reset by peer");
                 removedCount++;
             }
