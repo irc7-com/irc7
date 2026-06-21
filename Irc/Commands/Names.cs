@@ -52,9 +52,11 @@ internal class Names : Command, ICommand
         user.Send(
             Raws.IRCX_RPL_NAMEREPLY_353(user.Server, user, channel, channelType,
                 string.Join(' ',
-                    channel.GetMembers().Select(m =>
-                        $"{user.GetProtocol().FormattedUser(m)}"
-                    )
+                    channel.GetMembers()
+                        .Where(m => channel.CanSeeMember(user, m))
+                        .Select(m =>
+                            $"{user.GetProtocol().FormattedUser(m)}"
+                        )
                 )
             )
         );

@@ -827,9 +827,19 @@ public static class Raws
         return $":{server} 806 {user} %s %s";
     }
 
+    public static string IRCX_RPL_EVENTADD_806(IServer server, IUser user, IChannel channel, string eventData)
+    {
+        return $":{server} 806 {user} {channel} {eventData}";
+    }
+
     public static string IRCX_RPL_EVENTDEL_807(IServer server, IUser user)
     {
         return $":{server} 807 {user} %s %s";
+    }
+
+    public static string IRCX_RPL_EVENTDEL_807(IServer server, IUser user, IChannel channel, string eventData)
+    {
+        return $":{server} 807 {user} {channel} {eventData}";
     }
 
     public static string IRCX_RPL_EVENTSTART_808(IServer server, IUser user)
@@ -837,14 +847,29 @@ public static class Raws
         return $":{server} 808 {user} %s :Start of events";
     }
 
+    public static string IRCX_RPL_EVENTSTART_808(IServer server, IUser user, IChannel channel)
+    {
+        return $":{server} 808 {user} {channel} :Start of events";
+    }
+
     public static string IRCX_RPL_EVENTLIST_809(IServer server, IUser user)
     {
         return $":{server} 809 {user} %s %s";
     }
 
+    public static string IRCX_RPL_EVENTLIST_809(IServer server, IUser user, IChannel channel, string eventData)
+    {
+        return $":{server} 809 {user} {channel} {eventData}";
+    }
+
     public static string IRCX_RPL_EVENTEND_810(IServer server, IUser user)
     {
         return $":{server} 810 {user} %s :End of events";
+    }
+
+    public static string IRCX_RPL_EVENTEND_810(IServer server, IUser user, IChannel channel)
+    {
+        return $":{server} 810 {user} {channel} :End of events";
     }
 
     public static string IRCX_RPL_LISTXSTART_811(IServer server, IUser user)
@@ -1008,9 +1033,19 @@ public static class Raws
         return $":{server} 919 {user} %s %s :Unknown event entry";
     }
 
+    public static string IRCX_ERR_EVENTMIS_919(IServer server, IUser user, IChannel channel, string eventId)
+    {
+        return $":{server} 919 {user} {channel} {eventId} :Unknown event entry";
+    }
+
     public static string IRCX_ERR_NOSUCHEVENT_920(IServer server, IUser user)
     {
         return $":{server} 920 {user} %s :No such event";
+    }
+
+    public static string IRCX_ERR_NOSUCHEVENT_920(IServer server, IUser user, string eventName)
+    {
+        return $":{server} 920 {user} {eventName} :No such event";
     }
 
     public static string IRCX_ERR_TOOMANYEVENTS_921(IServer server, IUser user)
@@ -1134,7 +1169,17 @@ public static class Raws
 
     public static string RPL_EQUESTION(IUser user, IChannel channel, string nickname, string message)
     {
-        return $":{user.GetAddress()} EQUESTION {channel} {nickname} {channel} :{message}";
+        return RPL_EQUESTION(user, channel, nickname, channel.GetName(), message);
+    }
+
+    public static string RPL_EQUESTION(
+        IUser user,
+        IChannel channel,
+        string nickname,
+        string sourceRoom,
+        string message)
+    {
+        return $":{user.GetAddress()} EQUESTION {channel} {nickname} {sourceRoom} :{message}";
     }
 
     // IRCX CLONE message (draft-pfenning-irc-extensions-04 section 6.2)

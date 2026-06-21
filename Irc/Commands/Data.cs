@@ -1,9 +1,10 @@
-﻿using Irc.Commands;
-using Irc.Constants;
+﻿using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 
-internal class Data : Command, ICommand
+namespace Irc.Commands;
+
+public class Data : Command, ICommand
 {
     public new EnumCommandDataType GetDataType()
     {
@@ -12,6 +13,6 @@ internal class Data : Command, ICommand
 
     public new void Execute(IChatFrame chatFrame)
     {
-        chatFrame.User.Send(Raws.IRCX_ERR_NOTIMPLEMENTED(chatFrame.Server, chatFrame.User, nameof(Access)));
+        chatFrame.User.Send(Raws.IRCX_ERR_NOTIMPLEMENTED(chatFrame.Server, chatFrame.User, nameof(Data)));
     }
 }

@@ -209,6 +209,7 @@ public class Join : Command, ICommand
         clone.Modes.NoWhisper.ModeValue = parentModes.NoWhisper.ModeValue;
         clone.Modes.NoGuestWhisper.ModeValue = parentModes.NoGuestWhisper.ModeValue;
         clone.Modes.Auditorium.ModeValue = parentModes.Auditorium.ModeValue;
+        clone.Modes.OnStage.ModeValue = parentModes.OnStage.ModeValue;
         clone.Modes.AuthOnly.ModeValue = parentModes.AuthOnly.ModeValue;
         clone.Modes.Registered.ModeValue = parentModes.Registered.ModeValue;
         clone.Modes.Knock.ModeValue = parentModes.Knock.ModeValue;

@@ -11,6 +11,8 @@ namespace Irc.Objects.Channel;
 public class Channel : ChatObject, IChannel
 {
     protected readonly IList<IChannelMember> _members = new List<IChannelMember>();
+    private readonly IList<OnStageQuestion> _onStageQuestions = new List<OnStageQuestion>();
+    private int _nextOnStageQuestionId = 1;
     public HashSet<string> InviteList = new();
     public string Locale { get; set; } = string.Empty;
     public long Creation { get; } = Resources.GetEpochNowInSeconds();
@@ -41,6 +43,7 @@ public class Channel : ChatObject, IChannel
        w NoWhisper
        d Cloneable
        x Auditorium
+       g OnStage
      */
     private static char[] supportedChannelModes =
     [
@@ -55,7 +58,8 @@ public class Channel : ChatObject, IChannel
         Resources.ChannelModeModerated,
         Resources.ChannelModeNoWhisper,
         Resources.ChannelModeNoGuestWhisper,
-        Resources.ChannelModeAuditorium
+        Resources.ChannelModeAuditorium,
+        Resources.ChannelModeOnStage
     ]; 
     public static IChannel FromInMemoryChannel(InMemoryChannel inMemoryChannel)
     {
@@ -123,6 +127,102 @@ public class Channel : ChatObject, IChannel
             String.Compare(member.GetUser().GetAddress().Nickname, nickname, StringComparison.OrdinalIgnoreCase) == 0);
     }
 
+    public static bool IsOnStageHost(IChannelMember? member)
+    {
+        return member != null &&
+               (member.GetLevel() >= EnumChannelAccessLevel.ChatHost ||
+                member.GetUser().GetLevel() >= EnumUserAccessLevel.Guide);
+    }
+
+    public static bool IsOnStageSpeaker(IChannelMember? member)
+    {
+        return member != null &&
+               (member.GetLevel() >= EnumChannelAccessLevel.ChatVoice ||
+                member.GetUser().GetLevel() >= EnumUserAccessLevel.Guide);
+    }
+
+    public static bool IsAuditoriumSpectator(IChannelMember? member)
+    {
+        return member != null &&
+               member.GetLevel() < EnumChannelAccessLevel.ChatVoice &&
+               member.GetUser().GetLevel() < EnumUserAccessLevel.Guide;
+    }
+
+    public bool CanSeeMember(IUser viewer, IChannelMember subject)
+    {
+        var viewerMember = GetMember(viewer);
+        return viewerMember != null && CanSeeMember(viewerMember, subject);
+    }
+
+    private bool CanSeeMember(IChannelMember viewer, IChannelMember subject)
+    {
+        if (!Modes.Auditorium.ModeValue)
+        {
+            return true;
+        }
+
+        if (viewer.GetUser() == subject.GetUser())
+        {
+            return true;
+        }
+
+        if (IsOnStageHost(viewer))
+        {
+            return true;
+        }
+
+        if (IsOnStageHost(subject))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public OnStageQuestion AddOnStageQuestion(IUser user, string message, string? sourceRoom = null)
+    {
+        return AddOnStageQuestion(user.ToString(), sourceRoom ?? GetName(), message);
+    }
+
+    public OnStageQuestion AddOnStageQuestion(string nickname, string sourceRoom, string message)
+    {
+        var question = new OnStageQuestion(
+            _nextOnStageQuestionId++,
+            nickname,
+            sourceRoom,
+            message,
+            DateTime.UtcNow);
+        _onStageQuestions.Add(question);
+        return question;
+    }
+
+    public bool RemoveOnStageQuestion(int id)
+    {
+        var question = _onStageQuestions.FirstOrDefault(q => q.Id == id);
+        if (question == null)
+        {
+            return false;
+        }
+
+        return _onStageQuestions.Remove(question);
+    }
+
+    public IReadOnlyList<OnStageQuestion> GetOnStageQuestions()
+    {
+        return _onStageQuestions.ToList();
+    }
+
+    private void SendMembershipMessage(string message, IChannelMember subject)
+    {
+        foreach (var channelMember in _members)
+        {
+            if (CanSeeMember(channelMember, subject))
+            {
+                channelMember.GetUser().Send(message);
+            }
+        }
+    }
+
     public bool Allows(IUser user)
     {
         if (HasUser(user)) return false;
@@ -134,6 +234,8 @@ public class Channel : ChatObject, IChannel
         var joinMember = AddMember(user, accessResult);
         foreach (var channelMember in GetMembers())
         {
+            if (!CanSeeMember(channelMember, joinMember)) continue;
+
             var channelUser = channelMember.GetUser();
             var channelUserProtocol = channelUser.GetProtocol().GetProtocolType();
             if (channelUserProtocol <= EnumProtocolType.IRC3)
@@ -221,7 +323,11 @@ public class Channel : ChatObject, IChannel
 
     public IChannel Part(IUser user)
     {
-        Send(Raws.RPL_PART(user, this));
+        var member = GetMember(user);
+        if (member != null)
+            SendMembershipMessage(Raws.RPL_PART(user, this), member);
+        else
+            Send(Raws.RPL_PART(user, this));
         RemoveMember(user);
         return this;
     }
@@ -234,7 +340,11 @@ public class Channel : ChatObject, IChannel
 
     public IChannel Kick(IUser source, IUser target, string reason)
     {
-        Send(Raws.RPL_KICK_IRC(source, this, target, reason));
+        var targetMember = GetMember(target);
+        if (targetMember != null)
+            SendMembershipMessage(Raws.RPL_KICK_IRC(source, this, target, reason), targetMember);
+        else
+            Send(Raws.RPL_KICK_IRC(source, this, target, reason));
         RemoveMember(target);
         return this;
     }

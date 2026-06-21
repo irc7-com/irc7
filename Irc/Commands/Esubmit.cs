@@ -40,16 +40,6 @@ public class Esubmit : Command, ICommand
                 return;
             }
 
-            var channelMember = channel?.GetMember(chatFrame.User);
-            var isOnChannel = channelMember != null;
-
-            if (!isOnChannel)
-            {
-                chatFrame.User.Send(
-                    Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, chatFrame.User, channel!));
-                return;
-            }
-
             if (!channel!.Modes.OnStage.ModeValue)
             {
                 chatFrame.User.Send(
@@ -57,14 +47,39 @@ public class Esubmit : Command, ICommand
                 return;
             }
 
-            SubmitQuestion(chatFrame.User, channel, message);
+            var sourceRoom = GetSourceRoom(chatFrame.User, channel);
+            if (string.IsNullOrWhiteSpace(sourceRoom))
+            {
+                chatFrame.User.Send(
+                    Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, chatFrame.User, channel));
+                return;
+            }
+
+            SubmitQuestion(chatFrame.Server, chatFrame.User, channel, message, sourceRoom);
         }
     }
 
-    // TODO: Instead of EQUESTION this needs to be something else such as a EVENT etc
-
-    public static void SubmitQuestion(IUser user, IChannel channel, string message)
+    public static OnStageQuestion SubmitQuestion(
+        IServer server,
+        IUser user,
+        IChannel channel,
+        string message,
+        string? sourceRoom = null)
     {
-        channel.Send(Raws.RPL_EQUESTION(user, channel, user.ToString(), message));
+        var question = channel.AddOnStageQuestion(user, message, sourceRoom ?? channel.GetName());
+        Event.SendQuestionAdded(server, channel, question);
+        return question;
+    }
+
+    private static string? GetSourceRoom(IUser user, IChannel targetChannel)
+    {
+        if (targetChannel.GetMember(user) != null)
+        {
+            return targetChannel.GetName();
+        }
+
+        return user.GetChannels().Keys.Count == 1
+            ? user.GetChannels().Keys.First().GetName()
+            : null;
     }
 }

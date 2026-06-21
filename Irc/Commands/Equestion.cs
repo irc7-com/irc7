@@ -19,9 +19,12 @@ public class Equestion : Command, ICommand
     // EQUESTION %#OnStage Nickname :Why am I here?
     public new void Execute(IChatFrame chatFrame)
     {
-        var targetName = chatFrame.ChatMessage.Parameters.First();
-        var nickname = chatFrame.ChatMessage.Parameters[1];
-        var message = chatFrame.ChatMessage.Parameters[2];
+        var parameters = chatFrame.ChatMessage.Parameters;
+        var targetName = parameters.First();
+        var nickname = parameters[1];
+        var hasSourceRoom = parameters.Count >= 4;
+        var sourceRoomParam = hasSourceRoom ? parameters[2] : string.Empty;
+        var message = hasSourceRoom ? parameters[3] : parameters[2];
 
         var targets = targetName.Split(',', StringSplitOptions.RemoveEmptyEntries);
         foreach (var target in targets)
@@ -59,12 +62,25 @@ public class Equestion : Command, ICommand
                 return;
             }
 
-            SubmitQuestion(chatFrame.User, channel, nickname, message);
+            if (!Channel.IsOnStageHost(channelMember))
+            {
+                chatFrame.User.Send(
+                    Raws.IRCX_ERR_CHANOPRIVSNEEDED_482(chatFrame.Server, chatFrame.User, channel));
+                return;
+            }
+
+            var sourceRoom = hasSourceRoom ? sourceRoomParam : target;
+            SubmitQuestion(chatFrame.User, channel, nickname, sourceRoom, message);
         }
     }
 
-    public static void SubmitQuestion(IUser user, IChannel channel, string nickname, string message)
+    public static void SubmitQuestion(
+        IUser user,
+        IChannel channel,
+        string nickname,
+        string sourceRoom,
+        string message)
     {
-        channel.Send(Raws.RPL_EQUESTION(user, channel, nickname, message));
+        channel.Send(Raws.RPL_EQUESTION(user, channel, nickname, sourceRoom, message));
     }
 }

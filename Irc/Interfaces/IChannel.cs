@@ -42,4 +42,9 @@ public interface IChannel : IChatObject
     long TopicChanged { get; set; }
     IChannel UpdateTopic(string topic);
     string Locale { get; set; }
+    bool CanSeeMember(IUser viewer, IChannelMember subject);
+    OnStageQuestion AddOnStageQuestion(IUser user, string message, string? sourceRoom = null);
+    OnStageQuestion AddOnStageQuestion(string nickname, string sourceRoom, string message);
+    bool RemoveOnStageQuestion(int id);
+    IReadOnlyList<OnStageQuestion> GetOnStageQuestions();
 }

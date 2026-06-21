@@ -58,6 +58,13 @@ public class Eprivmsg : Command, ICommand
                     return;
                 }
 
+                if (!Channel.IsOnStageSpeaker(channelMember))
+                {
+                    chatFrame.User.Send(
+                        Raws.IRCX_ERR_CANNOTSENDTOCHAN_404(chatFrame.Server, chatFrame.User, channel));
+                    return;
+                }
+
                 SendEprivmsg(chatFrame.User, channel, message);
             }
         }
