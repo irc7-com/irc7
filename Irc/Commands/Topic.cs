@@ -7,7 +7,7 @@ namespace Irc.Commands;
 
 internal class Topic : Command, ICommand
 {
-    public Topic() : base(2)
+    public Topic() : base(1)
     {
     }
 
@@ -20,54 +20,54 @@ internal class Topic : Command, ICommand
     {
         var source = chatFrame.User;
         var channelName = chatFrame.ChatMessage.Parameters.First();
-        var topic = chatFrame.ChatMessage.Parameters[1];
-
-        if (chatFrame.ChatMessage.Parameters.Count > 2) topic = chatFrame.ChatMessage.Parameters[2];
-
+        
         var channel = chatFrame.Server.GetChannelByName(channelName);
         if (channel == null)
         {
             chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User,
                 chatFrame.ChatMessage.Parameters.First()));
         }
-        else
+        
+        var userIsOnChannel = chatFrame.User.IsOn(channel);
+
+        // If the channel topic is read
+        if (chatFrame.ChatMessage.Parameters.Count == 1)
         {
-            var result = ProcessTopic(chatFrame, channel, source, topic);
-            switch (result)
+            if (!userIsOnChannel && (channel.Modes.Private.ModeValue || channel.Modes.Secret.ModeValue))
             {
-                case EnumIrcError.ERR_NOTONCHANNEL:
-                {
-                    chatFrame.User.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
-                    break;
-                }
-                case EnumIrcError.ERR_NOCHANOP:
-                {
-                    chatFrame.User.Send(
-                        Raws.IRCX_ERR_CHANOPRIVSNEEDED_482(chatFrame.Server, source, channel));
-                    break;
-                }
-                case EnumIrcError.OK:
-                {
-                    channel.Send(Raws.RPL_TOPIC_IRC(chatFrame.Server, source, channel, topic));
-                    break;
-                }
+                // Whatever the reply is in this scenario
+                chatFrame.User.Send(Raws.IRCX_ERR_NOSUCHCHANNEL_403(chatFrame.Server, chatFrame.User,
+                    chatFrame.ChatMessage.Parameters.First()));
+                return;
             }
+
+            if (channel.Props.Topic.Value == "")
+            {
+                chatFrame.User.Send(Raws.IRCX_RPL_NOTOPIC_331(chatFrame.Server, source, channel));
+                return;
+            }
+            
+            chatFrame.User.Send(Raws.IRCX_RPL_TOPIC_332(chatFrame.Server, source, channel, channel.Props.Topic.Value));
+            return;
         }
+        
+        var topic = string.Empty;
+        if (chatFrame.ChatMessage.Parameters.Count > 1) topic = chatFrame.ChatMessage.Parameters[1];
+
+        ProcessTopic(chatFrame, channel, source, topic);
     }
 
-    public static EnumIrcError ProcessTopic(IChatFrame chatFrame, IChannel channel, IUser source, string topic)
+    public static void ProcessTopic(IChatFrame chatFrame, IChannel channel, IUser source, string topic)
     {
         var sourceMember = channel.GetMember(source);
-        if (sourceMember == null || !channel.CanBeModifiedBy((ChatObject)source))
+        if (sourceMember.GetLevel() < EnumChannelAccessLevel.ChatHost && channel.Modes.TopicOp.ModeValue)
         {
-            chatFrame.User.Send(Raws.IRCX_ERR_NOTONCHANNEL_442(chatFrame.Server, source, channel));
-            return EnumIrcError.ERR_NOTONCHANNEL;
+            chatFrame.User.Send(
+                Raws.IRCX_ERR_CHANOPRIVSNEEDED_482(chatFrame.Server, source, channel));
+            return;
         }
 
-        if (sourceMember.GetLevel() < EnumChannelAccessLevel.ChatHost && channel.Modes.TopicOp.ModeValue)
-            return EnumIrcError.ERR_NOCHANOP;
-
         channel.UpdateTopic(topic);
-        return EnumIrcError.OK;
+        channel.Send(Raws.RPL_TOPIC_IRC(chatFrame.Server, source, channel, topic));
     }
 }
