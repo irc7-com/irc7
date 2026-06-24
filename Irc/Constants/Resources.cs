@@ -275,7 +275,7 @@ public static class Resources
     public static string ChannelPropNameRegex = @"^%?[#&][^ \07,]{1,200}$";
     public static string ChannelPropOIDRegex = @"/0(?:[a-fA-F0-9]{8})?/";
     public static string ChannelPropPICSRegex = @"[\x20-\x7F]{1,255}";
-    public static string ChannelPropTopicRegex = @"[\x20-\x7F]{1,160}";
+    public static string ChannelPropTopicRegex = @"[\x20-\x7F]{0,160}";
     public static string ChannelPropOnjoinRegex = @"[\x20-\x7F]{1,255}";
     public static string ChannelPropOnpartRegex = @"[\x20-\x7F]{1,255}";
     public static string ChannelPropLagRegex = @"[0-2]{1}";
