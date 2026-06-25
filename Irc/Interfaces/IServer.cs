@@ -65,4 +65,9 @@ public interface IServer: IChatObject
     void SetMotd(string motd);
     void ProcessCookie(IUser user, string name, string value);
     bool IsChannelHostedElsewhere(string channelName, out string? existingServerId);
+    string MemberModes { get; }
+    string MemberListedModes { get; }
+    string UserModes { get; }
+    string ServerModes { get; }
+    string ChannelModes { get; }
 }

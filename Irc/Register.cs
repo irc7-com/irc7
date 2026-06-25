@@ -22,13 +22,15 @@ public static class Register
             chatFrame.User.Send(Raws.IRCX_RPL_WELCOME_004(chatFrame.Server, chatFrame.User,
                 chatFrame.Server.ServerVersion));
             
+            var Raw005ChannelModes = chatFrame.Server.ChannelModes.Replace("b", "").Replace("k", "").Replace("l", "");
+            
             chatFrame.User.Send(Raws.IRCX_RPL_ISUPPORT_005(
                 chatFrame.Server, 
                 chatFrame.User,
                 Resources.ConfigChannelTypes,
-                "qov", // temporary
-                ".@+", // temporary
-                "b,k,l,SWadefghimnprstuwxz", // temporary
+                chatFrame.Server.MemberModes,
+                chatFrame.Server.MemberListedModes,
+                $"b,k,l,{Raw005ChannelModes}", // temporary
                 chatFrame.Server.MaxChannels
             ));
             

@@ -210,7 +210,7 @@ public static class Raws
     public static string IRCX_RPL_WELCOME_004(IServer server, IUser user, Version version)
     {
         return
-            $":{server} 004 {user} {server} {version.Major}.{version.Minor}.{version.Revision} {server.GetSupportedUserModes()} {server.GetSupportedChannelModes()}";
+            $":{server} 004 {user} {server} {version.Major}.{version.Minor}.{version.Revision} {server.UserModes} {server.ChannelModes}";
     }
 
     // Reference: https://www.ietf.org/archive/id/draft-brocklesby-irc-isupport-03.txt

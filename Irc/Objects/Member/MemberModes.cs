@@ -25,6 +25,15 @@ public class MemberModes : ModeCollection, IMemberModes
 
         return string.Empty;
     }
+    
+    public static string GetListedMode(char modeChar)
+    {
+        if (modeChar == Resources.MemberModeOwner) return Resources.MemberModeFlagOwner.ToString();
+        if (modeChar == Resources.MemberModeHost) return Resources.MemberModeFlagHost.ToString();
+        if (modeChar == Resources.MemberModeVoice) return Resources.MemberModeFlagVoice.ToString();
+
+        return string.Empty;
+    }
 
     public char GetModeChar()
     {

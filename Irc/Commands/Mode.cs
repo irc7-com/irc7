@@ -80,7 +80,7 @@ internal class Mode : Command, ICommand
         }
         else if (chatObject is IUser)
         {
-            var modes = chatObject.Modes.ToString();
+            var modes = chatObject.Modes.GetModeString();
             chatFrame.User.Send(Raws.IRCX_RPL_UMODEIS_221(chatFrame.Server, chatFrame.User,
                 $"+{modes}"));
         }
