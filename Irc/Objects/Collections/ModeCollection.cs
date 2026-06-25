@@ -33,7 +33,7 @@ public class ModeCollection : IModeCollection
         return value?.Get() ?? 0;
     }
 
-    public string GetModeString()
+    public virtual string GetModeString()
     {
         return $"{new string(Modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}";
     }
@@ -56,6 +56,6 @@ public class ModeCollection : IModeCollection
 
     public override string ToString()
     {
-        return $"{new string(Modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}";
+        return $"{new string(Modes.Select(mode => mode.Key).ToArray())}";
     }
 }

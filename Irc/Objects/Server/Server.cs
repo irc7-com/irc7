@@ -1,7 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
-using System.Text.Json;
-using Irc.Access;
 using Irc.Access.Server;
 using Irc.Commands;
 using Irc.Constants;
@@ -12,6 +10,7 @@ using Irc.IO;
 using Irc.Modes;
 using Irc.Objects.Channel;
 using Irc.Objects.Collections;
+using Irc.Objects.Member;
 using Irc.Objects.User;
 using Irc.Protocols;
 using Irc.Security.Passport;
@@ -55,6 +54,12 @@ public class Server : ChatObject, IServer
     public IDictionary<EnumProtocolType, IProtocol> Protocols = new Dictionary<EnumProtocolType, IProtocol>();
 
     public IList<IUser> Users = new List<IUser>();
+
+    public string MemberModes { get; } = (new MemberModes()).ToString();
+    public string MemberListedModes { get; } = (new MemberModes()).ToString().ToCharArray().Select(c => Member.MemberModes.GetListedMode(c)).Aggregate("", (a, b) => a + b);
+    public string UserModes { get; } = (new UserModes()).ToString();
+    public string ServerModes { get; } = (new ServerModes()).ToString();
+    public string ChannelModes { get; } = (new ChannelModes()).ToString();
 
     public Server(ISocketServer socketServer,
         Func<bool, ISaslHandler> saslHandlerFactory,

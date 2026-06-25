@@ -94,8 +94,9 @@ k - set a channel key (password).
         var limit = UserLimit.ModeValue ? $" {UserLimit.Value}" : string.Empty;
         var key = Key.ModeValue ? $" {Keypass}" : string.Empty;
 
-        return
-            $"{new string(Modes.Where(mode => mode.Value.Get() > 0).Select(mode => mode.Key).ToArray())}{limit}{key}";
+        var channelModes =
+            $"{new string(Modes.Select(mode => mode.Key).ToArray())}";
+        return channelModes;
     }
 
     public string GetModeString(IUser requester, IChannel channel)

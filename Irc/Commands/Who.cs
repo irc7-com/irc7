@@ -103,7 +103,7 @@ public class Who : Command, ICommand
                 var channelMember = channel?.GetMember(chatUser);
                 if (channelMember != null) chanMode = channelMember.GetListedMode();
 
-                var modeString = chatUser.Modes.ToString();
+                var modeString = chatUser.Modes.GetModeString();
 
                 user.Send(Raws.IRCX_RPL_WHOREPLY_352(
                     server,
