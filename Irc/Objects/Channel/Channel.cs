@@ -31,34 +31,29 @@ public class Channel : ChatObject, IChannel
         Props.Creation.Value = Creation.ToString();
     }
 
-    /*
-       a AuthOnly
-       e Clone
-       p Private
-       h Hidden
-       s Secret
-       m Moderated
-       w NoWhisper
-       d Cloneable
-       x Auditorium
-     */
-    private static char[] supportedChannelModes =
-    [
-        Resources.ChannelModeNoExtern,
-        Resources.ChannelModeTopicOp,
-        Resources.ChannelModeAuthOnly,
-        Resources.ChannelModeClone,
-        Resources.ChannelModeCloneable,
-        Resources.ChannelModePrivate,
-        Resources.ChannelModeHidden,
-        Resources.ChannelModeSecret,
-        Resources.ChannelModeModerated,
-        Resources.ChannelModeNoWhisper,
-        Resources.ChannelModeNoGuestWhisper,
-        Resources.ChannelModeAuditorium
-    ]; 
+    private static readonly Lazy<char[]> _cachedSupportedChannelModes = new(() =>
+    {
+        // Exclude member-specific mode letters (owner/host/voice)
+        var excluded = new HashSet<char>
+        {
+            Resources.MemberModeOwner,
+            Resources.MemberModeVoice,
+            Resources.MemberModeHost
+        };
+
+        var channelModes = new ChannelModes().GetSupportedModes();
+        return channelModes.Where(c => !excluded.Contains(c)).ToArray();
+    });
+
+    public static char[] SupportedChannelModes()
+    {
+        // Return a copy to avoid callers mutating the cached array
+        return _cachedSupportedChannelModes.Value.ToArray();
+    }
+    
     public static IChannel FromInMemoryChannel(InMemoryChannel inMemoryChannel)
     {
+        var supportedChannelModes = SupportedChannelModes();
         // Set name
         var channel = new Channel(inMemoryChannel.ChannelName);
         
