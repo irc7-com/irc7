@@ -12,11 +12,11 @@ COPY . .
 
 # TARGETARCH is injected automatically by buildx (amd64 | arm64)
 ARG TARGETARCH
-RUN --mount=type=secret,id=IRCX_SSPI_TOKEN \
-    dotnet nuget add source "https://nuget.pkg.github.com/mono-chat/index.json" \
-      --name "mono-chat" \
-      --username jyonxo \
-      --password "$(cat /run/secrets/IRCX_SSPI_TOKEN)" \
+RUN --mount=type=secret,id=GITHUB_TOKEN \
+    dotnet nuget add source "https://nuget.pkg.github.com/irc7-com/index.json" \
+      --name "irc7-com" \
+      --username irc7-com \
+      --password "$(cat /run/secrets/GITHUB_TOKEN)" \
       --store-password-in-clear-text \
     && DOTNET_RID="linux-${TARGETARCH}" \
     && if [ "$TARGETARCH" = "amd64" ]; then DOTNET_RID="linux-x64"; \
@@ -29,7 +29,7 @@ RUN --mount=type=secret,id=IRCX_SSPI_TOKEN \
         -p:PublishAot=true \
         -o /app/output \
     && mv /app/output/Irc.Directory.Daemon /app/output/irc7ds \
-    && dotnet nuget remove source "mono-chat"
+    && dotnet nuget remove source "irc7-com"
 
 # ─────────────────────────────────────────────────────────────
 # Stage 2 – Minimal runtime image
@@ -48,10 +48,3 @@ COPY entrypoint_ds.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 EXPOSE ${irc7_port}
-
-
-
-
-
-
-
