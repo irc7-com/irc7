@@ -65,23 +65,17 @@ public class PropPuid : PropRule, IPropRule
         if (source is not IUser sourceUser || target is not IUser targetUser)
             return EnumIrcError.ERR_NOPERMS;
 
-        // If target is a guest, deny access
-        if (targetUser.IsGuest())
-            return EnumIrcError.ERR_NOPERMS;
-
-        // If the target is not passport authenticated, deny access
-        var sspiHandler = targetUser.GetSspiHandler();
-        if (sspiHandler == null || !sspiHandler.RequiresPassport)
-            return EnumIrcError.ERR_NOPERMS;
-
-        // If source and target are not on the same channel, deny access
-        var sharedChannel = sourceUser.GetChannels().Keys
-            .Any(channel => targetUser.IsOn(channel));
-
+        var sharedChannel = sourceUser.GetChannels().Keys.Any(channel => targetUser.IsOn(channel));
         if (!sharedChannel)
             return EnumIrcError.ERR_NOPERMS;
 
-        // GetValue will return the PUID from the credentials
+        if (targetUser.IsGuest())
+            return EnumIrcError.NO_VALUE;
+
+        var sspiHandler = targetUser.GetSspiHandler();
+        if (sspiHandler == null || !sspiHandler.RequiresPassport)
+            return EnumIrcError.NO_VALUE;
+
         return EnumIrcError.OK;
     }
 

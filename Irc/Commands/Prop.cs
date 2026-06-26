@@ -176,9 +176,17 @@ public class Prop : Command, ICommand
     public void SendProps(IServer server, IUser user, IChatObject targetObject, List<IPropRule> props)
     {
         var propsSent = 0;
+        var emptyProp = false;
         foreach (var prop in props)
         {
-            if (prop.EvaluateGet((IChatObject)user, targetObject) == EnumIrcError.ERR_NOPERMS)
+            var result = prop.EvaluateGet((IChatObject)user, targetObject);
+            if (result == EnumIrcError.NO_VALUE)
+            {
+                emptyProp = true;
+                continue;
+            }
+
+            if (result == EnumIrcError.ERR_NOPERMS)
             {
                 if (props.Count == 1) user.Send(Raws.IRCX_ERR_SECURITY_908(server, user));
                 continue;
@@ -206,7 +214,7 @@ public class Prop : Command, ICommand
             propsSent++;
         }
 
-        if (propsSent > 0) user.Send(Raws.IRCX_RPL_PROPEND_819(server, user, targetObject));
+        if (propsSent > 0 || emptyProp) user.Send(Raws.IRCX_RPL_PROPEND_819(server, user, targetObject));
     }
 
     public void SendProp(IServer server, IUser user, IChatObject targetObject, string propName,

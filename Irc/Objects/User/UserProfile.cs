@@ -52,6 +52,7 @@ public class UserProfile
     public bool IsFemale { get; set; }
     public bool HasPicture { get; set; }
     public bool IsSubscriber { get; set; }
+    public bool HasPuid { get; set; }
 
     public int GetProfileCode()
     {
@@ -81,7 +82,7 @@ public class UserProfile
 
     public string GetPictureString()
     {
-        return Guest ? "" : HasPicture ? "Y" : "X";
+        return (Guest || !HasPuid) ? "" : HasPicture ? "Y" : "X";
     }
 
     public string GetProfileString()
@@ -114,7 +115,7 @@ public class UserProfile
 
     public string GetGenderString()
     {
-        if (Guest) return "G";
+        if (Guest || !HasPuid) return "G";
         if (!HasProfile) return "R";
 
         return !IsMale && !IsFemale ? "P" : IsMale ? "M" : "F";

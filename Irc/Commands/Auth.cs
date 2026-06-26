@@ -5,6 +5,7 @@ using Irc.Enumerations;
 using Irc.Helpers;
 using Irc.Interfaces;
 using Irc.Objects.Server;
+using Irc.Objects.User;
 using Irc.Security.Credentials;
 
 public class Auth : Command, ICommand
@@ -226,6 +227,7 @@ public class Auth : Command, ICommand
         chatFrame.User.SetGuest(credentials.Guest);
         chatFrame.User.SetLevel(credentials.GetLevel());
 
+        ((User)chatFrame.User).GetProfile().HasPuid = !chatFrame.User.IsGuest() && saslHandler.RequiresPassport;
         // TODO: find another way to work in Utf8 nicknames
         if (chatFrame.User.GetLevel() >= EnumUserAccessLevel.Guide) chatFrame.User.Utf8 = true;
 

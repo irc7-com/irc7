@@ -3,6 +3,7 @@
 public enum EnumIrcError
 {
     OK = -1,
+    NO_VALUE = -2,
     NONE = 0,
     ERR_ALREADYINCHANNEL = 1,
     ERR_NOSUCHNICK = 401,
