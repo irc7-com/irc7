@@ -51,8 +51,20 @@ internal class Names : Command, ICommand
 
         // Calculate the fixed prefix length for a 353 reply:
         // :{server} 353 {user} {channelType} {channel} :
-        var prefixLength = 1 + user.Server.ToString().Length + 5 + user.ToString().Length
-                           + 1 + 1 + 1 + channel.ToString().Length + 2;
+        //  ^         ^^^^^     ^ ^             ^^
+        //  1 (colon) 5(' 353 ')  1 (space)     2(' :')
+        //            user.Length  1 (channelType char)
+        //                         1 (space)
+        //                          channel.Length
+        var prefixLength = 1                            // leading colon
+                           + user.Server.ToString().Length
+                           + 5                          // " 353 "
+                           + user.ToString().Length
+                           + 1                          // space before channelType
+                           + 1                          // channelType char ('=', '@', or '*')
+                           + 1                          // space after channelType
+                           + channel.ToString().Length
+                           + 2;                         // " :" before names list
 
         // Reserve 2 bytes for CRLF when determining how many name bytes fit per message.
         var maxNamesLength = user.Server.MaxMessageLength - 2 - prefixLength;

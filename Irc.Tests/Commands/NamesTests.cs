@@ -53,10 +53,10 @@ public class NamesTests
     public void ProcessNamesReply_ExceedsMaxMessageLength_SplitsIntoMultiple353s()
     {
         // Use a very small MaxMessageLength to force splitting.
-        // Prefix for ":TestServer 353 Sky = %#Lobby :" = 1+10+5+3+1+1+1+6+2 = 30 chars
-        // Setting MaxMessageLength to 40 means we have 40-2-30 = 8 chars for names.
-        // "UserA" is 5 chars — fits first message.
-        // "UserB" is 5 chars — would need " UserB" (6 chars), 5+6=11 > 8, so splits.
+        // Prefix for ":TestServer 353 Sky = %#Lobby :" = 1+10+5+3+1+1+1+7+2 = 31 chars
+        // Setting MaxMessageLength to 40 means we have 40-2-31 = 7 chars for names.
+        // "Sky" is 3 chars — fits as first name.
+        // "UserA" is 5 chars — needs "Sky UserA" (9 chars), which exceeds 7, so splits.
         _mockServer.Setup(s => s.MaxMessageLength).Returns(40);
 
         var channel = new Channel("%#Lobby");
