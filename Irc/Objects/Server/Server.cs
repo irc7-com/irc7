@@ -32,7 +32,8 @@ public class Server : ChatObject, IServer
     private readonly ConcurrentQueue<IUser> _pendingRemoveUserQueue = new();
     // Track IDs of users pending removal to avoid duplicate enqueues
     private readonly ConcurrentDictionary<Guid, byte> _pendingRemoveUserSet = new();
-    private readonly Task _processingTask;
+    private Task _processingTask;
+    private System.Timers.Timer? _processWatchdogTimer;
     private readonly Func<bool, ISaslHandler> _saslHandlerFactory;
     private readonly IReadOnlyDictionary<string, string> _saslSupportedPackages;
     private readonly ISocketServer _socketServer;
@@ -77,8 +78,7 @@ public class Server : ChatObject, IServer
         
         // Create a temporary instance to read supported packages
         _cacheManager = new Irc.Services.CacheManager(redisUrl);
-        _processingTask = new Task(Process);
-        _processingTask.Start();
+        _processingTask = StartProcessingTask();
 
         LoadSettingsFromDataStore();
 
@@ -126,6 +126,8 @@ public class Server : ChatObject, IServer
         modes = new string(modes.OrderBy(c => c).ToArray());
         _DataStore.Set("supported.channel.modes", modes);
         _DataStore.Set("supported.user.modes", new UserModes().GetSupportedModes());
+
+        StartProcessWatchdog();
     }
 
     public virtual void SetupHeartbeat()
@@ -454,6 +456,8 @@ public class Server : ChatObject, IServer
 
     public void Shutdown()
     {
+        _processWatchdogTimer?.Stop();
+        _processWatchdogTimer?.Dispose();
         _heartbeatTimer?.Stop();
         
         if (_cacheManager.IsConnected && !IsDirectoryServer)
@@ -582,56 +586,131 @@ public class Server : ChatObject, IServer
 
     private DateTime _lastChannelCleanup = DateTime.UtcNow;
 
+    private Task StartProcessingTask()
+    {
+        var task = new Task(RunProcessWithRestart, TaskCreationOptions.LongRunning);
+        task.Start();
+        return task;
+    }
+
+    private void StartProcessWatchdog()
+    {
+        _processWatchdogTimer = new System.Timers.Timer(1000); // check every 5 seconds
+        _processWatchdogTimer.Elapsed += (s, e) =>
+        {
+            if (_cancellationTokenSource.IsCancellationRequested) return;
+
+            if (_processingTask.IsCompleted)
+            {
+                var state = _processingTask.Status;
+                Log.Info($"Process task found dead (status: {state}) by watchdog. Respawning.");
+                _processingTask = StartProcessingTask();
+            }
+        };
+        _processWatchdogTimer.AutoReset = true;
+        _processWatchdogTimer.Start();
+    }
+
+    /// <summary>
+    /// Entry point for the processing task. Restarts <see cref="Process"/> automatically
+    /// if it exits due to an unhandled exception rather than a cancellation request.
+    /// </summary>
+    private void RunProcessWithRestart()
+    {
+        Log.Info("Process thread started.");
+        while (!_cancellationTokenSource.IsCancellationRequested)
+        {
+            try
+            {
+                Process();
+            }
+            catch (Exception ex) when (!_cancellationTokenSource.IsCancellationRequested)
+            {
+                // Fatal crash unrelated to shutdown — log and restart.
+                Log.Error(ex, "Fatal exception on Process thread. Will restart in 1 second.");
+                Thread.Sleep(1000);
+                Log.Info("Restarting Process thread after fatal exception.");
+                continue;
+            }
+            catch (Exception)
+            {
+                // Exception thrown while cancellation was already in progress — exit cleanly.
+                Log.Info("Process thread stopped due to cancellation token (exception during shutdown).");
+                break;
+            }
+
+            // Process() returned normally — determine why.
+            if (_cancellationTokenSource.IsCancellationRequested)
+            {
+                Log.Info("Process thread stopped due to cancellation token.");
+                break;
+            }
+
+            // Should not reach here under normal operation.
+            Log.Info("Process thread exited its loop unexpectedly without cancellation. Restarting.");
+        }
+
+        Log.Info("Process thread has terminated.");
+    }
+
     private void Process()
     {
         var backoffMs = 0;
         while (!_cancellationTokenSource.IsCancellationRequested)
         {
-            var hasWork = false;
-
-            AddPendingUsers();
-            RemovePendingUsers();
-
-            // Clean up empty channels that have been empty for > 5 minutes
-            if ((DateTime.UtcNow - _lastChannelCleanup).TotalSeconds >= 60)
+            try
             {
-                _lastChannelCleanup = DateTime.UtcNow;
-                var emptyChannels = ChannelList.Where(c => 
-                    !c.Store && 
-                    c.GetMembers().Count == 0 && 
-                    c.EmptySince.HasValue && 
-                    (DateTime.UtcNow - c.EmptySince.Value).TotalMinutes >= 5).ToList();
-                
-                foreach (var emptyChannel in emptyChannels)
-                {
-                    RemoveChannel(emptyChannel);
-                }
-            }
+                var hasWork = false;
 
-            // do stuff
-            foreach (var user in Users)
-            {
-                if (user.DisconnectIfIncomingThresholdExceeded()) continue;
+                AddPendingUsers();
+                RemovePendingUsers();
 
-                if (user.GetDataRegulator().GetIncomingBytes() > 0)
+                // Clean up empty channels that have been empty for > 5 minutes
+                if ((DateTime.UtcNow - _lastChannelCleanup).TotalSeconds >= 60)
                 {
-                    if (ProcessNextCommand(user))
+                    _lastChannelCleanup = DateTime.UtcNow;
+                    var emptyChannels = ChannelList.Where(c =>
+                        !c.Store &&
+                        c.GetMembers().Count == 0 &&
+                        c.EmptySince.HasValue &&
+                        (DateTime.UtcNow - c.EmptySince.Value).TotalMinutes >= 5).ToList();
+
+                    foreach (var emptyChannel in emptyChannels)
                     {
-                        hasWork = true;
-                        backoffMs = 0;
+                        RemoveChannel(emptyChannel);
                     }
                 }
 
-                ProcessNextModeOperation(user);
+                // do stuff
+                foreach (var user in Users)
+                {
+                    if (user.DisconnectIfIncomingThresholdExceeded()) continue;
 
-                if (!user.DisconnectIfOutgoingThresholdExceeded()) user.Flush();
-                user.DisconnectIfInactive();
+                    if (user.GetDataRegulator().GetIncomingBytes() > 0)
+                    {
+                        if (ProcessNextCommand(user))
+                        {
+                            hasWork = true;
+                            backoffMs = 0;
+                        }
+                    }
+
+                    ProcessNextModeOperation(user);
+
+                    if (!user.DisconnectIfOutgoingThresholdExceeded()) user.Flush();
+                    user.DisconnectIfInactive();
+                }
+
+                if (!hasWork)
+                {
+                    if (backoffMs < 1000) backoffMs += 10;
+                    Thread.Sleep(backoffMs);
+                }
             }
-
-            if (!hasWork)
+            catch (Exception ex)
             {
-                if (backoffMs < 1000) backoffMs += 10;
-                Thread.Sleep(backoffMs);
+                // Re-throw so RunProcessWithRestart can decide whether to restart or shut down.
+                throw new Exception("Unhandled exception inside Process loop iteration.", ex);
             }
         }
     }
