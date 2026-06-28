@@ -5,7 +5,7 @@ using Irc.Interfaces;
 
 namespace Irc.Commands;
 
-internal class Names : Command, ICommand
+public class Names : Command, ICommand
 {
     public Names() : base(1)
     {
@@ -40,10 +40,15 @@ internal class Names : Command, ICommand
 
     public static void ProcessNamesReply(IUser user, IChannel channel)
     {
-        // RFC 2812: '@' secret, '*' private, '=' all others (public).
-        var channelType = channel.Modes.Secret.ModeValue ? '@'
-                        : channel.Modes.Private.ModeValue ? '*'
-                        : '=';
+        // RFC 2812 "=" for others(public channels).
+        var channelType = '=';
+
+        if (channel.Modes.Secret.ModeValue)
+            // RFC 2812 "@" is used for secret channels
+            channelType = '@';
+        else if (channel.Modes.Private.ModeValue)
+            // RFC 2812 "*" for private
+            channelType = '*';
 
         // Measure available bytes for names: MaxMessageLength minus CRLF (2) minus the fixed prefix.
         var prefix = $":{user.Server} 353 {user} {channelType} {channel} :";
