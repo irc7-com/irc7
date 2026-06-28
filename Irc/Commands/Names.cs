@@ -1,10 +1,11 @@
-﻿using Irc.Constants;
+﻿using System.Text;
+using Irc.Constants;
 using Irc.Enumerations;
 using Irc.Interfaces;
 
 namespace Irc.Commands;
 
-internal class Names : Command, ICommand
+public class Names : Command, ICommand
 {
     public Names() : base(1)
     {
@@ -49,15 +50,26 @@ internal class Names : Command, ICommand
             // RFC 2812 "*" for private
             channelType = '*';
 
-        user.Send(
-            Raws.IRCX_RPL_NAMEREPLY_353(user.Server, user, channel, channelType,
-                string.Join(' ',
-                    channel.GetMembers().Select(m =>
-                        $"{user.GetProtocol().FormattedUser(m)}"
-                    )
-                )
-            )
-        );
+        // Measure available bytes for names: MaxMessageLength minus CRLF (2) minus the fixed prefix.
+        var prefix = $":{user.Server} 353 {user} {channelType} {channel} :";
+        var maxNamesLength = user.Server.MaxMessageLength - 2 - prefix.Length;
+
+        var batch = new StringBuilder();
+        foreach (var name in channel.GetMembers().Select(m => user.GetProtocol().FormattedUser(m)))
+        {
+            if (batch.Length > 0 && batch.Length + 1 + name.Length > maxNamesLength)
+            {
+                user.Send(Raws.IRCX_RPL_NAMEREPLY_353(user.Server, user, channel, channelType, batch.ToString()));
+                batch.Clear();
+            }
+
+            if (batch.Length > 0) batch.Append(' ');
+            batch.Append(name);
+        }
+
+        if (batch.Length > 0)
+            user.Send(Raws.IRCX_RPL_NAMEREPLY_353(user.Server, user, channel, channelType, batch.ToString()));
+
         user.Send(Raws.IRCX_RPL_ENDOFNAMES_366(user.Server, user, channel));
     }
 }

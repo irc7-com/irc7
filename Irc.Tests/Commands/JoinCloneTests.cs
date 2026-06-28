@@ -28,6 +28,7 @@ public class JoinCloneTests
         _serverChannels = new List<IChannel>();
 
         _mockServer.Setup(s => s.ToString()).Returns("MockServer");
+        _mockServer.SetupGet(s => s.MaxMessageLength).Returns(512);
         _mockServer.Setup(s => s.MaxChannels).Returns(10);
         _mockServer.Setup(s => s.JoinOnCreate).Returns(true);
         _mockServer.Setup(s => s.GetChannels()).Returns(_serverChannels);
@@ -84,7 +85,8 @@ public class JoinCloneTests
         _serverChannels.Add(parent);
 
         // Act
-        Join.JoinChannels(_mockServer.Object, _mockUser.Object, new List<string> { "%#chat" }, string.Empty);
+        var newUser3 = CreateMockUser("User3", "u3", "host3a");
+        Join.JoinChannels(_mockServer.Object, newUser3.Object, new List<string> { "%#chat" }, string.Empty);
 
         // Assert: a clone channel was created
         var clone = _serverChannels.FirstOrDefault(c =>
@@ -131,14 +133,15 @@ public class JoinCloneTests
         var channelCountBefore = _serverChannels.Count;
 
         // Act
-        Join.JoinChannels(_mockServer.Object, _mockUser.Object, new List<string> { "%#chat" }, string.Empty);
+        var newUser3 = CreateMockUser("User3", "u3", "host3a");
+        Join.JoinChannels(_mockServer.Object, newUser3.Object, new List<string> { "%#chat" }, string.Empty);
 
         // Assert: no new channels were added (user joined existing clone)
         Assert.That(_serverChannels.Count, Is.EqualTo(channelCountBefore),
             "No new channel should be created when an existing clone has room.");
 
         // Assert: user is now in the existing clone
-        Assert.That(existingClone.HasUser(_mockUser.Object), Is.True,
+        Assert.That(existingClone.HasUser(newUser3.Object), Is.True,
             "User should have joined the existing clone channel.");
     }
 
@@ -167,7 +170,8 @@ public class JoinCloneTests
         _serverChannels.Add(clone1);
 
         // Act
-        Join.JoinChannels(_mockServer.Object, _mockUser.Object, new List<string> { "%#chat" }, string.Empty);
+        var newUser3 = CreateMockUser("User3", "u3", "host3a");
+        Join.JoinChannels(_mockServer.Object, newUser3.Object, new List<string> { "%#chat" }, string.Empty);
 
         // Assert: clone2 was created
         var clone2 = _serverChannels.FirstOrDefault(c =>
@@ -271,7 +275,8 @@ public class JoinCloneTests
         _serverChannels.Add(parent);
 
         // Act
-        Join.JoinChannels(_mockServer.Object, _mockUser.Object, new List<string> { "%#modestest" }, string.Empty);
+        var newUser3 = CreateMockUser("User3", "u3", "host3a");
+        Join.JoinChannels(_mockServer.Object, newUser3.Object, new List<string> { "%#modestest" }, string.Empty);
 
         // Assert: clone was created
         var clone = _serverChannels.FirstOrDefault(c =>
@@ -410,6 +415,7 @@ public class JoinCloneTests
         address.SetNickname(nickname);
         address.User = username;
         address.Host = host;
+        mockU.Setup(u => u.Server).Returns(_mockServer.Object);
         mockU.Setup(u => u.GetAddress()).Returns(address);
         mockU.Setup(u => u.ToString()).Returns(nickname);
         mockU.Setup(u => u.GetChannels()).Returns(new Dictionary<IChannel, IChannelMember>());
