@@ -7,6 +7,10 @@ on:
     branches: [ "master", "ircx_sspi" ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,10 +31,10 @@ jobs:
 
     - name: Add GitHub Packages NuGet source
       run: |
-        dotnet nuget add source "https://nuget.pkg.github.com/mono-chat/index.json" \
-          --name "mono-chat" \
-          --username jyonxo \
-          --password "${{ secrets.IRCX_SSPI_TOKEN }}" \
+        dotnet nuget add source "https://nuget.pkg.github.com/irc7-com/index.json" \
+          --name "irc7-com" \
+          --username "${{ github.actor }}" \
+          --password "${{ secrets.GITHUB_TOKEN }}" \
           --store-password-in-clear-text
 
     - name: Restore dependencies
@@ -74,7 +78,7 @@ jobs:
           jyonxo/irc7cs:latest
           jyonxo/irc7cs:${{ github.sha }}
         secrets: |
-          IRCX_SSPI_TOKEN=${{ secrets.IRCX_SSPI_TOKEN }}
+          GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -110,7 +114,7 @@ jobs:
           jyonxo/irc7ds:latest
           jyonxo/irc7ds:${{ github.sha }}
         secrets: |
-          IRCX_SSPI_TOKEN=${{ secrets.IRCX_SSPI_TOKEN }}
+          GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
