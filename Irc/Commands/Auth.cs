@@ -223,9 +223,10 @@ public class Auth : Command, ICommand
         if (credentials.Guest && string.IsNullOrWhiteSpace(chatFrame.User.GetAddress().RealName))
             userAddress.RealName = string.Empty;
 
-        chatFrame.User.SetGuest(credentials.Guest);
         chatFrame.User.SetLevel(credentials.GetLevel());
 
+        if (!credentials.Guest && saslHandler.RequiresPassport)
+            chatFrame.User.AssignPassportProfile();
         // TODO: find another way to work in Utf8 nicknames
         if (chatFrame.User.GetLevel() >= EnumUserAccessLevel.Guide) chatFrame.User.Utf8 = true;
 

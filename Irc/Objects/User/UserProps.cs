@@ -23,6 +23,7 @@ public class PropProfile : PropRule
         if (int.TryParse(propValue, out var result))
         {
             var profile = user.GetProfile();
+            if (profile == null) return EnumIrcError.OK;
             if (profile.HasProfile)
             {
                 user.Send(Raws.IRCX_ERR_ALREADYREGISTERED_462(user.Server, user));
@@ -65,23 +66,13 @@ public class PropPuid : PropRule, IPropRule
         if (source is not IUser sourceUser || target is not IUser targetUser)
             return EnumIrcError.ERR_NOPERMS;
 
-        // If target is a guest, deny access
-        if (targetUser.IsGuest())
-            return EnumIrcError.ERR_NOPERMS;
-
-        // If the target is not passport authenticated, deny access
-        var sspiHandler = targetUser.GetSspiHandler();
-        if (sspiHandler == null || !sspiHandler.RequiresPassport)
-            return EnumIrcError.ERR_NOPERMS;
-
-        // If source and target are not on the same channel, deny access
-        var sharedChannel = sourceUser.GetChannels().Keys
-            .Any(channel => targetUser.IsOn(channel));
-
+        var sharedChannel = sourceUser.GetChannels().Keys.Any(channel => targetUser.IsOn(channel));
         if (!sharedChannel)
             return EnumIrcError.ERR_NOPERMS;
 
-        // GetValue will return the PUID from the credentials
+        if (targetUser.GetProfile() == null)
+            return EnumIrcError.NO_VALUE;
+
         return EnumIrcError.OK;
     }
 

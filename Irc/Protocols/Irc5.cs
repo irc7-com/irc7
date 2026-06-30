@@ -11,7 +11,7 @@ internal class Irc5 : Irc4
         var modeChar = string.Empty;
         if (member.HasModes()) modeChar += member.Owner.ModeValue ? '.' : member.Operator.ModeValue ? '@' : '+';
 
-        var profile = ((User)member.GetUser()).GetProfile().Irc5_ToString();
+        var profile = ((User)member.GetUser()).GetFormattedProfile(EnumProtocolType.IRC5);
         return $"{profile},{modeChar}{member.GetUser().GetAddress().Nickname}";
     }
 
@@ -22,6 +22,6 @@ internal class Irc5 : Irc4
 
     public override string GetFormat(IUser user)
     {
-        return ((User)user).GetProfile().Irc5_ToString();
+        return ((User)user).GetFormattedProfile(EnumProtocolType.IRC5);
     }
 }
