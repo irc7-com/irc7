@@ -25,7 +25,6 @@ public class User : ChatObject, IUser
     public override IAccessList Access => base.Access;
 
     private long _commandSequence;
-    private bool _guest;
     private EnumUserAccessLevel _level;
     private IProtocol _protocol;
     private bool _registered;
@@ -66,7 +65,7 @@ public class User : ChatObject, IUser
         UserAddress.SetIp(connection.GetIp());
     }
 
-    private UserProfile UserProfile { get; } = new();
+    private UserProfile? UserProfile { get; set; }
 
     public override EnumUserAccessLevel Level => GetLevel();
 
@@ -208,14 +207,8 @@ public class User : ChatObject, IUser
 
     public bool IsGuest()
     {
-        return _guest;
-    }
-
-    public virtual void SetGuest(bool guest)
-    {
-        if (Server.DisableGuestMode) return;
-        UserProfile.Guest = guest;
-        _guest = guest;
+        if (Server.DisableGuestMode) return false;
+        return UserProfile == null;
     }
 
     public void SetLevel(EnumUserAccessLevel level)
@@ -256,7 +249,6 @@ public class User : ChatObject, IUser
     public virtual void SetAway(IServer server, IUser user, string message)
     {
         user.Away = true;
-        UserProfile.Away = true;
         foreach (var channelPair in user.GetChannels())
         {
             var channel = channelPair.Key;
@@ -269,7 +261,6 @@ public class User : ChatObject, IUser
     public virtual void SetBack(IServer server, IUser user)
     {
         user.Away = false;
-        UserProfile.Away = false;
         foreach (var channelPair in user.GetChannels())
         {
             var channel = channelPair.Key;
@@ -284,7 +275,6 @@ public class User : ChatObject, IUser
         Modes.Admin.ModeValue = true;
         Modes.Admin.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Administrator;
-        UserProfile.Level = EnumUserAccessLevel.Administrator;
         Send(Raws.IRCX_RPL_YOUREADMIN_386(Server, this));
     }
 
@@ -293,7 +283,6 @@ public class User : ChatObject, IUser
         Modes.Oper.ModeValue = true;
         Modes.Oper.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Sysop;
-        UserProfile.Level = EnumUserAccessLevel.Sysop;
         Send(Raws.IRCX_RPL_YOUREOPER_381(Server, this));
     }
 
@@ -302,7 +291,6 @@ public class User : ChatObject, IUser
         Modes.Oper.ModeValue = true;
         Modes.Oper.DispatchModeChange(this, this, true, string.Empty);
         _level = EnumUserAccessLevel.Guide;
-        UserProfile.Level = EnumUserAccessLevel.Guide;
         Send(Raws.IRCX_RPL_YOUREGUIDE_629(Server, this));
     }
 
@@ -416,9 +404,48 @@ public class User : ChatObject, IUser
         };
     }
 
-    public UserProfile GetProfile()
+    public UserProfile? GetProfile()
     {
         return UserProfile;
+    }
+
+    public void AssignPassportProfile()
+    {
+        UserProfile ??= new UserProfile();
+    }
+
+    public string GetFormattedProfile(EnumProtocolType protocol)
+    {
+        var away = Away ? "G" : "H";
+        var mode = GetModeCharacter();
+        var gender = UserProfile?.GetGenderString() ?? "G";
+
+        if (protocol == EnumProtocolType.IRC5) return $"{away},{mode},{gender}";
+
+        var picture = UserProfile?.GetPictureString() ?? string.Empty;
+
+        if (protocol == EnumProtocolType.IRC8)
+        {
+            var registered = UserProfile?.GetRegisteredString() ?? "O";
+            return $"{away},{mode},{gender}{picture}{registered}";
+        }
+
+        return $"{away},{mode},{gender}{picture}";
+    }
+
+    private string GetModeCharacter()
+    {
+        switch (GetLevel())
+        {
+            case EnumUserAccessLevel.Administrator:
+                return "A";
+            case EnumUserAccessLevel.Sysop:
+                return "S";
+            case EnumUserAccessLevel.Guide:
+                return "G";
+            default:
+                return "U";
+        }
     }
 
     public override bool CanBeModifiedBy(IChatObject source)

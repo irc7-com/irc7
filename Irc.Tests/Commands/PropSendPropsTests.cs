@@ -213,8 +213,8 @@ public class PropSendPropsTests
             Nickname = nickname
         };
 
-        user.SetGuest(guest);
         user.InitializeSspiHandler(passport);
+        if (!guest && passport) user.AssignPassportProfile();
         return user;
     }
 }

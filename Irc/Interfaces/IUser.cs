@@ -21,7 +21,6 @@ public interface IUser
     bool Utf8 { get; set; }
     IChatFrame GetNextFrame();
     void ChangeNickname(string newNick, bool utf8Prefix);
-    void SetGuest(bool guest);
     void SetAway(IServer server, IUser user, string message);
     void SetBack(IServer server, IUser user);
     void SetLevel(EnumUserAccessLevel level);
@@ -61,4 +60,6 @@ public interface IUser
     Queue<ModeOperation> GetModeOperations();
     ISaslHandler? GetSspiHandler();
     ISaslHandler InitializeSspiHandler(bool passport);
+    UserProfile? GetProfile();
+    void AssignPassportProfile();
 }

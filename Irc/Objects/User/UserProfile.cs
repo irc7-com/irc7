@@ -1,6 +1,4 @@
-﻿using Irc.Enumerations;
-
-namespace Irc.Objects.User;
+﻿namespace Irc.Objects.User;
 /*
 // TODO: MSNPROFILE
 (Code) - (MSNPROFILE) - (Description)
@@ -43,16 +41,12 @@ IRC8 H,A,GO is correct as well as
 
 public class UserProfile
 {
-    public EnumUserAccessLevel Level { get; set; }
-    public bool Away { get; set; }
-    public bool Guest { get; set; }
     public bool Registered { get; set; }
     public bool HasProfile { get; set; }
     public bool IsMale { get; set; }
     public bool IsFemale { get; set; }
     public bool HasPicture { get; set; }
     public bool IsSubscriber { get; set; }
-    public bool HasPuid { get; set; }
 
     public int GetProfileCode()
     {
@@ -70,11 +64,6 @@ public class UserProfile
         HasPicture = Convert.ToBoolean(code & 8);
     }
 
-    public string GetAwayString()
-    {
-        return Away ? "G" : "H";
-    }
-
     public string GetRegisteredString()
     {
         return Registered ? "B" : "O";
@@ -82,7 +71,7 @@ public class UserProfile
 
     public string GetPictureString()
     {
-        return (Guest || !HasPuid) ? "" : HasPicture ? "Y" : "X";
+        return HasPicture ? "Y" : "X";
     }
 
     public string GetProfileString()
@@ -90,49 +79,10 @@ public class UserProfile
         return $"{GetGenderString()}{GetPictureString()}";
     }
 
-    public string GetModeString()
-    {
-        switch (Level)
-        {
-            case EnumUserAccessLevel.Administrator:
-            {
-                return "A";
-            }
-            case EnumUserAccessLevel.Sysop:
-            {
-                return "S";
-            }
-            case EnumUserAccessLevel.Guide:
-            {
-                return "G";
-            }
-            default:
-            {
-                return "U";
-            }
-        }
-    }
-
     public string GetGenderString()
     {
-        if (Guest || !HasPuid) return "G";
         if (!HasProfile) return "R";
 
         return !IsMale && !IsFemale ? "P" : IsMale ? "M" : "F";
-    }
-
-    public string Irc5_ToString()
-    {
-        return $"{GetAwayString()},{GetModeString()},{GetGenderString()}";
-    }
-
-    public string Irc7_ToString()
-    {
-        return $"{GetAwayString()},{GetModeString()},{GetProfileString()}";
-    }
-
-    public override string ToString()
-    {
-        return $"{GetAwayString()},{GetModeString()},{GetProfileString()}{GetRegisteredString()}";
     }
 }

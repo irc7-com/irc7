@@ -499,12 +499,16 @@ public class Server : ChatObject, IServer
             var subscribedString =
                 Passport.ValidateSubscriberInfo(value, issuedAt.Value);
             int.TryParse(subscribedString, out var subscribed);
-            if ((subscribed & 1) == 1) ((User.User)user).GetProfile().Registered = true;
+            if ((subscribed & 1) == 1)
+            {
+                var profile = user.GetProfile();
+                if (profile != null) profile.Registered = true;
+            }
         }
         else if (name == Resources.UserPropMsnProfile && user.IsAuthenticated() && !user.IsRegistered())
         {
             int.TryParse(value, out var profileCode);
-            ((User.User)user).GetProfile().SetProfileCode(profileCode);
+            user.GetProfile()?.SetProfileCode(profileCode);
         }
         else if (name == Resources.UserPropRole && user.IsAuthenticated())
         {

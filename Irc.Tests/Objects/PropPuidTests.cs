@@ -151,7 +151,7 @@ public class PropPuidTests
     }
 
     [Test]
-    public void FlagAndReply_NoPuidCoMember_GenderIsG_AndEvaluateGetIsNoValue()
+    public void FlagAndReply_NoPuidCoMember_IsGuest_FlagG_AndEvaluateGetIsNoValue()
     {
         var source = CreateUser(guest: false, passport: false);
         var target = CreateUser(guest: false, passport: false);
@@ -159,30 +159,35 @@ public class PropPuidTests
         channel.Join(source);
         channel.Join(target);
 
-        var genderString = target.GetProfile().GetGenderString();
         var evaluateResult = _prop.EvaluateGet(source, target);
 
-        Assert.That(genderString, Is.EqualTo("G"),
+        Assert.That(target.GetProfile(), Is.Null,
+            "A no-PUID target has no profile object");
+        Assert.That(target.IsGuest(), Is.True,
+            "A no-PUID target is a guest");
+        Assert.That(target.GetFormattedProfile(EnumProtocolType.IRC8), Is.EqualTo("H,U,GO"),
             "No-PUID target must report gender 'G'");
         Assert.That(evaluateResult, Is.EqualTo(EnumIrcError.NO_VALUE),
             "No-PUID target must yield NO_VALUE (empty 819), not a denial");
     }
 
     [Test]
-    public void FlagAndReply_PassportCoMember_GenderNotG_AndEvaluateGetIsOk()
+    public void FlagAndReply_PassportCoMember_NotGuest_FlagNotG_AndEvaluateGetIsOk()
     {
         var source = CreateUser(guest: false, passport: false);
         var target = CreateUser(guest: false, passport: true, puid: "F21F6EA24E994BAB");
-        target.GetProfile().HasPuid = true;
         var channel = new Irc.Objects.Channel.Channel("#TestChannel");
         channel.Join(source);
         channel.Join(target);
 
-        var genderString = target.GetProfile().GetGenderString();
         var evaluateResult = _prop.EvaluateGet(source, target);
 
-        Assert.That(genderString, Is.Not.EqualTo("G"),
-            "Passport target with HasPuid=true must not produce 'G'");
+        Assert.That(target.GetProfile(), Is.Not.Null,
+            "A passport target has a profile object");
+        Assert.That(target.IsGuest(), Is.False,
+            "A passport target is not a guest");
+        Assert.That(target.GetFormattedProfile(EnumProtocolType.IRC8), Is.EqualTo("H,U,RXO"),
+            "Passport target must not produce the no-profile 'G' flag");
         Assert.That(evaluateResult, Is.EqualTo(EnumIrcError.OK),
             "Passport target must yield OK");
     }
@@ -214,8 +219,8 @@ public class PropPuidTests
             Nickname = $"User_{Guid.NewGuid():N}"
         };
 
-        user.SetGuest(guest);
         user.InitializeSspiHandler(passport);
+        if (!guest && passport) user.AssignPassportProfile();
         return user;
     }
 

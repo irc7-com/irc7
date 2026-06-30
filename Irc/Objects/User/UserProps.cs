@@ -23,6 +23,7 @@ public class PropProfile : PropRule
         if (int.TryParse(propValue, out var result))
         {
             var profile = user.GetProfile();
+            if (profile == null) return EnumIrcError.OK;
             if (profile.HasProfile)
             {
                 user.Send(Raws.IRCX_ERR_ALREADYREGISTERED_462(user.Server, user));
@@ -69,11 +70,7 @@ public class PropPuid : PropRule, IPropRule
         if (!sharedChannel)
             return EnumIrcError.ERR_NOPERMS;
 
-        if (targetUser.IsGuest())
-            return EnumIrcError.NO_VALUE;
-
-        var sspiHandler = targetUser.GetSspiHandler();
-        if (sspiHandler == null || !sspiHandler.RequiresPassport)
+        if (targetUser.GetProfile() == null)
             return EnumIrcError.NO_VALUE;
 
         return EnumIrcError.OK;

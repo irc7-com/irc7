@@ -48,7 +48,7 @@ public class Privmsg : Command, ICommand
 
                 // Cannot send as a non-subscriber
                 if (user.GetLevel() < EnumUserAccessLevel.Guide &&
-                    !user.GetProfile().IsSubscriber &&
+                    !(user.GetProfile()?.IsSubscriber ?? false) &&
                     subscriberOnly.ModeValue
                    )
                 {
